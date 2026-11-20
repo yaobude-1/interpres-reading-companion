@@ -9,7 +9,8 @@ checks that run in CI, and manual probes that need a real desktop.
 python tests\run_checks.py
 ```
 
-This is the command used by `.github/workflows/checks.yml`. It covers:
+This is the command used by `.github/workflows/checks.yml`, after the
+`ruff check .` lint step. It covers:
 
 - config and key handling
 - local HTTP API authentication, limits, and mocked translation
@@ -27,6 +28,21 @@ This is the command used by `.github/workflows/checks.yml`. It covers:
 The gate must pass before a release. It does not require a visible desktop,
 though some pronunciation checks are skipped when the machine has no matching
 voice pack.
+
+## Static checks
+
+`ruff.toml` pins the rule set (syntax errors, pyflakes, flake8-bugbear). The
+baseline is clean, so any finding is a regression:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+ruff check .
+```
+
+The gate intentionally enables only defect-finding rules: no formatting, no
+import sorting, no style rewrites. When a warning is a false positive, prefer
+restructuring the code; if that is not practical, add a narrow `# noqa: <code>`
+with a one-line reason.
 
 ## Script tests
 

@@ -8,7 +8,6 @@ import re
 from lxml import html as lxml_html
 
 from .dictionary import Dictionary
-from .entrylayout import reorder, reorder_light
 
 _SOUND_MIME = {
     ".mp3": "audio/mpeg",

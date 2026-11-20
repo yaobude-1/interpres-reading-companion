@@ -118,7 +118,7 @@ def shape_borromean(size: int, w_ratio=0.045, color=LIGHT) -> Image.Image:
         gaps.sort()
         edges = [(g - half_gap, g + half_gap) for g in gaps]
         spans = []
-        for k, (a, b) in enumerate(edges):
+        for k, (_a, b) in enumerate(edges):
             nxt = edges[(k + 1) % len(edges)][0]
             if k == len(edges) - 1 and nxt < b:
                 nxt += 2 * math.pi

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -158,7 +157,6 @@ def main() -> int:
         # 小尺寸预览
         for j, sz in enumerate((48, 32, 16)):
             icon = fn(sz)
-            y = pad + big + label_h + j * 0
             sheet.paste(icon, (x + j * 60, pad + big + label_h + 8), icon)
             d.text((x + j * 60, pad + big + label_h + 8 + 52), f"{sz}", font=small, fill=(120, 124, 132))
     path = OUT / "icon_mock.png"

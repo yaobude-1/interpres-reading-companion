@@ -7,7 +7,6 @@ B. 用模拟的鼠标状态驱动 MouseWatcher，检查拖选/双击能被正确
 from __future__ import annotations
 
 import sys
-import threading
 import time
 import tkinter as tk
 from pathlib import Path

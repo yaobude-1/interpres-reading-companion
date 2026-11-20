@@ -16,8 +16,12 @@ jobs:
           python-version: "3.12"
       - name: Install runtime dependencies
         run: python -m pip install -r requirements.lock
+      - name: Install dev dependencies
+        run: python -m pip install -r requirements-dev.txt
       - name: Compile
-        run: python -m compileall -q app.py rc
+        run: python -m compileall -q app.py rc assets
+      - name: Lint
+        run: ruff check .
       - name: Core checks
         run: python tests/run_checks.py
       - name: Regression checks

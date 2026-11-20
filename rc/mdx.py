@@ -32,7 +32,7 @@ class MDXError(RuntimeError):
     pass
 
 
-_MACRON_TABLE = {ord(c): ord(p) for c, p in zip("āēīōūȳĀĒĪŌŪȲ", "aeiouyAEIOUY")}
+_MACRON_TABLE = {ord(c): ord(p) for c, p in zip("āēīōūȳĀĒĪŌŪȲ", "aeiouyAEIOUY", strict=True)}
 _MACRON_TABLE[0x0304] = None  # 组合长音符号直接删掉
 
 

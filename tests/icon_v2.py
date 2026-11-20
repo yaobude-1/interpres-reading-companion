@@ -149,7 +149,7 @@ def borromean(size: int, width_ratio=0.062, color=LIGHT, accent_ring=False) -> I
                   fill=colors[i], width=int(w))
             continue
         spans = []
-        for k, (a, b) in enumerate(edges):
+        for k, (_a, b) in enumerate(edges):
             nxt = edges[(k + 1) % len(edges)][0]
             if k == len(edges) - 1 and nxt < b:
                 nxt += 2 * math.pi

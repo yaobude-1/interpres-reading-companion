@@ -68,7 +68,6 @@ def main() -> int:
 
     print("\n[编辑查询词]")
     def edit_word():
-        from rc.config import Config as _C
 
         fake = {"word": "seek", "senses": [], "lang": "en", "source": "测试"}
         hits = [{"lang": "en", "source": "测试", "entry": fake}]

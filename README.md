@@ -167,6 +167,13 @@ python tests\test_ux_scenarios.py
 are direct assertions; some need a Windows desktop, clipboard, or Anki.
 `tests\ui_*.py` are manual probes and screenshot tools, not part of CI.
 
+Static checks are also part of the gate (`ruff.toml`); they must stay clean:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+ruff check .
+```
+
 See [`docs/TESTING.md`](docs/TESTING.md) for the release checklist and the
 difference between automated checks and manual probes.
 

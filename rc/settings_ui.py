@@ -20,6 +20,9 @@ from .service import (
     CHAT_PERSONA_DEFAULT as _ZH_CHAT_PERSONA,
     CHAT_RULES_DEFAULT as _ZH_CHAT_RULES,
 )
+from .i18n import tr
+from .uiutil import bind_defocus
+from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
 
 
 def default_translate_prompt() -> str:
@@ -38,9 +41,7 @@ def default_chat_rules() -> str:
     from . import i18n
 
     return _EN_CHAT_RULES if i18n.LANGUAGE == "en" else _ZH_CHAT_RULES
-from .i18n import tr
-from .uiutil import bind_defocus
-from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+
 
 VOICE_SAMPLES = {
     "en": "This is a test of the selected voice.",
@@ -52,9 +53,6 @@ VOICE_SAMPLES = {
     "pt": "Olá, este é um teste da voz selecionada.",
     "fr": "Ceci est un test de la voix sélectionnée.",
     "la": "Haec est probatio vocis selectae.",
-    "de": "Dies ist ein Test der ausgewählten Stimme.",
-    "es": "Esta es una prueba de la voz seleccionada.",
-    "ja": "これは選択した音声のテストです。",
 }
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from . import screens, textutil
+from . import screens
 from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, TEXT
 
 

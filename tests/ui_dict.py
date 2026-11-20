@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import shutil
 import sys
 import time
@@ -12,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
-from PIL import Image, ImageGrab  # noqa: E402
+from PIL import ImageGrab  # noqa: E402
 
 from rc.config import Config  # noqa: E402
 

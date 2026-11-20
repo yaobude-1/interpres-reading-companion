@@ -85,7 +85,7 @@ def tesseract(size: int, back_offset=(0.0, 0.0), back_scale=0.62, radius_ratio=0
     fc = corners(*front_c, front_half)
     bc = corners(*back_c, back_half)
 
-    for a, b in zip(fc, bc):
+    for a, b in zip(fc, bc, strict=False):
         d.line([a, b], fill=DIM + (200,), width=int(w_link))
     stroke(d, square(*front_c, front_half, rad), w_front, LIGHT + (255,), closed=True)
     stroke(d, square(*back_c, back_half, rad * back_scale), w_back, ACCENT + (255,), closed=True)

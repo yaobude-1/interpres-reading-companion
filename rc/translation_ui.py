@@ -7,7 +7,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, TEXT
+from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 
 
 class TranslationWindow:

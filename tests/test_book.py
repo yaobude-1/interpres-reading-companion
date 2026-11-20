@@ -11,7 +11,6 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
 from rc.book import parse_book  # noqa: E402
-from rc.config import Config  # noqa: E402
 from rc.store import Store  # noqa: E402
 
 EPUB = (

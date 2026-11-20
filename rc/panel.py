@@ -11,7 +11,7 @@ import json
 import tkinter as tk
 
 from . import textutil
-from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PANEL_ALT, RED, TEXT
+from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PANEL_ALT, RED, TEXT
 from .slimscroll import SlimScrollbar
 
 
@@ -1224,9 +1224,10 @@ class MainPanel:
             padx=6, pady=2, cursor="hand2",
         )
         original.pack(side="left", padx=(8, 0))
+        entry_lang = entry.get("lang")
         original.bind(
             "<Button-1>",
-            lambda _e, w=word, lang=entry.get("lang"): self.cb.get(
+            lambda _e, w=word, lang=entry_lang: self.cb.get(
                 "show_entry", lambda *_a: None
             )(w, lang),
         )

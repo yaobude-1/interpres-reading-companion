@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import ctypes
-import sys
 from ctypes import wintypes
 
 LOADER = r"C:\Program Files\WSL\wslsettings\WebView2Loader.dll"

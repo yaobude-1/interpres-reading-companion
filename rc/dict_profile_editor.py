@@ -6,9 +6,8 @@ import json
 import re
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox
 
-from .dict_profiles import TEMPLATE, load_profiles
+from .dict_profiles import TEMPLATE
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
 
 

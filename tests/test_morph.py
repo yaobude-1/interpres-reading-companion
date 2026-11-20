@@ -36,7 +36,10 @@ def main() -> int:
     check("-re 动词将来时", vendre["futur"][:2] == ["vendrai", "vendras"], vendre["futur"][:2])
 
     print("\n[法语反查]")
-    lookup = lambda w: True
+
+    def lookup(w):
+        return True
+
     check("parlait → parler", conjug_fr.analyse("parlait", lookup)[0] == "parler")
     check("fermerait → fermer", conjug_fr.analyse("fermerait", lookup)[0] == "fermer")
     check("suis → être", conjug_fr.analyse("suis", lookup)[0] == "être")

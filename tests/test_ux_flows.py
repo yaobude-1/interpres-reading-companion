@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import shutil
 import sys
-import time
 import tkinter as tk
 from pathlib import Path
 

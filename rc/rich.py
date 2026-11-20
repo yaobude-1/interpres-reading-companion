@@ -152,7 +152,6 @@ def _sanitize(fragment: str) -> str:
     if not fragment:
         return ""
     try:
-        from lxml import etree
         from lxml import html as LH
     except Exception:
         return _plain(fragment)
@@ -181,7 +180,7 @@ def _sanitize(fragment: str) -> str:
         el.attrib.pop("title", None)
         for key in list(el.attrib):
             del el.attrib[key]
-        if el.tag == "span" and not (el.get("class") in ("rc-cue", "rc-it")):
+        if el.tag == "span" and el.get("class") not in ("rc-cue", "rc-it"):
             el.attrib.pop("class", None)
     return _text_html(frag)
 
@@ -257,7 +256,6 @@ def extract_english_rich(html: str, headword: str = "") -> list[dict]:
     if not html:
         return []
     try:
-        from lxml import etree
         from lxml import html as LH
     except Exception:
         return []
@@ -265,14 +263,8 @@ def extract_english_rich(html: str, headword: str = "") -> list[dict]:
         tree = LH.fromstring(html)
     except Exception:
         return []
-    blocks: list[dict] = []
     pos_marks = tree.xpath('//span[@class="pos"]')
-    # 按 sense 出现顺序归属到最近的 pos
-    current_pos = ""
     pos_nodes = {el: " ".join("".join(el.itertext()).split()) for el in pos_marks}
-    for el in tree.iter():
-        if isinstance(el.tag, str) and "pos" in (el.get("class") or "") and el is not el.getroottree().getroot():
-            pass
     out: list[dict] = []
     for sense in tree.xpath('//span[contains(@class, "sense")]'):
         prev = sense.xpath("preceding::span[@class='pos'][1]")

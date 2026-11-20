@@ -11,7 +11,6 @@ ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
 from rc.config import Config  # noqa: E402
-from rc.service import Service  # noqa: E402
 from tests import mock_openai  # noqa: E402
 
 fails: list[str] = []

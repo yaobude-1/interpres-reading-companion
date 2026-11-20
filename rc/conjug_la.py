@@ -393,7 +393,7 @@ def verb_table(info: dict) -> list[dict]:
         ("infinitive_perfect", "不定式（完成）", "Infinitivus Perfectus"),
     ]
     rows = []
-    for key, zh, fr in participles:
+    for key, zh, _fr in participles:
         values = data.get(key) or []
         for value in values:
             rows.append((zh, value))
@@ -435,7 +435,7 @@ def analyse(word: str, lookup, keys=None) -> tuple[str, str, list[dict]] | None:
             return target, "现在时，第一人称单数", verb_table(verb)
 
     # 不定式：amare -> amo
-    for inf_ending, stem_kind in (("are", 1), ("ere", 3), ("ire", 4)):
+    for inf_ending, _stem_kind in (("are", 1), ("ere", 3), ("ire", 4)):
         if folded_target.endswith(inf_ending) and len(target) > len(inf_ending) + 1:
             base = target[: len(target) - len(inf_ending)]
             for suffix in ("o", "or", "io", "eo"):
@@ -455,7 +455,7 @@ def analyse(word: str, lookup, keys=None) -> tuple[str, str, list[dict]] | None:
         3: ("o", "is", "it", "imus", "itis", "unt"),
         4: ("io", "is", "it", "imus", "itis", "iunt"),
     }
-    for conj, endings in present_endings.items():
+    for _conj, endings in present_endings.items():
         for index, ending in enumerate(endings):
             if not folded_target.endswith(_fold(ending)):
                 continue
@@ -476,7 +476,7 @@ def analyse(word: str, lookup, keys=None) -> tuple[str, str, list[dict]] | None:
                     return lemma, f"现在时，{VERB_PERSONS[index]}", verb_table(info)
 
     # 名词：按格尾反推
-    for kind, endings in NOUN_ENDINGS.items():
+    for _kind, endings in NOUN_ENDINGS.items():
         for case in CASE_KEYS:
             for number, index in (("单数", 0), ("复数", 1)):
                 ending = _fold(endings[case][index])

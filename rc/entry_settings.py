@@ -9,7 +9,7 @@ from .uiutil import bind_defocus
 import tkinter as tk
 
 from .entryhtml import DEFAULT_COLORS
-from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 
 COLOR_ROWS = [
     ("sense", "义项号"),
@@ -99,7 +99,7 @@ class EntryColorSettings:
 
         grid = tk.Frame(pad, bg=PANEL)
         grid.pack(fill="x", pady=(0, 10))
-        for index, (key, label) in enumerate(COLOR_ROWS):
+        for key, label in COLOR_ROWS:
             color = saved.get(key) or DEFAULT_COLORS[key]
             var = tk.StringVar(value=color)
             self.color_vars[key] = var

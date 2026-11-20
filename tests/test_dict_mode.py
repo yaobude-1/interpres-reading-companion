@@ -82,7 +82,6 @@ def main() -> int:
     print("\n[词典音频]")
     real = Path.home() / ".reading-companion" / "config.json"
     if real.exists():
-        import json
 
         # 用真实配置查一个朗文有音频的词
         from rc import audio as audio_mod

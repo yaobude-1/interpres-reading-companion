@@ -12,8 +12,6 @@
 
 from __future__ import annotations
 
-import re
-
 try:
     from lxml import html as lxml_html
 except Exception:  # pragma: no cover
@@ -24,7 +22,8 @@ _TITLE_CLASSES = ("popheader", "expandable", "thead")
 
 def _text(node) -> str:
     text = " ".join((node.text_content() or "").split())
-    return text.strip(" ►►·:")
+    # 编号/项目符号是单个字符集合，strip 按字符剥离（不是剥子串）
+    return text.strip(" ►·:")  # noqa: B005
 
 
 def _nearest_title(content) -> str:
@@ -60,7 +59,6 @@ def reorder(fragment: str) -> str:
         return fragment
     try:
         tree = lxml_html.fromstring(fragment)
-        original_tree = lxml_html.fromstring(fragment)
     except Exception:
         return fragment
 

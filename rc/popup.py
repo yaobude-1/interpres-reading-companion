@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import tkinter as tk
-import tkinter.font as tkfont
 
 from . import screens, textutil
 
@@ -654,7 +653,7 @@ class PopupWindow:
                     self._label(
                         line, row.get("case", ""), fg=DIM, font=(FONT_FAMILY, 9), bg=PANEL
                     ).pack(side="left", pady=1)
-                    for key, fallback in (("sing", ""), ("plur", "")):
+                    for key, _fallback in (("sing", ""), ("plur", "")):
                         value = (row.get(key) or "").strip()
                         if not value:
                             continue
@@ -1231,7 +1230,6 @@ class PopupWindow:
         self._input_mode = False
         self._reset_to_translate(chat_button=True)
         self._lang = payload.get("source_lang") or "en"
-        lang_label = self.cb.get("lang_label", lambda c: c)(self._lang)
         book = payload.get("book") or ""
 
         self.title.configure(text=self._title_text(book, self._lang, payload.get("meta")))

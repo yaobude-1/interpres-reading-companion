@@ -37,7 +37,6 @@ def main() -> int:
             html = raw[1] if isinstance(raw, tuple) else raw
             if isinstance(html, bytes):
                 html = html.decode("utf-8", "replace")
-            text = " ".join(html.replace("<", " <").split())
             note = ""
             for marker in ("→", "->", "see ", "radical", "infinitif"):
                 if marker in html:

@@ -500,10 +500,6 @@ def conjugate(infinitive: str) -> dict | None:
         (f"{aux_present[i]} {participle}" if aux_present[i] else "")
         for i in range(6)
     ]
-    conditionnel = [
-        (data_form if (data_form := (futur[i].rstrip("s") + "s" if False else futur[i] + "s"))
-         else "") for i in range(6)
-    ]
     # 条件式 = 将来时词干 + 未完成过去时词尾
     futur_stem = futur[0][:-2] if futur[0].endswith("ai") else futur[0][:-1]
     conditionnel = [futur_stem + e for e in ER_IMPARFAIT]
@@ -512,7 +508,7 @@ def conjugate(infinitive: str) -> dict | None:
     return {
         "infinitive": verb,
         "aux": aux,
-        "passe_simple": _passe_simple(verb, stem if verb not in IRREGULAR else verb[:-1]),
+        "passe_simple": _passe_simple(verb, simple_stem),
         "present": present,
         "passe_compose": passe_compose,
         "imparfait": imparfait,
@@ -535,11 +531,12 @@ def _elide(person: str, form: str) -> str:
 
 
 def _persons(tense: str, forms: list[str]) -> list[tuple[str, str]]:
+    # 人称和词形数量可能不一致（如命令式只有 3 个），按短的截断
     if tense == "imperatif":
-        return list(zip(["(tu)", "(nous)", "(vous)"], forms))
+        return list(zip(["(tu)", "(nous)", "(vous)"], forms, strict=False))
     if tense == "participe":
-        return list(zip(["现在分词", "过去分词"], forms))
-    return [(p, _elide(p, f)) for p, f in zip(PERSONS, forms)]
+        return list(zip(["现在分词", "过去分词"], forms, strict=False))
+    return [(p, _elide(p, f)) for p, f in zip(PERSONS, forms, strict=False)]
 
 
 def table(infinitive: str) -> list[dict]:

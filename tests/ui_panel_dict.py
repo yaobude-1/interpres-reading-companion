@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 
-from PIL import Image, ImageGrab  # noqa: E402
+from PIL import ImageGrab  # noqa: E402
 
 from rc.config import Config  # noqa: E402
 from tests import mock_openai  # noqa: E402

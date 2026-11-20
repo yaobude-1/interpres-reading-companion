@@ -13,7 +13,6 @@ INPUT_CLASSES = {
     "TCombobox",
     "Spinbox",
     "TSpinbox",
-    "TCombobox",
 }
 
 

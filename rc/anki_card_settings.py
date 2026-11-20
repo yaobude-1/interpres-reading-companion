@@ -9,13 +9,11 @@ from tkinter import messagebox
 from .anki import (
     CUSTOM_SOURCES,
     DEFAULT_BACK,
-    DEFAULT_FIELD_MAP,
     DEFAULT_FRONT,
     CSS as DEFAULT_CSS,
     FIELDS,
     MODEL_NAME,
 )
-from .i18n import tr
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
 
 

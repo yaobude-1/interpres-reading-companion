@@ -1,4 +1,4 @@
-﻿"""超立方体 / 博罗米安环 精修稿（仅预览）。"""
+"""超立方体 / 博罗米安环 精修稿（仅预览）。"""
 
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ def borromean(size: int, mixed: bool = False, thin: bool = False) -> Image.Image
             edges.append((g - half_gap, g + half_gap))
         # 把跨越 ±π 的缺口拆开处理
         spans = []
-        for k, (a, b) in enumerate(edges):
+        for k, (_a, b) in enumerate(edges):
             spans.append((b, edges[(k + 1) % len(edges)][0] + (2 * math.pi if k == len(edges) - 1 else 0)))
         for a, b in spans:
             if b <= a:

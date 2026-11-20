@@ -406,7 +406,7 @@ class Translator:
         except json.JSONDecodeError:
             data = _extract_object(text)
             if data is None:
-                raise LLMError(f"模型输出无法解析为 JSON：{text[:200]}")
+                raise LLMError(f"模型输出无法解析为 JSON：{text[:200]}") from None
 
         if not isinstance(data, dict):
             raise LLMError("模型输出格式不对，请重试")

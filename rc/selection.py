@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.wintypes as wt
-import sys
 import threading
 import time
 from pathlib import Path
@@ -150,7 +149,6 @@ class MouseWatcher(threading.Thread):
     def run(self) -> None:
         down = False
         press_at = (0, 0)
-        press_time = 0.0
         last_click_time = 0.0
         last_fire = 0.0
 
@@ -162,7 +160,6 @@ class MouseWatcher(threading.Thread):
             if state and not down:
                 down = True
                 press_at = pos
-                press_time = now
                 self._notify_press(pos)
             elif not state and down:
                 down = False

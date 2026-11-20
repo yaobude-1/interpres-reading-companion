@@ -134,7 +134,8 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
             if not token:
                 return True
             supplied = self.headers.get("X-RC-Token") or ""
-            return supplied == token
+            # 常量时间比较，避免逐字符比较泄露 token 前缀
+            return hmac.compare_digest(supplied, token)
 
         def _route(self) -> tuple[str, dict]:
             parsed = urlparse(self.path)

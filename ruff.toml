@@ -1,0 +1,27 @@
+# Interpres 静态检查基线（P2）。
+#
+# 只启用能抓到真实缺陷的规则组，不做格式化重排，避免和现有风格冲突：
+#   E4 / E7 / E9  语法级错误（缩进、行内语句、语法错误等）
+#   F             pyflakes：未定义名、未使用导入/变量、重复字典键、f-string 问题
+#   B             flake8-bugbear：可变默认参数、zip 长度不匹配、宽泛异常等
+#
+# 基线必须是零告警：`ruff check .` 通过才算完成改动。
+
+target-version = "py312"
+line-length = 100
+
+extend-exclude = [
+    ".venv",
+    ".tools",
+    ".pipdl",
+    ".piptmp",
+    "vendor",
+    "vendor_build",
+    "build",
+    "build_portable",
+    "dist",
+    "dist_portable",
+]
+
+[lint]
+select = ["E4", "E7", "E9", "F", "B"]

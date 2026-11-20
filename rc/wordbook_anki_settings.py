@@ -14,8 +14,7 @@ from .anki import (
     FIELDS,
     MODEL_NAME,
 )
-from .i18n import tr
-from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, TEXT
 
 
 class WordbookAnkiSettings:

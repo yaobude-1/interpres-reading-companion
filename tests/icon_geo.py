@@ -206,10 +206,8 @@ def main() -> int:
     d = ImageDraw.Draw(sheet)
     try:
         font = ImageFont.truetype(FONT, 15)
-        small = ImageFont.truetype(FONT, 12)
     except Exception:
         font = ImageFont.load_default()
-        small = font
     for i, (name, fn) in enumerate(DESIGNS):
         col, row = i % cols, i // cols
         x = pad + col * (big + pad)

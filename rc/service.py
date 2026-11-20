@@ -563,14 +563,15 @@ class Service:
         text = (word or "").strip()
         if not text:
             return []
-        order: list[str] = [
-            code for code in (self.config.data.get("languages") or {}) if code
-        ]
+        order: list[str] = []
+        if lang_hint:
+            order.append(lang_hint)
+        for code in (self.config.data.get("languages") or {}):
+            if code and code not in order:
+                order.append(code)
         for code in ("en", "fr", "la", "de", "es", "it"):
             if code not in order:
                 order.append(code)
-        if lang_hint and lang_hint not in order:
-            order.append(lang_hint)
         for code in order:
             dictionary = self.dicts.dictionary(code)
             if dictionary is None:
@@ -1096,7 +1097,6 @@ class Service:
     def _dict2anki_note(self, word: dict) -> dict:
         """把一条生词组装成 Dict2Anki 笔记的字段。"""
         import re
-        from urllib.parse import quote
 
         from .rich import extract_english
 

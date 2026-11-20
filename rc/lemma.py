@@ -161,7 +161,6 @@ def latin_candidates(word: str) -> list[str]:
         "ibus": ["is", "us", "es"],
         "orum": ["us", "um", "a"],
         "arum": ["a"],
-        "orum": ["us"],
         "em": ["is", "es", "us"],
         "es": ["is", "es", "a"],
         "is": ["is", "es"],
@@ -175,7 +174,6 @@ def latin_candidates(word: str) -> list[str]:
         "os": ["us", "os"],
         "us": ["us"],
         "e": ["is", "es"],
-        "em": ["is"],
     }
     for suffix, stems in endings.items():
         if word.endswith(suffix) and len(word) - len(suffix) >= 2:
