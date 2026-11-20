@@ -352,6 +352,38 @@ def _prepare_plain(html: str) -> str:
     return html
 
 
+_CSP = (
+    "default-src 'none'; img-src data:; media-src data:; "
+    "style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
+    "font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'"
+)
+
+
+def _sanitize_untrusted(html: str) -> str:
+    """词典是外部数据：去掉脚本、内联事件和 javascript: 链接。
+
+    保留 HTML/CSS 和按钮外观；交互由本程序注入的脚本接管。
+    """
+    try:
+        root = lxml_html.fragment_fromstring(html, create_parent="div")
+        for node in root.xpath(".//script | .//iframe | .//object | .//embed | .//form"):
+            node.drop_tree()
+        for node in root.iter():
+            for attr in list(node.attrib):
+                name = attr.lower()
+                value = (node.attrib.get(attr) or "").strip().lower()
+                if name.startswith("on") or (
+                    name in {"href", "src", "action", "formaction"}
+                    and value.startswith("javascript:")
+                ):
+                    del node.attrib[attr]
+        return "".join(
+            lxml_html.tostring(child, encoding="unicode") for child in root
+        )
+    except Exception:
+        return html
+
+
 def build_entry_html(
     dictionary: Dictionary,
     word: str,
@@ -370,6 +402,7 @@ def build_entry_html(
     if isinstance(html, bytes):
         html = html.decode("utf-8", "replace")
     html = _unwrap_document(html)
+    html = _sanitize_untrusted(html)
     html = _inline_css(dictionary, html)
     html = _inline_images(dictionary, html)
     html = _inline_sounds(dictionary, html, audio_base)
@@ -393,6 +426,7 @@ def build_entry_html(
         base_css += "\n" + custom_css
     return (
         "<!DOCTYPE html><html lang='zh-CN'><head><meta charset='utf-8'>"
+        f"<meta http-equiv=\"Content-Security-Policy\" content=\"{_CSP}\">"
         f"<title>{heading}</title>"
         f"<style>{base_css}</style></head><body>{html}"
         f"<script>{_TOGGLE_JS}{_LONGMAN_JS}</script></body></html>"

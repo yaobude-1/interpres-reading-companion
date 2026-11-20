@@ -100,9 +100,9 @@
 所有设置和数据都在 `%USERPROFILE%\.reading-companion\`：
 
 ```
-config.json   设置（含 API Key，仅本地）
+config.json   设置（API Key 用 Windows DPAPI 加密，仅本地）
 reading.db    生词、对话、翻译缓存
-app.log       日志
+app.log       日志（不记录选中文本正文）
 cache/        TTS 音频缓存
 exports/      CSV/TSV/Markdown 导出
 ```
@@ -113,7 +113,7 @@ exports/      CSV/TSV/Markdown 导出
 - `127.0.0.1:8765`（AnkiConnect，启用时）
 - Microsoft Edge TTS 接口（仅当选了 Edge 引擎时）
 
-没有遥测。API Key 只存在本地，除了向你自己配置的接口发请求，不会离开这台机器。
+没有遥测。API Key 用 Windows DPAPI 加密后存在本地，除了向你自己配置的接口发请求，不会离开这台机器。
 
 ## 从源码运行
 

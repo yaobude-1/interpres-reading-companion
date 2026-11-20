@@ -1170,9 +1170,7 @@ class Service:
                 )
             note[f"sentence{index}"] = en
             note[f"sentence_explain{index}"] = cn
-            note[f"sentence_speech{index}"] = (
-                "http://dict.youdao.com/dictvoice?audio=" + quote(en.replace("<b>", "").replace("</b>", ""))
-            )
+            note[f"sentence_speech{index}"] = ""
             note[f"splaceHolder{index}"] = "Tap To View"
 
         media = self._audio_for_word(word)

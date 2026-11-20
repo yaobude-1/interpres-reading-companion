@@ -24,3 +24,4 @@ jobs:
         run: |
           python tests/test_chunking.py
           python tests/test_p0_regressions.py
+          python tests/test_p1_regressions.py

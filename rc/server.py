@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from . import __version__
+from .netpolicy import validate_base_url
 from .service import Service
 
 
@@ -216,9 +217,12 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
                         elif key == "api" and isinstance(value, dict):
                             for k in ("base_url", "model", "temperature", "timeout"):
                                 if k in value:
-                                    service.config.api[k] = value[k]
+                                    if k == "base_url":
+                                        service.config.api[k] = validate_base_url(str(value[k]))
+                                    else:
+                                        service.config.api[k] = value[k]
                             if value.get("api_key"):
-                                service.config.api["api_key"] = value["api_key"]
+                                service.config.set_api_key(str(value["api_key"]))
                     service.config.save()
                     self._json({"ok": True})
                 else:

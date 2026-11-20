@@ -705,11 +705,11 @@ class Application:
             return
         # 单个词先走本地词典，不花 token
         if textutil.looks_like_word(clean):
-            log.info("选词走词典：%r", clean)
+            log.info("选词走词典")
             self.bubble.hide()
             self._open_dictionary(clean, anchor)
             return
-        log.info("选段走翻译：%r（%d 字）", clean[:40], len(clean))
+        log.info("选段走翻译（%d 字）", len(clean))
         # 长段落直接进大浮窗：气泡放不下，也没法滚动
         if len(clean) >= 280:
             self.bubble.hide()
@@ -745,7 +745,7 @@ class Application:
             except Exception:  # noqa: BLE001
                 log.exception("查词失败")
                 hits = []
-            log.info("查词 %r → %d 本词典命中", word, len(hits))
+            log.info("查词命中 %d 本词典", len(hits))
             if hits:
                 self.events.put(("dict", (word, hits[0]["entry"], anchor, hits)))
             else:
@@ -839,7 +839,7 @@ class Application:
         source = str(self.config.get("audio_source", "dict_first"))
 
         def worker() -> None:
-            log.info("发音请求 text=%r lang=%r audio_key=%r source=%r", text, lang, audio_key, source)
+            log.info("发音请求 lang=%r source=%r", lang, source)
             try:
                 if source == "tts":
                     self.service.speak(text, lang)
@@ -851,7 +851,7 @@ class Application:
                     return
                 self.service.speak(text, lang)
             except Exception as exc:  # noqa: BLE001
-                log.exception("发音失败 text=%r lang=%r audio_key=%r", text, lang, audio_key)
+                log.exception("发音失败 lang=%r", lang)
                 msg = str(exc)
                 if "音色" in msg:
                     self.events.put(("toast", msg[:120]))

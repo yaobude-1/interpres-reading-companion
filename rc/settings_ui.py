@@ -242,7 +242,7 @@ class SettingsWindow:
         grid.columnconfigure(1, weight=1)
 
         api = self.config.api
-        self.var_key = tk.StringVar(value=api.get("api_key", ""))
+        self.var_key = tk.StringVar(value=self.config.api_key)
         self.var_base = tk.StringVar(value=api.get("base_url", "https://api.deepseek.com/v1"))
         self.var_model = tk.StringVar(value=api.get("model", "deepseek-chat"))
 
@@ -1287,10 +1287,11 @@ class SettingsWindow:
 
     def _apply_to_config(self, save: bool) -> None:
         api = self.config.api
-        api["api_key"] = self.var_key.get().strip()
         api["base_url"] = validate_base_url(
             self.var_base.get().strip() or "https://api.deepseek.com/v1"
         )
+        api["api_key"] = ""  # 实际密钥通过 set_api_key 加密后写入
+        self.config.set_api_key(self.var_key.get().strip())
         api["model"] = self.var_model.get().strip() or "deepseek-chat"
         if save:
             self.config.data["hotkey"] = self.var_hotkey.get().strip() or "ctrl+alt+t"

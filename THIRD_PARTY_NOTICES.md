@@ -49,11 +49,12 @@ Exact upstream source versions:
 - pystray 0.19.5 — https://github.com/moses-palmer/pystray/tree/v0.19.5
 - edge-tts 7.3.1 — https://github.com/rany2/edge-tts/tree/v7.3.1
 
-You may replace these components with modified versions; because they are
-plain Python modules in the local `vendor/` directory, they can be swapped
-without rebuilding the rest of the application. If you redistribute a
-modified version of these libraries, you must comply with LGPL-3.0 (source
-availability, notices).
+The packaged portable build freezes these modules into the PyInstaller
+archive, so they are not individually replaceable inside the installed
+`_internal` folder without rebuilding. To exercise LGPL modification rights,
+run from source with a local `vendor/` directory, or obtain the exact upstream
+source version and rebuild the application. This notice does not claim that
+the frozen executable can be relinked by replacing a single file.
 
 ## Content
 

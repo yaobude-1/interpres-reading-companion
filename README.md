@@ -95,11 +95,18 @@ Open **Words tab → Anki 设置…** to configure cards for one wordbook:
 
 Each wordbook already has its own deck, so the three modes can be mixed freely.
 Templates live on the note type, not on the deck: when several books share a
-type, editing its template affects all of them, and the dialog warns first.
+type, editing its template affects its first card template only; other templates
+are left untouched, and the dialog warns first.
 
 ## Dictionaries
 
 The app does not ship dictionaries. Put `.mdx`/`.mdd` files anywhere and add them in **Settings → 语言、词典与发音 → 词典设置…**. The parser supports MDX 2.0; encrypted or MDX 1.2 files are not supported yet.
+
+The original-entry viewer keeps the dictionary's HTML and CSS, but removes
+dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links
+before rendering. Its own toolbar buttons are handled by the app's injected
+script; a dictionary that depends on custom JavaScript interactivity will look
+correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
 
@@ -110,9 +117,9 @@ If your dictionary uses an unusual HTML layout, map it without code via **Settin
 All settings and data live in `%USERPROFILE%\.reading-companion\`:
 
 ```
-config.json   settings (including your API key — local only)
+config.json   settings (API key encrypted with Windows DPAPI)
 reading.db    vocabulary, conversations, translation cache
-app.log       logs
+app.log       logs (no selected text or document bodies)
 cache/        TTS audio cache
 exports/      CSV/TSV/Markdown exports
 ```
@@ -123,7 +130,8 @@ Network access is limited to:
 - `127.0.0.1:8765` (AnkiConnect, if enabled)
 - Microsoft Edge TTS endpoints (only if you select the Edge engine)
 
-No telemetry. The API key never leaves your machine except as a request to the endpoint you configured.
+No telemetry. The API key is encrypted at rest with Windows DPAPI and never
+leaves your machine except as a request to the endpoint you configured.
 
 ## Run from source
 

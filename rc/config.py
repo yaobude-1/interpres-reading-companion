@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import base64
 import copy
+import ctypes
 import json
 import os
 import secrets
@@ -150,6 +152,71 @@ def default_data_dir() -> Path:
     return Path.home() / ".reading-companion"
 
 
+class _DATA_BLOB(ctypes.Structure):
+    _fields_ = [("cbData", ctypes.c_uint32), ("pbData", ctypes.POINTER(ctypes.c_char))]
+
+
+if os.name == "nt":
+    _crypt32 = ctypes.windll.crypt32
+    _crypt32.CryptProtectData.argtypes = [
+        ctypes.POINTER(_DATA_BLOB), ctypes.c_void_p, ctypes.c_void_p,
+        ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32,
+        ctypes.POINTER(_DATA_BLOB),
+    ]
+    _crypt32.CryptProtectData.restype = ctypes.c_bool
+    _crypt32.CryptUnprotectData.argtypes = [
+        ctypes.POINTER(_DATA_BLOB), ctypes.c_void_p, ctypes.c_void_p,
+        ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32,
+        ctypes.POINTER(_DATA_BLOB),
+    ]
+    _crypt32.CryptUnprotectData.restype = ctypes.c_bool
+    _kernel32 = ctypes.windll.kernel32
+    _kernel32.LocalFree.argtypes = [ctypes.c_void_p]
+    _kernel32.LocalFree.restype = ctypes.c_void_p
+
+
+def _dpapi_protect(text: str) -> str | None:
+    if os.name != "nt":
+        return None
+    raw = text.encode("utf-8")
+    buf = ctypes.create_string_buffer(raw)
+    src = _DATA_BLOB(len(raw), ctypes.cast(buf, ctypes.POINTER(ctypes.c_char)))
+    out = _DATA_BLOB()
+    try:
+        ok = _crypt32.CryptProtectData(
+            ctypes.byref(src), None, None, None, None, 0x1, ctypes.byref(out)
+        )
+        if not ok:
+            return None
+        data = ctypes.string_at(out.pbData, out.cbData)
+        return "dpapi:" + base64.b64encode(data).decode("ascii")
+    finally:
+        if out.pbData:
+            _kernel32.LocalFree(out.pbData)
+
+
+def _dpapi_unprotect(value: str) -> str | None:
+    if os.name != "nt" or not value.startswith("dpapi:"):
+        return None
+    try:
+        raw = base64.b64decode(value[6:])
+        buf = ctypes.create_string_buffer(raw)
+        src = _DATA_BLOB(len(raw), ctypes.cast(buf, ctypes.POINTER(ctypes.c_char)))
+        out = _DATA_BLOB()
+        ok = _crypt32.CryptUnprotectData(
+            ctypes.byref(src), None, None, None, None, 0x1, ctypes.byref(out)
+        )
+        if not ok:
+            return None
+        try:
+            return ctypes.string_at(out.pbData, out.cbData).decode("utf-8")
+        finally:
+            if out.pbData:
+                _kernel32.LocalFree(out.pbData)
+    except Exception:
+        return None
+
+
 class Config:
     """轻量配置对象：点号访问 + 自动保存。"""
 
@@ -174,8 +241,23 @@ class Config:
         if not self.data.get("server_token"):
             self.data["server_token"] = secrets.token_hex(16)
             self.save()
+        self._migrate_api_key()
+
+    def _migrate_api_key(self) -> None:
+        key = str(self.api.get("api_key") or "").strip()
+        if not key or key.startswith("dpapi:"):
+            return
+        protected = _dpapi_protect(key)
+        if protected:
+            self.api["api_key"] = protected
+            self.save()
 
     def save(self) -> None:
+        key = str(self.api.get("api_key") or "").strip()
+        if key and not key.startswith("dpapi:"):
+            protected = _dpapi_protect(key)
+            if protected:
+                self.api["api_key"] = protected
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(self.data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -188,7 +270,14 @@ class Config:
 
     @property
     def api_key(self) -> str:
-        return str(self.api.get("api_key") or "").strip()
+        raw = str(self.api.get("api_key") or "").strip()
+        if raw.startswith("dpapi:"):
+            return (_dpapi_unprotect(raw) or "").strip()
+        return raw
+
+    def set_api_key(self, key: str) -> None:
+        key = (key or "").strip()
+        self.api["api_key"] = _dpapi_protect(key) if key else ""
 
     def language(self, code: str | None) -> dict:
         """取某语言的配置；未知语言返回一个安全回退。"""

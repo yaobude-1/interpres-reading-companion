@@ -36,7 +36,73 @@ kernel32.GlobalUnlock.argtypes = [wt.HGLOBAL]
 kernel32.GlobalUnlock.restype = wt.BOOL
 kernel32.GlobalFree.argtypes = [wt.HGLOBAL]
 kernel32.GlobalFree.restype = wt.HGLOBAL
+kernel32.GlobalSize.argtypes = [wt.HGLOBAL]
+kernel32.GlobalSize.restype = ctypes.c_size_t
+user32.EnumClipboardFormats.argtypes = [wt.UINT]
+user32.EnumClipboardFormats.restype = wt.UINT
+user32.CountClipboardFormats.restype = wt.INT
 user32.GetClipboardSequenceNumber.restype = wt.DWORD
+
+
+def _open_clipboard(retries: int = 6) -> bool:
+    for _ in range(retries):
+        if user32.OpenClipboard(None):
+            return True
+        time.sleep(0.03)
+    return False
+
+
+def snapshot_clipboard() -> list[tuple[int, bytes]]:
+    """保存剪贴板的文本/文件/图片（全局内存格式），用于取词后还原。"""
+    if not _open_clipboard():
+        return []
+    result: list[tuple[int, bytes]] = []
+    try:
+        fmt = 0
+        while True:
+            fmt = int(user32.EnumClipboardFormats(fmt))
+            if not fmt:
+                break
+            handle = user32.GetClipboardData(fmt)
+            if not handle:
+                continue
+            size = int(kernel32.GlobalSize(handle))
+            if size <= 0:
+                continue  # CF_BITMAP 等 GDI 句柄不是全局内存格式
+            ptr = kernel32.GlobalLock(handle)
+            if not ptr:
+                continue
+            try:
+                result.append((fmt, ctypes.string_at(ptr, size)))
+            finally:
+                kernel32.GlobalUnlock(handle)
+        return result
+    finally:
+        user32.CloseClipboard()
+
+
+def restore_clipboard(snapshot: list[tuple[int, bytes]]) -> bool:
+    if not snapshot or not _open_clipboard():
+        return False
+    try:
+        user32.EmptyClipboard()
+        for fmt, data in snapshot:
+            handle = kernel32.GlobalAlloc(0x0042, len(data))
+            if not handle:
+                continue
+            ptr = kernel32.GlobalLock(handle)
+            if not ptr:
+                kernel32.GlobalFree(handle)
+                continue
+            try:
+                ctypes.memmove(ptr, data, len(data))
+            finally:
+                kernel32.GlobalUnlock(handle)
+            if not user32.SetClipboardData(fmt, handle):
+                kernel32.GlobalFree(handle)
+        return True
+    finally:
+        user32.CloseClipboard()
 
 
 def clipboard_sequence() -> int:
@@ -132,6 +198,7 @@ def grab_selection(timeout: float = 0.9) -> tuple[str | None, str]:
     title = foreground_title()
     before = clipboard_sequence()
     previous = read_clipboard()
+    snapshot = snapshot_clipboard()
     send_copy()
 
     deadline = time.time() + timeout
@@ -147,8 +214,11 @@ def grab_selection(timeout: float = 0.9) -> tuple[str | None, str]:
     if not text:
         return None, title
     # 把用户原来的剪贴板换回去；若期间用户自己又复制了别的内容，就不要覆盖
-    if previous is not None and copied_seq and clipboard_sequence() == copied_seq:
-        write_clipboard(previous)
+    if copied_seq and clipboard_sequence() == copied_seq:
+        if snapshot:
+            restore_clipboard(snapshot)
+        elif previous is not None:
+            write_clipboard(previous)
     # 有些应用复制出来的内容和剪贴板里旧内容一样，seq 仍会变，这里不需要额外处理
     if previous is not None and text == previous and not text.strip():
         return None, title
