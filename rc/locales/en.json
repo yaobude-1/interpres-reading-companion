@@ -1,0 +1,1205 @@
+{
+  "+ 添加语言…": "+ Add language…",
+  "Anki 牌组": "Anki decks",
+  "Interpres · 设置": "Interpres · Settings",
+  "Oxford Latin Dictionary（英文释义/例句）": "Oxford Latin Dictionary (English definitions/examples)",
+  "Oxford_Hachette_French_English_Refined（音标/英文释义/例句）": "Oxford_Hachette_French_English_Refined (phonetics/English definitions/examples)",
+  "一直留着（点别处消失）": "Keep until dismissed (click elsewhere)",
+  "与它聊聊": "Chat about it",
+  "中文": "Chinese",
+  "主界面": "Main window",
+  "义项号": "Sense numbers",
+  "书": "Book",
+  "书名过滤": "Book filter",
+  "书名过滤…": "Book filter…",
+  "任何语言都能加；词典在「词典与发音 → 词典设置」里挂": "Any language can be added; attach dictionaries in “Dictionary & audio → Dictionary settings”",
+  "例句": "Examples",
+  "例：知乎、Bilibili、豆瓣、微信、Netflix": "e.g. Zhihu, Bilibili, Douban, WeChat, Netflix",
+  "保存": "Save",
+  "全部": "All",
+  "共 0 条": "0 items",
+  "共 1 段对话": "1 conversation",
+  "关闭": "Close",
+  "切换后需要重启 Interpres 才会生效": "Restart Interpres to apply",
+  "划词按钮": "Selection button",
+  "划词按钮设置…": "Selection button settings…",
+  "划词翻译": "Selection translate",
+  "删除": "Delete",
+  "删除所选": "Delete selected",
+  "删除语言前的保险：有生词或书籍时禁止删除（关掉则只弹提示）": "Safety lock: block deleting a language that still has words or books (unchecked: warn only)",
+  "删除选中": "Delete selected",
+  "刷新": "Refresh",
+  "刷新 Anki 牌组": "Refresh Anki decks",
+  "刷新音色": "Refresh voices",
+  "原版排版配色": "Original-entry colors",
+  "原版配色…": "Entry colors…",
+  "去创建 Key": "Create API key",
+  "双击选词触发": "Trigger on double-click selection",
+  "发送": "Send",
+  "取消": "Cancel",
+  "只对匹配的书名启用翻译（可配置多个关键词）": "Only translate matching book titles (multiple keywords allowed)",
+  "只用系统 TTS": "System TTS only",
+  "只用词典音频": "Dictionary audio only",
+  "同步 Anki": "Sync to Anki",
+  "同步全部生词到 Anki": "Sync all words to Anki",
+  "启用划词按钮": "Enable selection button",
+  "和它聊聊": "Chat about it",
+  "在主面板继续": "Continue in main panel",
+  "在哪些程序里生效": "Apps where it works",
+  "在阅读器里拖选或双击选词后，选区旁会出现「译」按钮，点一下才翻译。": "Select text in the reader (drag or double-click) and click the “Translate” button next to it.",
+  "在阅读器里点「把当前窗口加进来」，程序名会自动识别。": "Click “Add current window” in the reader; the app name is detected automatically.",
+  "填入默认": "Fill defaults",
+  "复制": "Copy",
+  "外观": "Appearance",
+  "字号": "Font size",
+  "安装/管理系统语音…": "Install/manage system voices…",
+  "对话": "Chat",
+  "对话人设（可用 {book} 占位）": "Chat persona ({book} placeholder supported)",
+  "对话原文上限": "Passage limit",
+  "对话回答要求": "Chat rules",
+  "对话时最多引用多少字原文；0 = 不限制。越小越省 token、越快": "Max source characters quoted in chat; 0 = unlimited. Smaller is cheaper and faster.",
+  "对话记录": "Chat history",
+  "对话记录…": "Chat history…",
+  "导出 CSV": "Export CSV",
+  "导出 Markdown": "Export Markdown",
+  "导出 TSV": "Export TSV",
+  "导出全部生词 CSV": "Export all words (CSV)",
+  "导出本书": "Export this book",
+  "德语  de": "German  de",
+  "必须保留 JSON 结构说明，否则翻译结果无法解析": "Keep the JSON schema description, or results cannot be parsed",
+  "恢复默认": "Restore default",
+  "打开数据目录": "Open data folder",
+  "打开面板": "Open panel",
+  "把当前窗口加进来": "Add current window",
+  "拉丁语  la": "Latin  la",
+  "拖选后自动出现「译」按钮，可关、可换颜色和透明度": "Show a “Translate” button after selection; can disable, recolor and change opacity",
+  "拖选触发": "Trigger on selection",
+  "按 Esc / 右上角 ✕ 直接退出程序（不勾则隐藏到托盘，可从托盘打开）": "Esc / ✕ quits the app (unchecked: hide to tray, reopen from tray)",
+  "按书名过滤": "Filter by book title",
+  "按书筛选": "Filter by book",
+  "按钮什么时候消失": "When the button disappears",
+  "按钮文字": "Button label",
+  "按钮背景": "Button background",
+  "按钮透明度": "Button opacity",
+  "搜索": "Search",
+  "改书名": "Rename book",
+  "改名": "Rename",
+  "新建": "New",
+  "暗色正文": "Dark reading text",
+  "服务地址": "Base URL",
+  "朗文当代高级英语词典6th（音标/中文释义/例句/发音）": "Longman DOCE 6th (phonetics/Chinese definitions/examples/audio)",
+  "未配置": "Not configured",
+  "本地词典": "Local dictionary",
+  "柔和": "Soft",
+  "查": "Look up",
+  "查看": "View",
+  "查词": "Dictionary",
+  "标签": "Tabs",
+  "模型": "Model",
+  "模型与连接": "Model & connection",
+  "正文": "Body",
+  "气泡宽度": "Bubble width",
+  "气泡文字": "Bubble text",
+  "气泡背景": "Bubble background",
+  "气泡透明度": "Bubble opacity",
+  "法语  fr": "French  fr",
+  "流式输出速度（字/秒）": "Streaming speed (chars/sec)",
+  "测试连接": "Test connection",
+  "添加本地 MDX/MDD 词典、调整查询顺序": "Add local MDX/MDD dictionaries and reorder lookup",
+  "清空": "Clear",
+  "清空（用默认）": "Clear (use default)",
+  "点色块改颜色，立刻反映到「原版」窗口": "Click a swatch to change color; applied to the original-entry window immediately",
+  "热键与划词": "Hotkeys & selection",
+  "生词": "Words",
+  "生词本": "Vocabulary",
+  "界面语言": "UI language",
+  "直接输入牌组名即可（不存在会自动新建）；点 ▾ 可从 Anki 现有牌组里选。": "Type a deck name directly (created if missing); click ▾ to pick an existing Anki deck.",
+  "秒": "sec",
+  "移动到…": "Move to…",
+  "编辑": "Edit",
+  "翻译": "Translate",
+  "翻译与对话": "Translation & chat",
+  "翻译提示词（系统提示）": "Translation prompt (system)",
+  "翻译时自动查词典（释义/音标/例句优先用词典，模型只补上下文义）": "Look up the local dictionary during translation (definitions/phonetics/examples from the dictionary; the model only fills context)",
+  "翻译记录": "Translation history",
+  "翻译记录 ▾": "Translation history ▾",
+  "翻译记录…": "Translation history…",
+  "翻译（Ctrl+Enter）": "Translate (Ctrl+Enter)",
+  "聊": "Chat",
+  "聊聊": "Chat",
+  "背景": "Background",
+  "自动跟随当前书籍时，窗口标题里含下面任意一条就忽略。每行一条，不分大小写。\n浏览器内部页（新建标签页、New Tab、设置…）已经默认过滤，不用重复加。": "When following the active book, ignore window titles containing any of these lines (case-insensitive).\nBrowser internal pages (New Tab, settings…) are already filtered.",
+  "自动跟随当前书籍（在阅读器里换书时跟着切；关掉则手动切换）": "Follow the active book (switch with the reader; off = switch manually in the panel)",
+  "自定义 CSS（追加到样式表末尾，可留空）": "Custom CSS (appended to the stylesheet; optional)",
+  "英语  en": "English  en",
+  "英语用 Dict2Anki 模板同步（多义项 + 例句 + 音频，字段更全）": "Sync English with the Dict2Anki note type (multi-sense + examples + audio; richer fields)",
+  "西班牙语  es": "Spanish  es",
+  "记录与数据": "History & data",
+  "词典与发音": "Dictionary & audio",
+  "词典文件": "Dictionary file",
+  "词典设置…": "Dictionary settings…",
+  "词典音频优先（没有就用 TTS）": "Dictionary audio first (fallback to TTS)",
+  "词性": "Part of speech",
+  "词本": "Word books",
+  "译": "Translate",
+  "试听": "Preview",
+  "详情": "Details",
+  "语种": "Language",
+  "语言 / 音色 / Anki 牌组": "Languages / voices / Anki decks",
+  "越大越快；译文和对话都按这个速度显示": "Higher is faster; both translation and chat use this speed",
+  "跳过 Anki 牌组里已存在的单词（不同笔记类型也算，避免重复添加）": "Skip words already in the Anki deck (any note type; avoids duplicates)",
+  "输入一个单词，本地词典查询，不消耗 token": "Type a word to query the local dictionary without using tokens",
+  "过几秒自动消失": "Fade out after a few seconds",
+  "这段文字会按你设置的速度逐字出现，用来感受快慢。改成 30 就慢一倍，改成 120 就快一倍。": "This text is typed out at your configured speed. Try 30 for half speed, 120 for double.",
+  "这里列出 SAPI 和 OneCore 两套音色；新语言请在 Windows 设置 → 语音 里添加后点「刷新」": "Lists both SAPI and OneCore voices. To add languages, use Windows Settings → Speech, then click Refresh.",
+  "退出程序": "Quit",
+  "选中文字后按热键翻译；Ctrl+Alt+S 随时打开这个窗口": "Select text and press the hotkey; Ctrl+Alt+S opens this window",
+  "选择 MDX 文件即可，同目录的 MDD（发音/图片）会自动识别。支持 MDX 2.0；带加密锁或 1.2 老格式的词典暂时读不了。": "Pick an MDX file; the MDD in the same folder (audio/images) is detected automatically. MDX 2.0 supported; encrypted or old 1.2 dictionaries are not.",
+  "选择…": "Choose…",
+  "部分号": "Part numbers",
+  "重新检测": "Detect again",
+  "音色": "Voice",
+  "预设": "Presets",
+  "高对比": "High contrast",
+  "默认": "default",
+  "鼠标移开就消失": "Disappear when the mouse leaves",
+  "（自动匹配）": "(Auto)",
+  "__patterns__": [
+    {
+      "zh": "^Anki 设置 · (.*)$",
+      "en": "Anki settings · {1}"
+    },
+    {
+      "zh": "^AnkiConnect 调用失败：(.*)$",
+      "en": "AnkiConnect call failed: {1}"
+    },
+    {
+      "zh": "^Anki 里没有笔记类型 (.*)$",
+      "en": "Anki has no note type: {1}"
+    },
+    {
+      "zh": "^接口返回错误：(.*)$",
+      "en": "API returned an error: {1}"
+    },
+    {
+      "zh": "^接口没有返回内容：(.*)$",
+      "en": "API returned no content: {1}"
+    },
+    {
+      "zh": "^接口返回的不是 JSON：(.*)$",
+      "en": "API returned non-JSON: {1}"
+    },
+    {
+      "zh": "^请求失败：(.*)$",
+      "en": "Request failed: {1}"
+    },
+    {
+      "zh": "^连不上模型服务：(.*)$",
+      "en": "Cannot reach the model service: {1}"
+    },
+    {
+      "zh": "^模型输出无法解析为 JSON：(.*)$",
+      "en": "Model output is not valid JSON: {1}"
+    },
+    {
+      "zh": "^不认识的热键：(.*)$",
+      "en": "Unknown key: {1}"
+    },
+    {
+      "zh": "^热键需要一个主键：(.*)$",
+      "en": "Hotkey needs a main key: {1}"
+    },
+    {
+      "zh": "^自定义发音命令失败：(.*)$",
+      "en": "Custom speech command failed: {1}"
+    },
+    {
+      "zh": "^OneCore 音色合成失败：(.*)$",
+      "en": "OneCore voice synthesis failed: {1}"
+    },
+    {
+      "zh": "^语音合成失败：(.*)$",
+      "en": "Speech synthesis failed: {1}"
+    },
+    {
+      "zh": "^无法打开音频（MCI (\\d+)）$",
+      "en": "Cannot open audio (MCI {1})."
+    },
+    {
+      "zh": "^播放失败（MCI (\\d+)）$",
+      "en": "Playback failed (MCI {1})."
+    },
+    {
+      "zh": "^不支持的格式：(.*)$",
+      "en": "Unsupported format: {1}"
+    },
+    {
+      "zh": "^连接正常 · (\\d+) 个牌组$",
+      "en": "Connection OK · {1} decks"
+    },
+    {
+      "zh": "^(\\d+) 个生词$",
+      "en": "{1} words"
+    },
+    {
+      "zh": "^(\\d+) 个词$",
+      "en": "{1} words"
+    },
+    {
+      "zh": "^(\\d+) 条$",
+      "en": "{1} items"
+    },
+    {
+      "zh": "^(\\d+) 段对话$",
+      "en": "{1} conversations"
+    },
+    {
+      "zh": "^显示 (\\d+) 个 · 库内共 (\\d+) 个$",
+      "en": "Showing {1} · {2} total"
+    },
+    {
+      "zh": "^共 (\\d+) 条$",
+      "en": "{1} items"
+    },
+    {
+      "zh": "^共 (\\d+) 段对话$",
+      "en": "{1} conversations"
+    },
+    {
+      "zh": "^完成 · (\\d+) ms$",
+      "en": "Done · {1} ms"
+    },
+    {
+      "zh": "^翻译中… (\\d+)/(\\d+)$",
+      "en": "Translating… {1}/{2}"
+    },
+    {
+      "zh": "^正在翻译.*(\\d+)/(\\d+).*$",
+      "en": "Translating… {1}/{2}"
+    },
+    {
+      "zh": "^已加入生词本：(.*)$",
+      "en": "Added to vocabulary: {1}"
+    },
+    {
+      "zh": "^试听：(.*)$",
+      "en": "Preview: {1}"
+    },
+    {
+      "zh": "^1-9 收藏 · Ctrl\\+Enter 同步 Anki · 空格朗读 · Enter 复制 · (\\d+) ms$",
+      "en": "1-9 save · Ctrl+Enter sync Anki · Space speak · Enter copy · {1} ms"
+    },
+    {
+      "zh": "^(.*) → 中文\\s+·\\s+(.*)$",
+      "en": "{1} → Chinese   ·   {2}"
+    },
+    {
+      "zh": "^共 (\\d+) 个生词$",
+      "en": "{1} words"
+    },
+    {
+      "zh": "^已导出 (\\d+) 条 → (.*)$",
+      "en": "Exported {1} items → {2}"
+    },
+    {
+      "zh": "^翻译失败：(.*)$",
+      "en": "Translation failed: {1}"
+    },
+    {
+      "zh": "^发音失败：(.*)$",
+      "en": "Speech failed: {1}"
+    },
+    {
+      "zh": "^出错了：(.*)$",
+      "en": "Error: {1}"
+    },
+    {
+      "zh": "^Anki 同步失败：(.*)$",
+      "en": "Anki sync failed: {1}"
+    },
+    {
+      "zh": "^热键注册失败：(.*)$",
+      "en": "Hotkey registration failed: {1}"
+    },
+    {
+      "zh": "^切换对话失败：(.*)$",
+      "en": "Failed to switch conversation: {1}"
+    },
+    {
+      "zh": "^已收藏 (.*?)（(.*?)）$",
+      "en": "Saved {1} ({2})"
+    },
+    {
+      "zh": "^本地词典里没有「(.*)」。$",
+      "en": "No local dictionary entry for “{1}”."
+    },
+    {
+      "zh": "^(.*) → 中文$",
+      "en": "{1} → Chinese"
+    },
+    {
+      "zh": "^与《(.*)》聊聊$",
+      "en": "Chat about “{1}”"
+    },
+    {
+      "zh": "^文中义：(.*)$",
+      "en": "Contextual meaning: {1}"
+    },
+    {
+      "zh": "^术语表命中：(.*)$",
+      "en": "Glossary match: {1}"
+    },
+    {
+      "zh": "^没有可用的(.*)音色.*$",
+      "en": "No voice available for {1}. Pick one in Settings → Languages."
+    },
+    {
+      "zh": "^已新建词本：(.*)$",
+      "en": "Created word book: {1}"
+    },
+    {
+      "zh": "^已保存词本：(.*)$",
+      "en": "Saved word book: {1}"
+    },
+    {
+      "zh": "^已移动 (\\d+) 个词到「(.*)」$",
+      "en": "Moved {1} words to “{2}”"
+    },
+    {
+      "zh": "^正在同步「(.*)」…$",
+      "en": "Syncing “{1}”…"
+    },
+    {
+      "zh": "^Anki 同步完成：(.*)$",
+      "en": "Anki sync finished: {1}"
+    },
+    {
+      "zh": "^已删除 (\\d+) 个生词$",
+      "en": "Deleted {1} words"
+    },
+    {
+      "zh": "^已删除 (\\d+) 个。$",
+      "en": "Deleted {1}."
+    },
+    {
+      "zh": "^已删除词本，(\\d+) 个词移回默认词本$",
+      "en": "Word book deleted; {1} words moved back to the default book"
+    },
+    {
+      "zh": "^已加入术语表：(.*?) → (.*)$",
+      "en": "Added to glossary: {1} → {2}"
+    },
+    {
+      "zh": "^已添加语言：(.*)$",
+      "en": "Language added: {1}"
+    },
+    {
+      "zh": "^已保存语言：(.*)$",
+      "en": "Language saved: {1}"
+    },
+    {
+      "zh": "^已删除语言：(.*)$",
+      "en": "Language deleted: {1}"
+    },
+    {
+      "zh": "^打开对话失败：(.*)$",
+      "en": "Failed to open conversation: {1}"
+    },
+    {
+      "zh": "^连接正常 · (.*)$",
+      "en": "Connection OK · {1}"
+    },
+    {
+      "zh": "^该语言还没有配置词典，已取消翻译。?$",
+      "en": "This language has no dictionary configured; translation cancelled."
+    },
+    {
+      "zh": "^已导出 (.*)$",
+      "en": "Exported {1}"
+    }
+  ],
+  "发音来源": "Audio source",
+  "代码": "Code",
+  "中文名": "Chinese name",
+  "本地名": "Native name",
+  "引擎": "Engine",
+  "命令": "Command",
+  "Edge 音色": "Edge voice",
+  "系统语音 / Edge 在线 / 自定义命令": "System voice / Edge online / Custom command",
+  "使用 Windows 已安装的 SAPI / OneCore 音色。": "Use SAPI / OneCore voices installed in Windows.",
+  "牌组留空会自动用 Reading::<中文名>；音色留空则按语言自动匹配": "Empty deck defaults to Reading::<Chinese name>; empty voice auto-matches the language.",
+  "Ctrl+Alt+S 打开设置 · Esc 关闭": "Ctrl+Alt+S opens settings · Esc closes",
+  "没连上 Anki（未运行？），可以直接手输牌组名": "Can't reach Anki (not running?); you can still type a deck name.",
+  "出了点问题": "Something went wrong",
+  "数字键收藏 · 点击也可": "Number keys save · clicking works too",
+  "选择书籍 ▾": "Select book ▾",
+  "英语": "English",
+  "法语": "French",
+  "拉丁语": "Latin",
+  "德语": "German",
+  "西班牙语": "Spanish",
+  "意大利语": "Italian",
+  "日语": "Japanese",
+  "俄语": "Russian",
+  "Anki 同步失败": "Anki sync failed",
+  "Interpres 已在后台运行 · 划词后点「译」，或按 Ctrl+Alt+T": "Interpres is running in the background · select text and click “Translate”, or press Ctrl+Alt+T",
+  "中文名不能为空。": "Chinese name cannot be empty.",
+  "先在列表里选中要删除的单词。": "Select a word to delete first.",
+  "先填 API Key，然后点「测试连接」": "Enter your API key, then click “Test connection”.",
+  "先粘贴或输入要翻译的文字": "Paste or type text to translate first.",
+  "先选中一条记录。": "Select a record first.",
+  "先选中一段对话。": "Select a conversation first.",
+  "先选中一段对话，或先按书筛选。": "Select a conversation, or filter by book first.",
+  "先选中要删除的对话。": "Select conversations to delete first.",
+  "先选中要删除的记录。": "Select records to delete first.",
+  "同步失败": "Sync failed",
+  "失败": "Failed",
+  "导出": "Export",
+  "导出失败": "Export failed",
+  "导出完成": "Export complete",
+  "已保存": "Saved",
+  "已经收藏过了": "Already saved",
+  "已隐藏到托盘，双击托盘图标可打开": "Hidden to tray; double-click the tray icon to open",
+  "没有可同步的生词。": "No words to sync.",
+  "测试中…": "Testing…",
+  "翻译中…": "Translating…",
+  "词本名称不能为空。": "Word book name cannot be empty.",
+  "译文已复制": "Translation copied",
+  "试听中…": "Previewing…",
+  "该语言还没有配置词典。": "This language has no dictionary configured.",
+  "这个词没有本地音频": "No local audio for this word",
+  "这本词典没有原版条目": "This dictionary has no original entry",
+  "默认词本不能删除。": "The default word book cannot be deleted.",
+  "已复制": "Copied",
+  "连不上 Anki，请先打开 Anki（并确认装了 AnkiConnect）": "Cannot reach Anki. Open Anki first and make sure AnkiConnect is installed.",
+  "模型返回了空内容": "The model returned an empty response.",
+  "没有读到文字": "No text was captured.",
+  "词本不存在": "Word book not found.",
+  "语言代码不能为空": "Language code cannot be empty.",
+  "这段对话已经不存在了": "This conversation no longer exists.",
+  "问题不能为空": "Question cannot be empty.",
+  "没有可朗读的文字": "No text to speak.",
+  "语音合成失败：系统没有可用的语音": "Speech synthesis failed: no usable system voice.",
+  "这门语言没有配置自定义发音命令": "No custom speech command configured for this language.",
+  "__phrases__": [
+    {
+      "zh": "+ 添加语言…",
+      "en": "+ Add language…"
+    },
+    {
+      "zh": "Anki 牌组",
+      "en": "Anki deck"
+    },
+    {
+      "zh": "Interpres · 设置",
+      "en": "Interpres · Settings"
+    },
+    {
+      "zh": "Oxford Latin Dictionary（英文释义/例句）",
+      "en": "Oxford Latin Dictionary (English definitions/examples)"
+    },
+    {
+      "zh": "Oxford_Hachette_French_English_Refined（音标/英文释义/例句）",
+      "en": "Oxford_Hachette_French_English_Refined (phonetics/English definitions/examples)"
+    },
+    {
+      "zh": "一直留着（点别处消失）",
+      "en": "Keep until dismissed (click elsewhere)"
+    },
+    {
+      "zh": "与它聊聊",
+      "en": "Chat about it"
+    },
+    {
+      "zh": "书名过滤",
+      "en": "Book filter"
+    },
+    {
+      "zh": "书名过滤…",
+      "en": "Book filter…"
+    },
+    {
+      "zh": "任何语言都能加；词典在「词典与发音 → 词典设置」里挂",
+      "en": "Any language can be added; attach dictionaries in “Dictionary & audio → Dictionary settings”"
+    },
+    {
+      "zh": "例：知乎、Bilibili、豆瓣、微信、Netflix",
+      "en": "e.g. Zhihu, Bilibili, Douban, WeChat, Netflix"
+    },
+    {
+      "zh": "共 0 条",
+      "en": "0 items"
+    },
+    {
+      "zh": "共 1 段对话",
+      "en": "1 conversation"
+    },
+    {
+      "zh": "切换后需要重启 Interpres 才会生效",
+      "en": "Restart Interpres to apply"
+    },
+    {
+      "zh": "划词按钮",
+      "en": "Selection button"
+    },
+    {
+      "zh": "划词按钮设置…",
+      "en": "Selection button settings…"
+    },
+    {
+      "zh": "划词翻译",
+      "en": "Selection translate"
+    },
+    {
+      "zh": "删除所选",
+      "en": "Delete selected"
+    },
+    {
+      "zh": "删除语言前的保险：有生词或书籍时禁止删除（关掉则只弹提示）",
+      "en": "Safety lock: block deleting a language that still has words or books (unchecked: warn only)"
+    },
+    {
+      "zh": "删除选中",
+      "en": "Delete selected"
+    },
+    {
+      "zh": "刷新 Anki 牌组",
+      "en": "Refresh Anki decks"
+    },
+    {
+      "zh": "刷新音色",
+      "en": "Refresh voices"
+    },
+    {
+      "zh": "原版排版配色",
+      "en": "Original-entry colors"
+    },
+    {
+      "zh": "原版配色…",
+      "en": "Entry colors…"
+    },
+    {
+      "zh": "去创建 Key",
+      "en": "Create API key"
+    },
+    {
+      "zh": "双击选词触发",
+      "en": "Trigger on double-click selection"
+    },
+    {
+      "zh": "只对匹配的书名启用翻译（可配置多个关键词）",
+      "en": "Only translate matching book titles (multiple keywords allowed)"
+    },
+    {
+      "zh": "只用系统 TTS",
+      "en": "System TTS only"
+    },
+    {
+      "zh": "只用词典音频",
+      "en": "Dictionary audio only"
+    },
+    {
+      "zh": "同步 Anki",
+      "en": "Sync to Anki"
+    },
+    {
+      "zh": "同步全部生词到 Anki",
+      "en": "Sync all words to Anki"
+    },
+    {
+      "zh": "启用划词按钮",
+      "en": "Enable selection button"
+    },
+    {
+      "zh": "和它聊聊",
+      "en": "Chat about it"
+    },
+    {
+      "zh": "在主面板继续",
+      "en": "Continue in main panel"
+    },
+    {
+      "zh": "在哪些程序里生效",
+      "en": "Apps where it works"
+    },
+    {
+      "zh": "在阅读器里拖选或双击选词后，选区旁会出现「译」按钮，点一下才翻译。",
+      "en": "Select text in the reader (drag or double-click) and click the “Translate” button next to it."
+    },
+    {
+      "zh": "在阅读器里点「把当前窗口加进来」，程序名会自动识别。",
+      "en": "Click “Add current window” in the reader; the app name is detected automatically."
+    },
+    {
+      "zh": "填入默认",
+      "en": "Fill defaults"
+    },
+    {
+      "zh": "安装/管理系统语音…",
+      "en": "Install/manage system voices…"
+    },
+    {
+      "zh": "对话人设（可用 {book} 占位）",
+      "en": "Chat persona ({book} placeholder supported)"
+    },
+    {
+      "zh": "对话原文上限",
+      "en": "Passage limit"
+    },
+    {
+      "zh": "对话回答要求",
+      "en": "Chat rules"
+    },
+    {
+      "zh": "对话时最多引用多少字原文；0 = 不限制。越小越省 token、越快",
+      "en": "Max source characters quoted in chat; 0 = unlimited. Smaller is cheaper and faster."
+    },
+    {
+      "zh": "对话记录",
+      "en": "Chat history"
+    },
+    {
+      "zh": "对话记录…",
+      "en": "Chat history…"
+    },
+    {
+      "zh": "导出 CSV",
+      "en": "Export CSV"
+    },
+    {
+      "zh": "导出 Markdown",
+      "en": "Export Markdown"
+    },
+    {
+      "zh": "导出 TSV",
+      "en": "Export TSV"
+    },
+    {
+      "zh": "导出全部生词 CSV",
+      "en": "Export all words (CSV)"
+    },
+    {
+      "zh": "导出本书",
+      "en": "Export this book"
+    },
+    {
+      "zh": "德语  de",
+      "en": "German  de"
+    },
+    {
+      "zh": "必须保留 JSON 结构说明，否则翻译结果无法解析",
+      "en": "Keep the JSON schema description, or results cannot be parsed"
+    },
+    {
+      "zh": "恢复默认",
+      "en": "Restore default"
+    },
+    {
+      "zh": "打开数据目录",
+      "en": "Open data folder"
+    },
+    {
+      "zh": "打开面板",
+      "en": "Open panel"
+    },
+    {
+      "zh": "把当前窗口加进来",
+      "en": "Add current window"
+    },
+    {
+      "zh": "拉丁语  la",
+      "en": "Latin  la"
+    },
+    {
+      "zh": "拖选后自动出现「译」按钮，可关、可换颜色和透明度",
+      "en": "Show a “Translate” button after selection; can disable, recolor and change opacity"
+    },
+    {
+      "zh": "拖选触发",
+      "en": "Trigger on selection"
+    },
+    {
+      "zh": "按 Esc / 右上角 ✕ 直接退出程序（不勾则隐藏到托盘，可从托盘打开）",
+      "en": "Esc / ✕ quits the app (unchecked: hide to tray, reopen from tray)"
+    },
+    {
+      "zh": "按书名过滤",
+      "en": "Filter by book title"
+    },
+    {
+      "zh": "按书筛选",
+      "en": "Filter by book"
+    },
+    {
+      "zh": "按钮什么时候消失",
+      "en": "When the button disappears"
+    },
+    {
+      "zh": "按钮文字",
+      "en": "Button label"
+    },
+    {
+      "zh": "按钮背景",
+      "en": "Button background"
+    },
+    {
+      "zh": "按钮透明度",
+      "en": "Button opacity"
+    },
+    {
+      "zh": "暗色正文",
+      "en": "Dark reading text"
+    },
+    {
+      "zh": "服务地址",
+      "en": "Base URL"
+    },
+    {
+      "zh": "朗文当代高级英语词典6th（音标/中文释义/例句/发音）",
+      "en": "Longman DOCE 6th (phonetics/Chinese definitions/examples/audio)"
+    },
+    {
+      "zh": "本地词典",
+      "en": "Local dictionary"
+    },
+    {
+      "zh": "模型与连接",
+      "en": "Model & connection"
+    },
+    {
+      "zh": "气泡宽度",
+      "en": "Bubble width"
+    },
+    {
+      "zh": "气泡文字",
+      "en": "Bubble text"
+    },
+    {
+      "zh": "气泡背景",
+      "en": "Bubble background"
+    },
+    {
+      "zh": "气泡透明度",
+      "en": "Bubble opacity"
+    },
+    {
+      "zh": "法语  fr",
+      "en": "French  fr"
+    },
+    {
+      "zh": "流式输出速度（字/秒）",
+      "en": "Streaming speed (chars/sec)"
+    },
+    {
+      "zh": "测试连接",
+      "en": "Test connection"
+    },
+    {
+      "zh": "添加本地 MDX/MDD 词典、调整查询顺序",
+      "en": "Add local MDX/MDD dictionaries and reorder lookup"
+    },
+    {
+      "zh": "清空（用默认）",
+      "en": "Clear (use default)"
+    },
+    {
+      "zh": "点色块改颜色，立刻反映到「原版」窗口",
+      "en": "Click a swatch to change color; applied to the original-entry window immediately"
+    },
+    {
+      "zh": "热键与划词",
+      "en": "Hotkeys & selection"
+    },
+    {
+      "zh": "界面语言",
+      "en": "UI language"
+    },
+    {
+      "zh": "直接输入牌组名即可（不存在会自动新建）；点 ▾ 可从 Anki 现有牌组里选。",
+      "en": "Type a deck name directly (created if missing); click ▾ to pick an existing Anki deck."
+    },
+    {
+      "zh": "移动到…",
+      "en": "Move to…"
+    },
+    {
+      "zh": "翻译与对话",
+      "en": "Translation & chat"
+    },
+    {
+      "zh": "翻译提示词（系统提示）",
+      "en": "Translation prompt (system)"
+    },
+    {
+      "zh": "翻译时自动查词典（释义/音标/例句优先用词典，模型只补上下文义）",
+      "en": "Look up the local dictionary during translation (definitions/phonetics/examples from the dictionary; the model only fills context)"
+    },
+    {
+      "zh": "翻译记录",
+      "en": "Translation history"
+    },
+    {
+      "zh": "翻译记录 ▾",
+      "en": "Translation history ▾"
+    },
+    {
+      "zh": "翻译记录…",
+      "en": "Translation history…"
+    },
+    {
+      "zh": "翻译（Ctrl+Enter）",
+      "en": "Translate (Ctrl+Enter)"
+    },
+    {
+      "zh": "自动跟随当前书籍时，窗口标题里含下面任意一条就忽略。每行一条，不分大小写。\n浏览器内部页（新建标签页、New Tab、设置…）已经默认过滤，不用重复加。",
+      "en": "When following the active book, ignore window titles containing any of these lines (case-insensitive).\nBrowser internal pages (New Tab, settings…) are already filtered."
+    },
+    {
+      "zh": "自动跟随当前书籍（在阅读器里换书时跟着切；关掉则手动切换）",
+      "en": "Follow the active book (switch with the reader; off = switch manually in the panel)"
+    },
+    {
+      "zh": "自定义 CSS（追加到样式表末尾，可留空）",
+      "en": "Custom CSS (appended to the stylesheet; optional)"
+    },
+    {
+      "zh": "英语  en",
+      "en": "English  en"
+    },
+    {
+      "zh": "英语用 Dict2Anki 模板同步（多义项 + 例句 + 音频，字段更全）",
+      "en": "Sync English with the Dict2Anki note type (multi-sense + examples + audio; richer fields)"
+    },
+    {
+      "zh": "西班牙语  es",
+      "en": "Spanish  es"
+    },
+    {
+      "zh": "记录与数据",
+      "en": "History & data"
+    },
+    {
+      "zh": "词典与发音",
+      "en": "Dictionary & audio"
+    },
+    {
+      "zh": "词典文件",
+      "en": "Dictionary file"
+    },
+    {
+      "zh": "词典设置…",
+      "en": "Dictionary settings…"
+    },
+    {
+      "zh": "词典音频优先（没有就用 TTS）",
+      "en": "Dictionary audio first (fallback to TTS)"
+    },
+    {
+      "zh": "语言 / 音色 / Anki 牌组",
+      "en": "Languages / voices / Anki decks"
+    },
+    {
+      "zh": "越大越快；译文和对话都按这个速度显示",
+      "en": "Higher is faster; both translation and chat use this speed"
+    },
+    {
+      "zh": "跳过 Anki 牌组里已存在的单词（不同笔记类型也算，避免重复添加）",
+      "en": "Skip words already in the Anki deck (any note type; avoids duplicates)"
+    },
+    {
+      "zh": "输入一个单词，本地词典查询，不消耗 token",
+      "en": "Type a word to query the local dictionary without using tokens"
+    },
+    {
+      "zh": "过几秒自动消失",
+      "en": "Fade out after a few seconds"
+    },
+    {
+      "zh": "这段文字会按你设置的速度逐字出现，用来感受快慢。改成 30 就慢一倍，改成 120 就快一倍。",
+      "en": "This text is typed out at your configured speed. Try 30 for half speed, 120 for double."
+    },
+    {
+      "zh": "这里列出 SAPI 和 OneCore 两套音色；新语言请在 Windows 设置 → 语音 里添加后点「刷新」",
+      "en": "Lists both SAPI and OneCore voices. To add languages, use Windows Settings → Speech, then click Refresh."
+    },
+    {
+      "zh": "退出程序",
+      "en": "Quit"
+    },
+    {
+      "zh": "选中文字后按热键翻译；Ctrl+Alt+S 随时打开这个窗口",
+      "en": "Select text and press the hotkey; Ctrl+Alt+S opens this window"
+    },
+    {
+      "zh": "选择 MDX 文件即可，同目录的 MDD（发音/图片）会自动识别。支持 MDX 2.0；带加密锁或 1.2 老格式的词典暂时读不了。",
+      "en": "Pick an MDX file; the MDD in the same folder (audio/images) is detected automatically. MDX 2.0 supported; encrypted or old 1.2 dictionaries are not."
+    },
+    {
+      "zh": "重新检测",
+      "en": "Detect again"
+    },
+    {
+      "zh": "鼠标移开就消失",
+      "en": "Disappear when the mouse leaves"
+    },
+    {
+      "zh": "（自动匹配）",
+      "en": "(Auto)"
+    },
+    {
+      "zh": "发音来源",
+      "en": "Audio source"
+    },
+    {
+      "zh": "Edge 音色",
+      "en": "Edge voice"
+    },
+    {
+      "zh": "系统语音 / Edge 在线 / 自定义命令",
+      "en": "System voice / Edge online / Custom command"
+    },
+    {
+      "zh": "使用 Windows 已安装的 SAPI / OneCore 音色。",
+      "en": "Use SAPI / OneCore voices installed in Windows."
+    },
+    {
+      "zh": "牌组留空会自动用 Reading::<中文名>；音色留空则按语言自动匹配",
+      "en": "Empty deck defaults to Reading::<Chinese name>; empty voice auto-matches the language."
+    },
+    {
+      "zh": "Ctrl+Alt+S 打开设置 · Esc 关闭",
+      "en": "Ctrl+Alt+S opens settings · Esc closes"
+    },
+    {
+      "zh": "没连上 Anki（未运行？），可以直接手输牌组名",
+      "en": "Can't reach Anki (not running?); you can still type a deck name."
+    },
+    {
+      "zh": "出了点问题",
+      "en": "Something went wrong"
+    },
+    {
+      "zh": "数字键收藏 · 点击也可",
+      "en": "Number keys save · clicking works too"
+    },
+    {
+      "zh": "选择书籍 ▾",
+      "en": "Select book ▾"
+    },
+    {
+      "zh": "西班牙语",
+      "en": "Spanish"
+    },
+    {
+      "zh": "意大利语",
+      "en": "Italian"
+    },
+    {
+      "zh": "Anki 同步失败",
+      "en": "Anki sync failed"
+    },
+    {
+      "zh": "Interpres 已在后台运行 · 划词后点「译」，或按 Ctrl+Alt+T",
+      "en": "Interpres is running in the background · select text and click “Translate”, or press Ctrl+Alt+T"
+    },
+    {
+      "zh": "中文名不能为空。",
+      "en": "Chinese name cannot be empty."
+    },
+    {
+      "zh": "先在列表里选中要删除的单词。",
+      "en": "Select a word to delete first."
+    },
+    {
+      "zh": "先填 API Key，然后点「测试连接」",
+      "en": "Enter your API key, then click “Test connection”."
+    },
+    {
+      "zh": "先粘贴或输入要翻译的文字",
+      "en": "Paste or type text to translate first."
+    },
+    {
+      "zh": "先选中一条记录。",
+      "en": "Select a record first."
+    },
+    {
+      "zh": "先选中一段对话。",
+      "en": "Select a conversation first."
+    },
+    {
+      "zh": "先选中一段对话，或先按书筛选。",
+      "en": "Select a conversation, or filter by book first."
+    },
+    {
+      "zh": "先选中要删除的对话。",
+      "en": "Select conversations to delete first."
+    },
+    {
+      "zh": "先选中要删除的记录。",
+      "en": "Select records to delete first."
+    },
+    {
+      "zh": "同步失败",
+      "en": "Sync failed"
+    },
+    {
+      "zh": "导出失败",
+      "en": "Export failed"
+    },
+    {
+      "zh": "导出完成",
+      "en": "Export complete"
+    },
+    {
+      "zh": "已经收藏过了",
+      "en": "Already saved"
+    },
+    {
+      "zh": "已隐藏到托盘，双击托盘图标可打开",
+      "en": "Hidden to tray; double-click the tray icon to open"
+    },
+    {
+      "zh": "没有可同步的生词。",
+      "en": "No words to sync."
+    },
+    {
+      "zh": "测试中…",
+      "en": "Testing…"
+    },
+    {
+      "zh": "翻译中…",
+      "en": "Translating…"
+    },
+    {
+      "zh": "词本名称不能为空。",
+      "en": "Word book name cannot be empty."
+    },
+    {
+      "zh": "译文已复制",
+      "en": "Translation copied"
+    },
+    {
+      "zh": "试听中…",
+      "en": "Previewing…"
+    },
+    {
+      "zh": "该语言还没有配置词典。",
+      "en": "This language has no dictionary configured."
+    },
+    {
+      "zh": "这个词没有本地音频",
+      "en": "No local audio for this word"
+    },
+    {
+      "zh": "这本词典没有原版条目",
+      "en": "This dictionary has no original entry"
+    },
+    {
+      "zh": "默认词本不能删除。",
+      "en": "The default word book cannot be deleted."
+    },
+    {
+      "zh": "连不上 Anki，请先打开 Anki（并确认装了 AnkiConnect）",
+      "en": "Cannot reach Anki. Open Anki first and make sure AnkiConnect is installed."
+    },
+    {
+      "zh": "模型返回了空内容",
+      "en": "The model returned an empty response."
+    },
+    {
+      "zh": "没有读到文字",
+      "en": "No text was captured."
+    },
+    {
+      "zh": "词本不存在",
+      "en": "Word book not found."
+    },
+    {
+      "zh": "语言代码不能为空",
+      "en": "Language code cannot be empty."
+    },
+    {
+      "zh": "这段对话已经不存在了",
+      "en": "This conversation no longer exists."
+    },
+    {
+      "zh": "问题不能为空",
+      "en": "Question cannot be empty."
+    },
+    {
+      "zh": "没有可朗读的文字",
+      "en": "No text to speak."
+    },
+    {
+      "zh": "语音合成失败：系统没有可用的语音",
+      "en": "Speech synthesis failed: no usable system voice."
+    },
+    {
+      "zh": "这门语言没有配置自定义发音命令",
+      "en": "No custom speech command configured for this language."
+    }
+  ],
+  "还没有填写 API Key": "No API key yet.",
+  "没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写": "No API key configured. Press Ctrl+Alt+S to open settings.",
+  "模型返回了空内容，可能是触发了长度限制，请缩短选中范围": "The model returned an empty response (possibly hit the length limit). Try selecting less text.",
+  "模型响应超时，请检查网络或换用更短的选中范围": "The model timed out. Check your network or select less text.",
+  "模型输出格式不对，请重试": "Unexpected model output. Please try again.",
+  "模型没有给出译文，请重试或换一段文字": "The model returned no translation. Try again or choose another passage.",
+  "热键不能为空": "Hotkey cannot be empty.",
+  "Edge TTS 没有返回音频": "Edge TTS returned no audio.",
+  "PDF 解析还没做：先用 EPUB，或者在阅读器里导出成 EPUB": "PDF parsing is not implemented yet. Use EPUB, or export to EPUB from your reader.",
+  "这本 EPUB 里没抽到文字（可能是纯图片版）": "No text extracted from this EPUB (it may be image-only).",
+  "这个文件不是有效的 EPUB": "Not a valid EPUB file.",
+  "EPUB 里找不到 OPF 清单": "No OPF manifest found in this EPUB.",
+  "未知原因": "unknown reason",
+  "Anki 卡片": "Anki cards",
+  "启用自定义卡片": "Enable custom cards",
+  "笔记类型": "Note type",
+  "（连不上 Anki 时用内置 Interpres 字段）": "(offline: use built-in Interpres fields)",
+  "字段映射（目标字段 → 内容来源）": "Field mapping (target field → content)",
+  "Front 模板": "Front template",
+  "Back 模板": "Back template",
+  "保存/同步时把模板与 CSS 推到 Anki（已有卡片会重新渲染）": "Push templates and CSS to Anki on save/sync (existing cards re-render)",
+  "填入默认模板": "Fill default templates",
+  "（不填）": "(empty)",
+  "卡片模板…": "Card templates…",
+  "自定义字段映射、Front/Back 模板与 CSS；启用后英语不再走 Dict2Anki": "Custom field mapping, Front/Back templates and CSS; when enabled, English no longer uses Dict2Anki",
+  "Anki 设置…": "Anki settings…",
+  "模式": "Mode",
+  "跟随全局默认（与其它词本共享）": "Follow global default (share with other word books)",
+  "独立模板（自动创建 Interpres · 词本名）": "Independent templates (auto-create Interpres · book name)",
+  "选择已有笔记类型": "Use an existing note type",
+  "牌组沿用词本设置里的牌组。模板属于笔记类型：": "The deck comes from the word book settings. Templates belong to the note type:",
+  "• 跟随全局：与设置里的全局模板共用": "• Follow global: shares the global templates from Settings",
+  "• 独立：自动创建「Interpres · 词本名」，模板只属于这本": "• Independent: creates “Interpres · book name”; templates belong to this book only",
+  "• 选已有类型：与其它使用该类型的词本共享模板": "• Existing type: shares templates with other books using it",
+  "同步模板/CSS 到 Anki（已有卡片会重新渲染）": "Sync templates/CSS to Anki (existing cards re-render)",
+  "使用设置 →「卡片模板…」里的全局配置；要单独改就切到独立或已有类型。": "Uses the global card templates from Settings; switch to Independent or Existing to customise this book.",
+  "独立模板只属于这本词本；首次同步会自动在 Anki 创建该笔记类型。": "Independent templates belong to this word book; the note type is created on first sync.",
+  "与其它使用这个笔记类型的词本共享模板；修改会影响它们。": "Shares templates with other word books using this note type; edits affect them.",
+  "牌组": "Deck",
+  "（按语言默认）": "(language default)",
+  "单词": "Word",
+  "音标": "Phonetic",
+  "释义": "Meaning",
+  "来源": "Source",
+  "添加时间": "Added",
+  "同步": "Synced",
+  "已读取字段": "Fields loaded",
+  "字段映射把这里生成的内容放进你选择的笔记类型；Front/Back/CSS 仅对内置 Interpres 模型生效（也可同步到你自己的模型，会影响已有卡片）。\\n启用后，英语也不再走 Dict2Anki。": "Maps generated content into the note type you choose; Front/Back/CSS apply to the built-in Interpres model (and can be synced to your own model, affecting existing cards).\\nWhen enabled, English no longer uses Dict2Anki.",
+  "字段映射把这里生成的内容放进你选择的笔记类型；Front/Back/CSS 仅对内置 Interpres 模型生效（也可同步到你自己的模型，会影响已有卡片）。\n启用后，英语也不再走 Dict2Anki。": "Maps generated content into the note type you choose; Front/Back/CSS apply to the built-in Interpres model (and can be synced to your own model, affecting existing cards).\nWhen enabled, English no longer uses Dict2Anki.",
+  "切换后会自动重启并应用": "The app will restart automatically to apply the change",
+  "设置": "Settings",
+  "连接与 AI": "Connection & AI",
+  "语言、词典与发音": "Language & audio",
+  "语言与音色": "Language & voices",
+  "记录": "Records",
+  "生词导出": "Export",
+  "关于": "About",
+  "个人阅读工具，不是商业产品。源码、文档和发布包都在 GitHub。": "A personal reading tool, not a commercial product. Source, docs and releases are on GitHub.",
+  "打开 GitHub 发布页": "Open GitHub releases",
+  "源代码": "Source code",
+  "MIT License · 第三方组件许可见 THIRD_PARTY_NOTICES.md": "MIT License · third-party notices in THIRD_PARTY_NOTICES.md",
+  "通用": "General",
+  "您是否要查找：": "Did you mean: "
+}
