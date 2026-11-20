@@ -4,6 +4,8 @@
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$vendor = Join-Path $root "vendor"
+if (-not (Test-Path -LiteralPath $vendor)) { $vendor = Join-Path $root "vendor_build" }
 $py = $env:PYTHON
 if (-not $py) {
     $dshPython = Join-Path $env:USERPROFILE ".dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
@@ -31,7 +33,7 @@ Write-Host "Building single-file exe (about 1 minute)..."
     --add-data "rc\tts_onecore.ps1;rc" `
     --add-data "rc\play_mp3.ps1;rc" `
     --collect-submodules lxml `
-    --paths "$root\vendor_build" `
+    --paths "$vendor" `
     --hidden-import pystray `
     --hidden-import pystray._win32 `
     --hidden-import rc.dict_profiles `

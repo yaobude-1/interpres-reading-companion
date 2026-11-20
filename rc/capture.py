@@ -25,10 +25,17 @@ user32.GetClipboardData.restype = wt.HANDLE
 user32.GetClipboardData.argtypes = [wt.UINT]
 user32.OpenClipboard.argtypes = [wt.HWND]
 user32.CloseClipboard.restype = wt.BOOL
+user32.EmptyClipboard.restype = wt.BOOL
+user32.SetClipboardData.argtypes = [wt.UINT, wt.HANDLE]
+user32.SetClipboardData.restype = wt.HANDLE
+kernel32.GlobalAlloc.argtypes = [wt.UINT, ctypes.c_size_t]
+kernel32.GlobalAlloc.restype = wt.HGLOBAL
 kernel32.GlobalLock.argtypes = [wt.HGLOBAL]
 kernel32.GlobalLock.restype = ctypes.c_void_p
 kernel32.GlobalUnlock.argtypes = [wt.HGLOBAL]
 kernel32.GlobalUnlock.restype = wt.BOOL
+kernel32.GlobalFree.argtypes = [wt.HGLOBAL]
+kernel32.GlobalFree.restype = wt.HGLOBAL
 user32.GetClipboardSequenceNumber.restype = wt.DWORD
 
 
@@ -55,6 +62,42 @@ def read_clipboard() -> str | None:
         finally:
             user32.CloseClipboard()
     return None
+
+
+def write_clipboard(text: str) -> bool:
+    """把文本写回剪贴板；失败返回 False，不抛异常。"""
+    try:
+        raw = (text or "").encode("utf-16-le") + b"\x00\x00"
+        handle = kernel32.GlobalAlloc(0x0042, len(raw))  # GMEM_MOVEABLE | GMEM_ZEROINIT
+        if not handle:
+            return False
+        ptr = kernel32.GlobalLock(handle)
+        if not ptr:
+            kernel32.GlobalFree(handle)
+            return False
+        try:
+            ctypes.memmove(ptr, raw, len(raw))
+        finally:
+            kernel32.GlobalUnlock(handle)
+        for _ in range(6):
+            if user32.OpenClipboard(None):
+                break
+            time.sleep(0.03)
+        else:
+            kernel32.GlobalFree(handle)
+            return False
+        try:
+            user32.EmptyClipboard()
+            if user32.SetClipboardData(CF_UNICODETEXT, handle):
+                handle = None  # 成功后系统接管内存
+                return True
+            return False
+        finally:
+            user32.CloseClipboard()
+            if handle:
+                kernel32.GlobalFree(handle)
+    except Exception:
+        return False
 
 
 def send_copy() -> None:
@@ -93,14 +136,19 @@ def grab_selection(timeout: float = 0.9) -> tuple[str | None, str]:
 
     deadline = time.time() + timeout
     text: str | None = None
+    copied_seq = 0
     while time.time() < deadline:
         if clipboard_sequence() != before:
+            copied_seq = clipboard_sequence()
             text = read_clipboard()
             break
         time.sleep(0.03)
 
     if not text:
         return None, title
+    # 把用户原来的剪贴板换回去；若期间用户自己又复制了别的内容，就不要覆盖
+    if previous is not None and copied_seq and clipboard_sequence() == copied_seq:
+        write_clipboard(previous)
     # 有些应用复制出来的内容和剪贴板里旧内容一样，seq 仍会变，这里不需要额外处理
     if previous is not None and text == previous and not text.strip():
         return None, title

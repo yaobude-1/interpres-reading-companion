@@ -245,6 +245,15 @@ class Application:
     # ------------------------------------------------------------------ 事件循环
     def _pump(self) -> None:
         try:
+            self._pump_events()
+        except Exception:
+            log.exception("事件循环异常")
+        self._follow_active_book()
+        if not self.quitting:
+            self.root.after(25, self._pump)
+
+    def _pump_events(self) -> None:
+        try:
             while True:
                 kind, payload = self.events.get_nowait()
                 if kind == "hotkey":
@@ -252,6 +261,9 @@ class Application:
                 elif kind == "loading":
                     text, book, anchor = payload
                     self.popup.show_loading(text, book, "", anchor)
+                elif kind == "begin":
+                    text, book, anchor = payload
+                    self._begin(text, book, anchor)
                 elif kind == "busy":
                     self.popup.show_busy(payload)
                 elif kind == "dict":
@@ -355,9 +367,6 @@ class Application:
                     return
         except queue.Empty:
             pass
-        self._follow_active_book()
-        if not self.quitting:
-            self.root.after(25, self._pump)
 
     def _follow_active_book(self) -> None:
         """主界面开着时盯着前台阅读器：开了「自动跟随」才换书。"""
@@ -615,7 +624,8 @@ class Application:
                     self._open_dictionary(selected.strip(), anchor)
                     return
                 book = capture.book_from_title(title)
-                self._begin(selected, book, anchor)
+                # 交给主线程处理：_begin 可能弹语言确认框，不能在后台线程碰 Tk
+                self.events.put(("begin", (selected, book, anchor)))
 
         threading.Thread(target=worker, daemon=True, name="capture").start()
 

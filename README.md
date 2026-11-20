@@ -130,11 +130,13 @@ No telemetry. The API key never leaves your machine except as a request to the e
 Requires Python 3.12 and PowerShell:
 
 ```powershell
-pip install -r requirements.txt --target vendor
+pip install -r requirements.lock --target vendor
 python app.py
 ```
 
 `vendor/` is only used for local runs; the packaged exe bundles these dependencies.
+`requirements.lock` pins the exact transitive set; `requirements.txt` keeps the
+direct-dependency ranges for development.
 
 Build the portable folder release:
 
