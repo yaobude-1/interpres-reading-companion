@@ -39,6 +39,20 @@ from rc.settings_ui import SettingsWindow
 log = logging.getLogger("rc")
 
 
+def restore_panel_geometry(config, panel) -> None:
+    """把上次保存的主面板尺寸/位置套回去。
+
+    必须在 MainPanel 创建之后调用：之前调用会命中 AttributeError 并被吞掉，
+    保存的几何信息就永远不会生效。
+    """
+    try:
+        geometry = str(config.get("panel_geometry") or "")
+        if geometry:
+            panel.win.geometry(geometry)
+    except Exception:
+        log.debug("恢复面板几何失败", exc_info=True)
+
+
 class Application:
     def __init__(self, config: Config, *, enable_hotkeys: bool = True, silent: bool = False) -> None:
         self.config = config
@@ -113,12 +127,6 @@ class Application:
         self.quick = QuickButton(
             self.root, config, self._open_selection_bubble, self._open_chat_from_selection
         )
-        try:
-            geometry = str(self.config.get("panel_geometry") or "")
-            if geometry:
-                self.panel.win.geometry(geometry)
-        except Exception:
-            pass
         self._pending_selection: tuple[str, str, tuple[int, int]] | None = None
         self._sel_gen = 0
         self._bubble_gen = 0
@@ -141,6 +149,7 @@ class Application:
                 "close": self._close_panel,
             },
         )
+        restore_panel_geometry(self.config, self.panel)
 
         self.api = ApiServer(
             self.service,

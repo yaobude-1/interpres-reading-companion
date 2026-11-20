@@ -37,6 +37,14 @@ def main() -> int:
     check("配置文件不出现明文", "sk-p1-secret" not in raw, stored[:16])
     check("重新加载可解密", Config(data).api_key == "sk-p1-secret")
 
+    print("\n[无法解密的 API Key 不再假装“没配置”]")
+    broken = Config(data)
+    broken.data["api"]["api_key"] = "dpapi:AAAA"
+    broken.save()
+    reloaded = Config(data)
+    check("解密失败时 api_key 为空", reloaded.api_key == "", reloaded.api_key)
+    check("给出无法解密提示", "无法解密" in reloaded.api_key_error, reloaded.api_key_error)
+
     print("\n[词典 HTML 净化]")
     dirty = (
         '<div><script>alert(1)</script>'
@@ -51,10 +59,32 @@ def main() -> int:
     check("移除 javascript: 链接", "javascript:" not in clean.lower(), clean)
     check("移除 iframe", "<iframe" not in clean.lower(), clean)
 
+    print("\n[净化失败时 fail-closed]")
+    import rc.entryhtml as entryhtml
+
+    original = entryhtml.lxml_html.fragment_fromstring
+
+    def boom(*_args, **_kwargs):
+        raise ValueError("broken html")
+
+    entryhtml.lxml_html.fragment_fromstring = boom
+    try:
+        fallback = _sanitize_untrusted('<img src="x" onerror="alert(1)">')
+    finally:
+        entryhtml.lxml_html.fragment_fromstring = original
+    check("失败时不放行标签", "<img" not in fallback.lower(), fallback)
+    check("失败时输出转义文本", "&lt;img" in fallback and "onerror" in fallback, fallback)
+
     print("\n[不再外发明文音频地址]")
     service_src = (ROOT / "rc" / "service.py").read_text(encoding="utf-8")
     check("没有 youdao 地址", "dict.youdao.com" not in service_src)
     check("没有 dictvoice", "dictvoice" not in service_src)
+
+    print("\n[发布打包脚本]")
+    build_src = (ROOT / "build_portable.ps1").read_bytes()
+    # PS 5.1 把无 BOM 脚本按 ANSI 解码，脚本里出现中文就会静默匹配不到文件
+    check("build_portable.ps1 保持纯 ASCII", all(byte < 128 for byte in build_src))
+    check('按 *.txt 收集说明文件', b'-Filter "*.txt"' in build_src)
 
     shutil.rmtree(data, ignore_errors=True)
     print("\n" + "=" * 50)

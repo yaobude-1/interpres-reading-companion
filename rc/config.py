@@ -225,6 +225,7 @@ class Config:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.path = self.data_dir / "config.json"
         self.data: dict = copy.deepcopy(DEFAULT_CONFIG)
+        self._api_key_undecryptable: bool | None = None
         self.load()
 
     # ---------------------------------------------------------------- load / save
@@ -272,8 +273,23 @@ class Config:
     def api_key(self) -> str:
         raw = str(self.api.get("api_key") or "").strip()
         if raw.startswith("dpapi:"):
-            return (_dpapi_unprotect(raw) or "").strip()
+            plain = _dpapi_unprotect(raw)
+            self._api_key_undecryptable = plain is None
+            return (plain or "").strip()
+        self._api_key_undecryptable = False
         return raw
+
+    @property
+    def api_key_error(self) -> str:
+        """配置里存了 Key 但解不开时给出可读原因；正常情况返回空串。"""
+        raw = str(self.api.get("api_key") or "").strip()
+        if not raw.startswith("dpapi:"):
+            return ""
+        if self._api_key_undecryptable is None:
+            self._api_key_undecryptable = _dpapi_unprotect(raw) is None
+        if self._api_key_undecryptable:
+            return "配置里的 API Key 无法解密（配置文件可能来自另一台电脑或另一个 Windows 用户），请重新填写。"
+        return ""
 
     def set_api_key(self, key: str) -> None:
         key = (key or "").strip()

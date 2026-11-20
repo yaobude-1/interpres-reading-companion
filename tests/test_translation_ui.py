@@ -1,9 +1,10 @@
-﻿"""验证翻译记录的界面与导出。"""
+"""验证翻译记录的界面与导出。"""
 
 from __future__ import annotations
 
 import shutil
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -20,6 +21,18 @@ def check(name: str, cond: bool, detail: str = "") -> None:
     print(("  ok   " if cond else "  FAIL ") + name + ("" if cond else f"  {detail}"))
     if not cond:
         fails.append(name)
+
+
+def pump(root, predicate, timeout: float = 3.0) -> bool:
+    """跑 Tk 事件循环直到条件成立：面板译文是定时器分段刷的，只 update 一次不够。"""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        root.update()
+        if predicate():
+            return True
+        time.sleep(0.02)
+    root.update()
+    return predicate()
 
 
 def main() -> int:
@@ -86,7 +99,13 @@ def main() -> int:
     app.panel._load_record(rows[0])
     app.root.update()
     check("原文填进面板", "quick brown" in app.panel.input.get("1.0", "end"))
-    check("译文显示出来", mock_openai.CANNED["translation"] in app.panel.output.get("1.0", "end"))
+    check(
+        "译文显示出来",
+        pump(
+            app.root,
+            lambda: mock_openai.CANNED["translation"] in app.panel.output.get("1.0", "end"),
+        ),
+    )
 
     app.shutdown()
     shutil.rmtree(data, ignore_errors=True)

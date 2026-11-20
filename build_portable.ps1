@@ -74,7 +74,11 @@ Copy-Item (Join-Path $built "*") $stage -Recurse
 Copy-Item (Join-Path $root "THIRD_PARTY_NOTICES.md") $stage
 Copy-Item (Join-Path $root "README.md") $stage
 Copy-Item (Join-Path $root "LICENSE") $stage
-if (Test-Path (Join-Path $root "使用说明.txt")) { Copy-Item (Join-Path $root "使用说明.txt") $stage }
+# Copy the Chinese quick-start without naming it literally: PS 5.1 decodes
+# BOM-less scripts as ANSI, so a CJK literal here silently matches nothing.
+Get-ChildItem -LiteralPath $root -File -Filter "*.txt" |
+    Where-Object { $_.Name -notlike "requirements*" } |
+    ForEach-Object { Copy-Item -LiteralPath $_.FullName $stage }
 if (Test-Path (Join-Path $root "licenses")) { Copy-Item (Join-Path $root "licenses") $stage -Recurse }
 if (Test-Path (Join-Path $root "docs")) { Copy-Item (Join-Path $root "docs") $stage -Recurse }
 

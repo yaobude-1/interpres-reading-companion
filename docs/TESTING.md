@@ -22,8 +22,11 @@ This is the command used by `.github/workflows/checks.yml`, after the
 - chunk deduplication
 - P0 regressions: newest chat messages, non-destructive vocabulary
   updates, cache-key inputs, Anki single-template updates, MDX size limits
-- P1 regressions: DPAPI key storage, dictionary HTML sanitization, no
-  external speech URLs
+- P1 regressions: DPAPI key storage (including the "cannot decrypt" case),
+  dictionary HTML sanitization with a fail-closed fallback, no external speech
+  URLs, and an ASCII-only portable build script (PS 5.1 decodes BOM-less
+  scripts as ANSI, which silently dropped the Chinese quick-start file)
+- panel geometry restore, so a saved window size is actually applied
 
 The gate must pass before a release. It does not require a visible desktop,
 though some pronunciation checks are skipped when the machine has no matching

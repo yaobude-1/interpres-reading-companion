@@ -219,7 +219,7 @@ class Translator:
 
     def test(self) -> str:
         if not self.config.api_key:
-            raise LLMError("还没有填写 API Key")
+            raise LLMError(self.config.api_key_error or "还没有填写 API Key")
         reply = self._chat(
             [
                 {"role": "system", "content": "你是一个连接测试助手。"},
@@ -298,7 +298,9 @@ class Translator:
         """流式请求：逐段产出模型输出的文本增量。"""
         api = self.config.api
         if not self.config.api_key:
-            raise LLMError("没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写")
+            raise LLMError(
+                self.config.api_key_error or "没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写"
+            )
         try:
             base = validate_base_url(api.get("base_url") or "https://api.deepseek.com/v1")
         except ValueError as exc:

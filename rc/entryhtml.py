@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+from html import escape
 
 from lxml import html as lxml_html
 
@@ -380,7 +381,8 @@ def _sanitize_untrusted(html: str) -> str:
             lxml_html.tostring(child, encoding="unicode") for child in root
         )
     except Exception:
-        return html
+        # fail-closed：解析失败时只按纯文本显示，绝不放行未净化的 HTML
+        return '<pre class="rc-raw">' + escape(html) + "</pre>"
 
 
 def build_entry_html(
