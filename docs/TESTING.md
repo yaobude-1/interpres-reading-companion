@@ -18,6 +18,9 @@ This is the command used by `.github/workflows/checks.yml`. It covers:
 - AnkiConnect round trips against a mock server
 - pronunciation fallbacks
 - endpoint policy
+- chunk deduplication
+- P0 regressions: newest chat messages, non-destructive vocabulary
+  updates, cache-key inputs, Anki single-template updates, MDX size limits
 
 The gate must pass before a release. It does not require a visible desktop,
 though some pronunciation checks are skipped when the machine has no matching

@@ -268,9 +268,12 @@ class Anki:
         if not names:
             raise AnkiError(f"Anki 里没有笔记类型 {model}")
         if front or back:
+            # 只改第一个模板；多模板模型的其他模板保留原样，避免抹平
+            # 用户自建的“认知/回忆”等卡片设计。
+            first = names[:1]
             templates = {
                 name: {"Front": front or DEFAULT_FRONT, "Back": back or DEFAULT_BACK}
-                for name in names
+                for name in first
             }
             self._invoke("updateModelTemplates", model={"name": model, "templates": templates})
         if css:

@@ -318,7 +318,8 @@ class AnkiCardSettings:
             if not messagebox.askyesno(
                 "覆盖模板",
                 f"「{model}」是你自己的笔记类型。\n\n"
-                "继续会把它的 Front/Back/CSS 替换成这里的版本，已有卡片会受影响。\n"
+                "继续只会替换它的第一个模板的 Front/Back/CSS，其他模板保留；"
+                "已有卡片仍会重渲染。\n"
                 "确定同步吗？",
                 parent=self.win,
             ):

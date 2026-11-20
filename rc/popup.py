@@ -46,6 +46,11 @@ class PopupWindow:
         self._dict: dict | None = None
         self._dict_word = ""
         self._typing: tk.Frame | None = None
+        self._chat_job = None
+        self._chat_target = ""
+        self._chat_shown = ""
+        self._chat_reply = ""
+        self._chat_final = False
         self.chat_input: tk.Text | None = None
 
         try:

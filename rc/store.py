@@ -400,10 +400,20 @@ class Store:
             ).fetchone()
             if row:
                 self._conn.execute(
-                    """UPDATE vocab SET word = ?, reading = ?, pos = ?, meaning = ?,
-                       sentence = ?, book = ?, difficulty = ?,
-                       dict_source = ?, dict_meaning = ?, dict_example = ?,
-                       dict_example_cn = ?, audio_key = ?, updated = ?
+                    """UPDATE vocab SET
+                       word = COALESCE(NULLIF(?, ''), word),
+                       reading = COALESCE(NULLIF(?, ''), reading),
+                       pos = COALESCE(NULLIF(?, ''), pos),
+                       meaning = COALESCE(NULLIF(?, ''), meaning),
+                       sentence = COALESCE(NULLIF(?, ''), sentence),
+                       book = COALESCE(NULLIF(?, ''), book),
+                       difficulty = COALESCE(NULLIF(?, ''), difficulty),
+                       dict_source = COALESCE(NULLIF(?, ''), dict_source),
+                       dict_meaning = COALESCE(NULLIF(?, ''), dict_meaning),
+                       dict_example = COALESCE(NULLIF(?, ''), dict_example),
+                       dict_example_cn = COALESCE(NULLIF(?, ''), dict_example_cn),
+                       audio_key = COALESCE(NULLIF(?, ''), audio_key),
+                       updated = ?
                        WHERE id = ?""",
                     (*values, ts, row["id"]),
                 )
@@ -727,7 +737,10 @@ class Store:
     def messages(self, conv_id: int, limit: int = 200) -> list[dict]:
         with self._lock:
             rows = self._conn.execute(
-                "SELECT * FROM messages WHERE conversation_id = ? ORDER BY id LIMIT ?",
+                """SELECT * FROM (
+                       SELECT * FROM messages WHERE conversation_id = ?
+                       ORDER BY id DESC LIMIT ?
+                   ) ORDER BY id""",
                 (conv_id, limit),
             ).fetchall()
         return [dict(r) for r in rows]

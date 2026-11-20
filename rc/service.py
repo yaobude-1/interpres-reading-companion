@@ -218,32 +218,42 @@ class Service:
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             done = 0
+            # 同一个块可能因表格/重复段落出现多次；只翻一次，再按原位置复用结果
+            unique: dict[tuple[str, str, str], list[int]] = {}
+            for index, chunk in enumerate(chunks):
+                context_key = (
+                    chunk,
+                    context_before if index == 0 else "",
+                    context_after if index == total - 1 else "",
+                )
+                unique.setdefault(context_key, []).append(index)
             with ThreadPoolExecutor(max_workers=TRANSLATE_WORKERS) as pool:
                 futures = {}
-                for index, chunk in enumerate(chunks):
-                    futures[
-                        pool.submit(
-                            self._translate_chunk,
-                            chunk,
-                            book=book,
-                            src_lang=src_lang,
-                            context_before=context_before if index == 0 else "",
-                            context_after=context_after if index == total - 1 else "",
-                            target=target,
-                            glossary=glossary,
-                            use_cache=use_cache,
-                        )
-                    ] = index
+                for (chunk, ctx_before, ctx_after), indexes in unique.items():
+                    future = pool.submit(
+                        self._translate_chunk,
+                        chunk,
+                        book=book,
+                        src_lang=src_lang,
+                        context_before=ctx_before,
+                        context_after=ctx_after,
+                        target=target,
+                        glossary=glossary,
+                        use_cache=use_cache,
+                    )
+                    futures[future] = indexes
                 try:
                     for future in as_completed(futures):
-                        index = futures[future]
-                        results[index] = future.result()
-                        done += 1
-                        if on_progress is not None:
-                            try:
-                                on_progress(done, total)
-                            except Exception:
-                                pass
+                        result = future.result()
+                        indexes = futures[future]
+                        for index in indexes:
+                            results[index] = result
+                            done += 1
+                            if on_progress is not None:
+                                try:
+                                    on_progress(done, total)
+                                except Exception:
+                                    pass
                         if on_partial is not None:
                             joined = "\n\n".join(
                                 str(item.get("translation") or "")
@@ -372,7 +382,7 @@ class Service:
         glossary: list[tuple[str, str]],
         use_cache: bool,
     ) -> dict:
-        key = self._cache_key(clean, book, src_lang, target, context_before, context_after)
+        key = self._cache_key(clean, book, src_lang, target, context_before, context_after, glossary)
         if use_cache:
             cached = self.store.cache_get(key)
             if cached:
@@ -424,7 +434,7 @@ class Service:
         use_cache: bool,
         on_partial=None,
     ) -> dict:
-        key = self._cache_key(clean, book, src_lang, target, context_before, context_after)
+        key = self._cache_key(clean, book, src_lang, target, context_before, context_after, glossary)
         if use_cache:
             cached = self.store.cache_get(key)
             if cached:
@@ -508,9 +518,21 @@ class Service:
         target: str,
         before: str,
         after: str,
+        glossary: list[tuple[str, str]] | None = None,
     ) -> str:
         raw = json.dumps(
-            [CACHE_VERSION, text, book, src_lang, target, before[-400:], after[:400]],
+            [
+                CACHE_VERSION,
+                text,
+                book,
+                src_lang,
+                target,
+                before[-400:],
+                after[:400],
+                self.config.api.get("model", ""),
+                self.config.get("prompt_translate_system", ""),
+                sorted(glossary or []),
+            ],
             ensure_ascii=False,
             sort_keys=True,
         )

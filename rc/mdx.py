@@ -23,6 +23,7 @@ import bisect
 import html as html_lib
 import re
 import struct
+import threading
 import zlib
 from pathlib import Path
 
@@ -44,6 +45,7 @@ class MDX:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
         self._fh = self.path.open("rb")
+        self._lock = threading.RLock()
         self.attrs = self._read_header()
         declared = (self.attrs.get("Encoding") or "").strip().upper()
         if declared:
@@ -181,6 +183,11 @@ class MDX:
 
     # ------------------------------------------------------------------ 读取
     def _read_record(self, offset: int) -> bytes:
+        # MDX 只有一个文件句柄；翻译会并发查词，seek/read 必须串行。
+        with self._lock:
+            return self._read_record_locked(offset)
+
+    def _read_record_locked(self, offset: int) -> bytes:
         if not self._record_blocks or offset < 0 or offset >= self._record_total:
             raise MDXError("记录偏移越界")
         index = 0
@@ -300,12 +307,24 @@ def _inflate_block(block: bytes) -> bytes:
     body = block[8:]
     if kind == 2:
         try:
-            return zlib.decompress(body)
+            return _decompress_capped(body)
         except zlib.error:
-            return zlib.decompress(block[4:])
+            return _decompress_capped(block[4:])
     if kind in (0, 1):
         return body
     raise MDXError(f"不认识的压缩类型：{kind}")
+
+
+def _decompress_capped(data: bytes, limit: int = 64 * 1024 * 1024) -> bytes:
+    """解压单个记录块，并限制输出大小，避免恶意 MDX 造成内存耗尽。"""
+    obj = zlib.decompressobj()
+    out = obj.decompress(data, limit + 1)
+    if len(out) > limit or obj.unconsumed_tail:
+        raise MDXError("词典记录解压后过大")
+    out += obj.flush()
+    if len(out) > limit:
+        raise MDXError("词典记录解压后过大")
+    return out
 
 
 TAG_RE = re.compile(r"<[^>]+>")

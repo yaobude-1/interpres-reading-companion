@@ -112,6 +112,13 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
             except ValueError:
                 length = 0
             if length < 0 or length > MAX_BODY:
+                # 读掉有限的一段再拒绝，避免客户端还在上传时收到 RST
+                remaining = min(max(length, 0), MAX_BODY * 2)
+                while remaining > 0:
+                    chunk = self.rfile.read(min(remaining, 65536))
+                    if not chunk:
+                        break
+                    remaining -= len(chunk)
                 raise ValueError("request body too large")
             if not length:
                 return {}
