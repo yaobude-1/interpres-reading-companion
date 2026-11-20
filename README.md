@@ -155,6 +155,13 @@ python tests\test_ux_flows.py
 python tests\test_ux_scenarios.py
 ```
 
+`tests\run_checks.py` is the automated CI gate. The `tests\test_*.py` scripts
+are direct assertions; some need a Windows desktop, clipboard, or Anki.
+`tests\ui_*.py` are manual probes and screenshot tools, not part of CI.
+
+See [`docs/TESTING.md`](docs/TESTING.md) for the release checklist and the
+difference between automated checks and manual probes.
+
 Some tests use a mock OpenAI/AnkiConnect server; Anki integration tests skip automatically when Anki is not running.
 
 ## Architecture
