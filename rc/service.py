@@ -656,10 +656,13 @@ class Service:
                 continue
             seen.add(key)
             hits.append({"lang": code, "source": entry.get("source") or "", "entry": entry})
-        # 按设置里的语言顺序展示；语言内再按来源名排序，保持稳定
+        # 词头精确命中的语言排前面：Longman 的 "fait" 会命中 "fait accompli"，
+        # 而法语词典里 "fait" 才是真正的词头。之后再按语言顺序、来源名排序。
+        query_key = text.lower()
         language_rank = {code: index for index, code in enumerate(order)}
         hits.sort(
             key=lambda hit: (
+                (hit["entry"].get("word") or "").strip().lower() != query_key,
                 language_rank.get(hit.get("lang") or "", 999),
                 hit.get("source") or "",
             )
