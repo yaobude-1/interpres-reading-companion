@@ -10,6 +10,7 @@ from tkinter import messagebox, ttk
 
 from . import __version__
 from .llm import SYSTEM_PROMPT as _ZH_TRANSLATE_PROMPT
+from .netpolicy import validate_base_url
 from .prompts_en import (
     CHAT_PERSONA_EN as _EN_CHAT_PERSONA,
     CHAT_RULES_EN as _EN_CHAT_RULES,
@@ -249,8 +250,14 @@ class SettingsWindow:
         self._field(grid, 1, "服务地址", self.var_base)
         self._field(grid, 2, "模型", self.var_model)
 
+        tk.Label(
+            grid,
+            text="自定义服务地址会把选中的文本和 API Key 发送到该服务器；远程地址必须使用 HTTPS。",
+            bg=PANEL, fg=MUTED, font=(FONT_FAMILY, 8), anchor="w", justify="left",
+        ).grid(row=3, column=0, columnspan=3, sticky="ew", padx=12, pady=(0, 4))
+
         row = tk.Frame(grid, bg=PANEL)
-        row.grid(row=3, column=0, columnspan=2, sticky="ew", padx=12, pady=(4, 10))
+        row.grid(row=4, column=0, columnspan=2, sticky="ew", padx=12, pady=(4, 10))
         self.test_label = tk.Label(
             row, text="", bg=PANEL, fg=MUTED, font=(FONT_FAMILY, 9), anchor="w"
         )
@@ -1245,7 +1252,11 @@ class SettingsWindow:
 
     # ------------------------------------------------------------------ 动作
     def test_api(self) -> None:
-        self._apply_to_config(save=False)
+        try:
+            self._apply_to_config(save=False)
+        except ValueError as exc:
+            self.test_label.configure(text=str(exc), fg=RED)
+            return
         self.test_label.configure(text="测试中…", fg=MUTED)
         self.win.update_idletasks()
 
@@ -1265,7 +1276,11 @@ class SettingsWindow:
         threading.Thread(target=run, daemon=True).start()
 
     def save(self) -> None:
-        self._apply_to_config(save=True)
+        try:
+            self._apply_to_config(save=True)
+        except ValueError as exc:
+            self.test_label.configure(text=str(exc), fg=RED)
+            return
         self.on_saved()
         self._refresh_stats()
         self.test_label.configure(text="已保存", fg=GREEN)
@@ -1273,7 +1288,9 @@ class SettingsWindow:
     def _apply_to_config(self, save: bool) -> None:
         api = self.config.api
         api["api_key"] = self.var_key.get().strip()
-        api["base_url"] = self.var_base.get().strip() or "https://api.deepseek.com/v1"
+        api["base_url"] = validate_base_url(
+            self.var_base.get().strip() or "https://api.deepseek.com/v1"
+        )
         api["model"] = self.var_model.get().strip() or "deepseek-chat"
         if save:
             self.config.data["hotkey"] = self.var_hotkey.get().strip() or "ctrl+alt+t"

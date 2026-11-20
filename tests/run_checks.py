@@ -128,6 +128,12 @@ def check_api(service: Service) -> None:
     except urllib.error.HTTPError as exc:
         check("鉴权拦截", exc.code == 401, str(exc.code))
 
+    try:
+        call("/api/translate", {"text": "x" * (1024 * 1024 + 1)})
+        check("超大请求拦截", False, "超大请求竟然通过了")
+    except urllib.error.HTTPError as exc:
+        check("超大请求拦截", exc.code == 413, str(exc.code))
+
     translated = call("/api/translate", {"text": "Hello there, my friend."})
     check("HTTP 翻译", translated["ok"] and bool(translated["translation"]), str(translated)[:120])
 
@@ -200,6 +206,28 @@ def check_anki_mock(service: Service) -> None:
     server.shutdown()
 
 
+def check_endpoint_policy() -> None:
+    print("\n[服务地址策略]")
+    from rc.netpolicy import validate_base_url
+
+    check(
+        "HTTPS 远程",
+        validate_base_url("https://api.deepseek.com/v1") == "https://api.deepseek.com/v1",
+    )
+    check(
+        "HTTP 本机",
+        validate_base_url("http://127.0.0.1:11434/v1") == "http://127.0.0.1:11434/v1",
+    )
+    for bad in ("http://example.com/v1", "ftp://example.com/v1", "https://user:pass@example.com"):
+        try:
+            validate_base_url(bad)
+        except ValueError:
+            ok = True
+        else:
+            ok = False
+        check(f"拒绝 {bad}", ok)
+
+
 def check_tts(service: Service) -> None:
     print("\n[发音]")
     voices = service.tts.voices()
@@ -241,6 +269,7 @@ def main() -> int:
     check_api(service)
     check_anki_mock(service)
     check_tts(service)
+    check_endpoint_policy()
     check_config_persist(data_dir)
     mock.shutdown()
 

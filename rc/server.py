@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import socket
 import sys
@@ -16,6 +17,9 @@ from urllib.parse import parse_qs, urlparse
 
 from . import __version__
 from .service import Service
+
+
+MAX_BODY = 1024 * 1024
 
 
 class _LocalServer(ThreadingHTTPServer):
@@ -107,6 +111,8 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
                 length = int(self.headers.get("Content-Length") or 0)
             except ValueError:
                 length = 0
+            if length < 0 or length > MAX_BODY:
+                raise ValueError("request body too large")
             if not length:
                 return {}
             raw = self.rfile.read(length)
@@ -160,7 +166,11 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
                 if not self._authorized():
                     self._json({"ok": False, "error": "unauthorized"}, 401)
                     return
-                body = self._body()
+                try:
+                    body = self._body()
+                except ValueError:
+                    self._json({"ok": False, "error": "request body too large"}, 413)
+                    return
                 if path == "/api/show-settings":
                     if on_show_settings:
                         on_show_settings()

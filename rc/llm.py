@@ -12,6 +12,8 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+from .netpolicy import validate_base_url
+
 SYSTEM_PROMPT = """你是一位精通多国语言的专业译者，同时是一位经验丰富的语言教师。用户正在精读一本外文书，会给你一段从阅读器里复制出来的原文（可能是一个词、一个短语、或一整段），以及可选的上下文、术语表和书名。
 
 你的任务：
@@ -243,7 +245,10 @@ class Translator:
         if not key:
             raise LLMError("没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写")
 
-        base = (api.get("base_url") or "https://api.deepseek.com/v1").rstrip("/")
+        try:
+            base = validate_base_url(api.get("base_url") or "https://api.deepseek.com/v1")
+        except ValueError as exc:
+            raise LLMError(str(exc)) from exc
         url = base + "/chat/completions"
         payload: dict[str, Any] = {
             "model": api.get("model") or "deepseek-chat",
@@ -294,7 +299,10 @@ class Translator:
         api = self.config.api
         if not self.config.api_key:
             raise LLMError("没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写")
-        base = (api.get("base_url") or "https://api.deepseek.com/v1").rstrip("/")
+        try:
+            base = validate_base_url(api.get("base_url") or "https://api.deepseek.com/v1")
+        except ValueError as exc:
+            raise LLMError(str(exc)) from exc
         url = base + "/chat/completions"
         payload: dict[str, Any] = {
             "model": api.get("model") or "deepseek-chat",
