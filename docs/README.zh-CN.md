@@ -51,6 +51,8 @@
 3. 按 `Ctrl+Alt+S` 打开设置，填入 API Key，点 **测试连接**。
 4. 在阅读器里选中文字，按 `Ctrl+Alt+T`。
 
+每个版本改了什么：见 [`CHANGELOG.md`](../CHANGELOG.md) 或 Releases 页面。
+
 热键：
 
 | 热键 | 作用 |
@@ -120,10 +122,11 @@ exports/      CSV/TSV/Markdown 导出
 需要 Python 3.12 和 PowerShell：
 
 ```powershell
-pip install -r requirements.txt --target vendor
+pip install -r requirements.lock --target vendor
 python app.py
 ```
 
+`requirements.lock` 固定了精确的传递依赖；`requirements.txt` 只写直接依赖的版本范围。
 `vendor/` 只用于本地运行；打包后的 exe 已包含这些依赖。
 
 打包便携文件夹版：
@@ -148,22 +151,56 @@ python tests\test_ux_scenarios.py
 ## 架构
 
 ```
-app.py              入口、热键、托盘、本地 HTTP API
-rc/service.py       翻译流程、词典、生词、Anki
-rc/llm.py           翻译/对话客户端（流式、JSON 解析）
-rc/rich.py          词典 HTML → 结构化义项/例句
-rc/mdx.py           纯标准库 MDX/MDD 读取
-rc/panel.py         主窗口（翻译 / 查词 / 对话 / 生词）
-rc/popup.py         划词弹窗与气泡
-rc/store.py         SQLite 存储
-rc/i18n.py          中英文显示层翻译
+app.py                    入口：应用外壳、热键、托盘、main()
+app_panel.py              主面板接线：翻译、提问、历史窗口
+app_flow.py               选区 → 气泡 → 详情 → 查词
+app_media.py              收藏、Anki 推送、发音、术语锁定
+rc/service.py             Service（mixin 组合）：对话、历史、状态
+rc/service_base.py        mixin 共享属性的注解声明
+rc/service_translate.py   翻译流程：分块、缓存、流式
+rc/service_dict.py        查词、词形、词条 HTML
+rc/service_vocab.py       生词本、语言、术语表
+rc/service_anki.py        Anki 字段、模板、推送
+rc/service_common.py      分块/缓存小工具
+rc/llm.py                 翻译/对话客户端（流式、JSON 解析）
+rc/rich.py                词典 HTML → 结构化义项/例句
+rc/mdx.py                 纯标准库 MDX/MDD 读取
+rc/panel.py               主窗口外壳：布局、书籍、滚动、状态
+rc/panel_translate.py     翻译页：流式输出、进度、错误
+rc/panel_dict.py          查词页：查询、义项、词形、收藏
+rc/panel_chat.py          对话页：消息与流式回复
+rc/panel_suggest.py       查词联想弹层与键盘处理
+rc/popup.py               划词弹窗外壳：生命周期、定位、滚轮
+rc/popup_dict.py          词典卡片：义项、词形、近义词
+rc/popup_chat.py          内联对话卡片：气泡、输入栏、流式
+rc/popup_result.py        翻译结果卡片：生词、语法、操作
+rc/popup_common.py        弹窗小工具
+rc/settings_ui.py         设置窗口外壳：分页、标签、共享控件
+rc/settings_pages.py      设置窗口：每页一个构建函数
+rc/settings_actions.py    设置窗口：保存、测试、对话框、导出
+rc/settings_common.py     设置页共享的辅助函数
+rc/config.py              配置文件、DPAPI 密钥存储、语言表
+rc/server.py              仅回环的本地 HTTP API（token、大小限制）
+rc/netpolicy.py           服务地址校验：只允许 HTTPS 或回环
+rc/capture.py             剪贴板快照与选中文字捕获
+rc/selection.py           拖选/双击选词的鼠标监听
+rc/dictionary.py          单本 MDX 词典：查询、音频、词条 HTML
+rc/dictmanager.py         按语言管理词典与缓存
+rc/anki.py                AnkiConnect 客户端、字段与模板
+rc/tts.py                 发音：SAPI、Edge 或自定义命令
+rc/theme.py               共享配色与字体
+rc/store.py               SQLite 存储
+rc/i18n.py                中英文显示层翻译
 ```
+
+更完整的变更记录见 [`CHANGELOG.md`](../CHANGELOG.md)。
 
 ## 已知缺陷和没做好的地方
 
 - 代码由 AI 生成，没有经过专业程序员审查；请把它当作实验性个人项目。
 - 只在作者自己的 Windows 机器和少数几个阅读器上测试过，其他软件、缩放比例和系统版本没有覆盖。
 - 划词依赖剪贴板模拟，少数选择处理特殊的程序可能不工作。
+- API Key 用 Windows DPAPI 加密，换电脑或换 Windows 用户后需要重新填一次（生词本和历史记录可以直接拷）。
 - 每种语言只使用一本 MDX 词典，没有多词典合并显示。
 - 不支持 MDX 1.2 和加密词典。
 - 拉丁语没有原生 TTS 音色，会回退到意大利语（Edge）或法语（SAPI）。
