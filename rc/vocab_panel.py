@@ -188,17 +188,19 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
                 anchor="w",
                 stretch=False,
             )
-        scroll = tk.Scrollbar(
+        self._vscroll = ttk.Scrollbar(
             right, orient="vertical", command=self.word_tree.yview,
-            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+            style="Vertical.TScrollbar",
         )
-        xscroll = tk.Scrollbar(
+        self._xscroll = ttk.Scrollbar(
             right, orient="horizontal", command=self.word_tree.xview,
-            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+            style="Horizontal.TScrollbar",
         )
-        self.word_tree.configure(yscrollcommand=scroll.set, xscrollcommand=xscroll.set)
-        xscroll.pack(side="bottom", fill="x", pady=(2, 0))
-        scroll.pack(side="right", fill="y", pady=(6, 0))
+        self.word_tree.configure(
+            yscrollcommand=self._vscroll.set, xscrollcommand=self._xscroll.set
+        )
+        self._xscroll.pack(side="bottom", fill="x", pady=(2, 0))
+        self._vscroll.pack(side="right", fill="y", pady=(6, 0))
         self.word_tree.pack(side="left", fill="both", expand=True, pady=(6, 0))
         self.word_tree.bind("<Delete>", lambda _e: self.delete_selected())
         self.word_tree.bind("<Double-1>", self._open_word)
@@ -247,6 +249,10 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
             troughcolor=SCROLL_TRACK,
             bordercolor=BORDER,
             arrowcolor=MUTED,
+            lightcolor=SCROLL_TRACK,
+            darkcolor=SCROLL_TRACK,
+            borderwidth=0,
+            relief="flat",
         )
         style.map("TScrollbar", background=[("active", ACCENT)])
         for _bar in ("Vertical.TScrollbar", "Horizontal.TScrollbar"):
@@ -256,6 +262,10 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
                 troughcolor=SCROLL_TRACK,
                 bordercolor=BORDER,
                 arrowcolor=MUTED,
+                lightcolor=SCROLL_TRACK,
+                darkcolor=SCROLL_TRACK,
+                borderwidth=0,
+                relief="flat",
             )
             style.map(_bar, background=[("active", ACCENT)])
         style.configure(

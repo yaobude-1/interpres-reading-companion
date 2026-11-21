@@ -5,6 +5,8 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
+- Vocabulary table scrollbars hide when the content fits and use a subtle dark
+  thumb instead of a light strip.
 - Vocabulary tab: word actions now form one row under the word table (full
   labels on wide windows; short labels and a gear for Anki settings when
   narrow), while new/rename/delete for word books stay in the left pane.

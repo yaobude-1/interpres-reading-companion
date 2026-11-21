@@ -80,10 +80,40 @@ class VocabTableMixin:
         if keep:
             self.word_tree.selection_set(keep)
         self._update_headings()
+        self.word_tree.after_idle(self._update_scrollbars)
 
     def _on_tree_configure(self, event) -> None:
         if event.width > 80 and not self._dragging:
             self._fit_widths(event.width)
+        self.word_tree.after_idle(self._update_scrollbars)
+
+    def _update_scrollbars(self) -> None:
+        """内容装得下时隐藏滚动条，避免横竖两条灰带。"""
+        try:
+            if not self.word_tree.winfo_exists():
+                return
+            x1, x2 = self.word_tree.xview()
+            y1, y2 = self.word_tree.yview()
+            mapped_x = bool(self._xscroll.winfo_ismapped())
+            mapped_y = bool(self._vscroll.winfo_ismapped())
+        except tk.TclError:
+            return
+        need_x = not (x1 <= 0.001 and x2 >= 0.999)
+        need_y = not (y1 <= 0.001 and y2 >= 0.999)
+        if need_x != mapped_x:
+            if need_x:
+                self._xscroll.pack(
+                    side="bottom", fill="x", pady=(2, 0), before=self.word_tree
+                )
+            else:
+                self._xscroll.pack_forget()
+        if need_y != bool(self._vscroll.winfo_ismapped()):
+            if need_y:
+                self._vscroll.pack(
+                    side="right", fill="y", pady=(6, 0), before=self.word_tree
+                )
+            else:
+                self._vscroll.pack_forget()
 
     def _fit_widths(self, total: int) -> None:
         """按保存的比例铺满表格；低于最小宽度时先压释义，再从右侧列补。"""

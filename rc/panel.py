@@ -60,6 +60,10 @@ class MainPanel(
             troughcolor=SCROLL_TRACK,
             bordercolor=BORDER,
             arrowcolor=MUTED,
+            lightcolor=SCROLL_TRACK,
+            darkcolor=SCROLL_TRACK,
+            borderwidth=0,
+            relief="flat",
         )
         style.map("TScrollbar", background=[("active", ACCENT)])
         for _bar in ("Vertical.TScrollbar", "Horizontal.TScrollbar"):
@@ -69,6 +73,10 @@ class MainPanel(
                 troughcolor=SCROLL_TRACK,
                 bordercolor=BORDER,
                 arrowcolor=MUTED,
+                lightcolor=SCROLL_TRACK,
+                darkcolor=SCROLL_TRACK,
+                borderwidth=0,
+                relief="flat",
             )
             style.map(_bar, background=[("active", ACCENT)])
         self.win.minsize(520, 700)

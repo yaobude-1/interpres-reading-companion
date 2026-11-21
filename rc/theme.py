@@ -26,8 +26,8 @@ _DARK = {
     "BORDER_SOFT": "#2f3440",
     "FIELD_BG": "#1b1e26",
     "FIELD_BORDER": "#2c313c",
-    "SCROLL_THUMB": "#4b5263",
-    "SCROLL_TRACK": "#15171d",
+    "SCROLL_THUMB": "#2f3440",
+    "SCROLL_TRACK": "#1b1d24",
 }
 
 _LIGHT = {
@@ -46,8 +46,8 @@ _LIGHT = {
     "BORDER_SOFT": "#d8dee8",
     "FIELD_BG": "#ffffff",
     "FIELD_BORDER": "#c9d0dc",
-    "SCROLL_THUMB": "#b6bfcc",
-    "SCROLL_TRACK": "#e3e8f0",
+    "SCROLL_THUMB": "#c9d0dc",
+    "SCROLL_TRACK": "#f4f5f7",
 }
 
 ACCENTS = {
