@@ -160,10 +160,22 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         main = tk.Frame(self.win, bg=BG)
         main.pack(fill="both", expand=True)
         bottom = tk.Frame(self.win, bg=BG)
-        bottom.pack(side="bottom", fill="x", padx=16, pady=(0, 10))
-        self._button(bottom, "保存", self.save, primary=True).pack(side="right")
-        self._button(bottom, "关闭", self.close).pack(side="right", padx=(0, 8))
-        self._button(bottom, "退出程序", self._quit).pack(side="left")
+        bottom.pack(side="bottom", fill="x")
+        # 左侧按钮区延续导航栏的黑色，避免底部一条浅色把侧栏截断
+        bottom_left = tk.Frame(bottom, bg=SIDEBAR, width=190)
+        bottom_left.pack(side="left", fill="y")
+        bottom_left.pack_propagate(False)
+        self._button(bottom_left, "退出程序", self._quit).pack(
+            side="left", padx=16, pady=6
+        )
+        bottom_right = tk.Frame(bottom, bg=BG)
+        bottom_right.pack(side="left", fill="both", expand=True)
+        self._button(bottom_right, "保存", self.save, primary=True).pack(
+            side="right", padx=(0, 16), pady=6
+        )
+        self._button(bottom_right, "关闭", self.close).pack(
+            side="right", padx=(0, 8), pady=6
+        )
 
         side = tk.Frame(main, bg=SIDEBAR, width=190)
         side.pack(side="left", fill="y")
