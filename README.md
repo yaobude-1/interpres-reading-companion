@@ -182,7 +182,10 @@ Some tests use a mock OpenAI/AnkiConnect server; Anki integration tests skip aut
 ## Architecture
 
 ```
-app.py                    entry point, hotkeys, tray, local HTTP API
+app.py                    entry point: Application shell, hotkeys, tray, main()
+app_panel.py              main-panel wiring: translate, ask, history windows
+app_flow.py               selection → bubble → details → dictionary flow
+app_media.py              save word, Anki push, pronunciation, term locking
 rc/service.py             Service (mixin composition): chat, history, status
 rc/service_base.py        annotated attributes shared by the service mixins
 rc/service_translate.py   translation pipeline: chunking, cache, streaming
