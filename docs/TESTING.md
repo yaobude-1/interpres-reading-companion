@@ -72,6 +72,29 @@ headless environment.
 
 ## Release checklist
 
+Build from a committed tree, not from a dirty working copy: bump the version,
+commit it, then build, tag and upload. That keeps the binary traceable to a
+single commit.
+
+```powershell
+# 1. version bumped and committed
+python tests\run_checks.py
+
+# 2. build from that commit
+powershell -ExecutionPolicy Bypass -File .\build_portable.ps1
+
+# 3. verify the packaged output
+Get-FileHash dist\Interpres.zip -Algorithm SHA256      # compare with dist\SHA256SUMS.txt
+(Get-Item dist_portable\Interpres\Interpres.exe).VersionInfo.FileVersion
+dist_portable\Interpres\Interpres.exe --version        # prints "Interpres X.Y.Z"
+# the zip must contain 使用说明.txt, README.md, LICENSE, SHA256SUMS.txt
+
+# 4. tag the same commit and publish
+git tag -a vX.Y.Z <commit> -m "Interpres X.Y.Z"
+git push origin vX.Y.Z
+gh release create vX.Y.Z dist/Interpres.zip
+```
+
 Before replacing a release asset, verify on Windows:
 
 - [ ] App starts from source and from the packaged portable folder.

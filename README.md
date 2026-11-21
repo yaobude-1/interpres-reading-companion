@@ -206,6 +206,10 @@ rc/popup_dict.py          dictionary card: senses, morphology, similar words
 rc/popup_chat.py          inline chat card: bubbles, input bar, streaming
 rc/popup_result.py        translation result card: terms, grammar, actions
 rc/popup_common.py        small popup helpers
+rc/settings_ui.py         settings window shell: pages, tabs, shared widgets
+rc/settings_pages.py      settings window: one builder per page
+rc/settings_actions.py    settings window: save, test, dialogs, export
+rc/settings_common.py     settings helpers shared with the page builders
 rc/theme.py               shared palette and font
 rc/store.py               SQLite storage
 rc/i18n.py                zh/en display-layer translation
