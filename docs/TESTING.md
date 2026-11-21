@@ -61,6 +61,11 @@ python tests\test_panel.py
 python tests\test_ux_flows.py
 ```
 
+If a script defines its own `check(name, fn)` helper, make sure `False` and
+`None` count as failures. A helper written as `fn() or ""` followed by an
+unconditional pass turns every boolean assertion green, which is how a
+"fake green" test slipped into the CI gate once (see `test_ux_scenarios.py`).
+
 Some need a real Tk desktop, Windows clipboard, or Anki. They are run locally
 before publishing; they are not all part of CI.
 

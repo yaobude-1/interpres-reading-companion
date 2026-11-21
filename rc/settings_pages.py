@@ -25,7 +25,7 @@ from .theme import (
 
 
 class SettingsPagesMixin:
-    def _build_ai_page(self) -> None:
+    def _build_ai_section(self) -> None:
         outer = self._page_bodies["ai"]
         self._section(outer, "模型与连接")
         grid = tk.Frame(outer, bg=PANEL)
@@ -67,7 +67,7 @@ class SettingsPagesMixin:
             row, "去创建 Key", lambda: _open("https://platform.deepseek.com/api_keys")
         ).pack(side="right", padx=(0, 8))
 
-    def _build_hotkey_page(self) -> None:
+    def _build_hotkey_section(self) -> None:
         outer = self._page_bodies["general"]
         self._section(outer, "热键与划词")
         hot = tk.Frame(outer, bg=PANEL)
@@ -91,7 +91,7 @@ class SettingsPagesMixin:
             font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(10, 0))
 
-    def _build_ui_page(self) -> None:
+    def _build_ui_section(self) -> None:
         outer = self._page_bodies["general"]
         self._section(outer, "主界面")
         ui_row = tk.Frame(outer, bg=BG)
@@ -167,7 +167,7 @@ class SettingsPagesMixin:
             font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(10, 0))
 
-    def _build_dict_page(self) -> None:
+    def _build_dict_section(self) -> None:
         outer = self._page_bodies["langdict"]
         self._section(outer, "词典与发音")
         dict_row = tk.Frame(outer, bg=BG)
@@ -225,7 +225,7 @@ class SettingsPagesMixin:
             bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(10, 0))
 
-    def _build_language_page(self) -> None:
+    def _build_language_section(self) -> None:
         outer = self._page_bodies["langdict"]
         self._section(outer, "语言与音色")
         self.lang_table = tk.Frame(outer, bg=PANEL)
@@ -324,7 +324,7 @@ class SettingsPagesMixin:
             bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(10, 0))
 
-    def _build_records_page(self) -> None:
+    def _build_records_section(self) -> None:
         outer = self._page_bodies["general"]
         self._section(outer, "记录")
         records = tk.Frame(outer, bg=PANEL)
@@ -343,7 +343,7 @@ class SettingsPagesMixin:
         )
         self.data_label.pack(fill="x", padx=12, pady=(0, 8))
 
-    def _build_anki_page(self) -> None:
+    def _build_anki_section(self) -> None:
         outer = self._page_bodies["anki"]
         self._section(outer, "生词导出")
         export_row = tk.Frame(outer, bg=PANEL)
@@ -360,7 +360,7 @@ class SettingsPagesMixin:
         )
         self.stats.pack(fill="x", padx=12, pady=(0, 8))
 
-    def _build_about_page(self) -> None:
+    def _build_about_section(self) -> None:
         outer = self._page_bodies["about"]
         about = tk.Frame(outer, bg=PANEL)
         about.pack(fill="x", pady=(4, 12))
@@ -388,7 +388,7 @@ class SettingsPagesMixin:
             bg=PANEL, fg=DIM, font=(FONT_FAMILY, 8), anchor="w",
         ).pack(fill="x", padx=12, pady=(0, 12))
 
-    def _build_prompts_page(self) -> None:
+    def _build_prompts_section(self) -> None:
         outer = self._page_bodies["ai"]
         self._section(outer, "翻译与对话")
         passage_row = tk.Frame(outer, bg=PANEL)

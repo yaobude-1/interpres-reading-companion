@@ -29,6 +29,10 @@ def main() -> int:
     data = HERE / ".voicepreview"
     shutil.rmtree(data, ignore_errors=True)
     cfg = Config(data)
+    # 固定用 system 引擎：让 preview_voice 走被 mock 的 speak_with，
+    # 不依赖机器上是否装了某个 SAPI 音色、也不会去连 Edge。
+    for code in ("en", "fr"):
+        cfg.data.setdefault("languages", {}).setdefault(code, {})["tts_engine"] = "system"
     cfg.save()
     service = Service(cfg)
 

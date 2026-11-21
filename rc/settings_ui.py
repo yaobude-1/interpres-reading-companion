@@ -203,15 +203,15 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         self.win.bind("<MouseWheel>", self._on_wheel, add="+")
         self._show_page("ai")
 
-        self._build_ai_page()
-        self._build_hotkey_page()
-        self._build_ui_page()
-        self._build_dict_page()
-        self._build_language_page()
-        self._build_records_page()
-        self._build_anki_page()
-        self._build_about_page()
-        self._build_prompts_page()
+        self._build_ai_section()
+        self._build_hotkey_section()
+        self._build_ui_section()
+        self._build_dict_section()
+        self._build_language_section()
+        self._build_records_section()
+        self._build_anki_section()
+        self._build_about_section()
+        self._build_prompts_section()
 
     def _rebuild_language_tables(self) -> None:
         self.lang_vars = {}

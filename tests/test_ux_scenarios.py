@@ -16,14 +16,23 @@ results: list[tuple[str, bool, str]] = []
 
 
 def check(name: str, fn) -> None:
+    """跑一个断言函数：抛异常或返回 False/None 都算失败。
+
+    注意：不能写成 `fn() or ""` 后无条件记 True——那样返回 False 的断言也会变绿。
+    """
     try:
-        detail = fn() or ""
-        results.append((name, True, str(detail)[:120]))
-        print(f"  ok   {name}" + (f"  {detail}" if detail else ""))
+        detail = fn()
     except Exception as exc:  # noqa: BLE001
         results.append((name, False, f"{type(exc).__name__}: {exc}"))
         print(f"  FAIL {name}  {type(exc).__name__}: {exc}")
         traceback.print_exc(limit=2)
+        return
+    if detail is False or detail is None:
+        results.append((name, False, "断言返回 False"))
+        print(f"  FAIL {name}  断言返回 False")
+        return
+    results.append((name, True, str(detail)[:120]))
+    print(f"  ok   {name}" + (f"  {detail}" if detail else ""))
 
 
 def main() -> int:
@@ -98,13 +107,14 @@ def main() -> int:
 
     print("\n[聊天]")
     def chat_empty():
+        conv_id = svc.start_conversation("Book", "en", "passage", "译文")["id"]
         try:
-            svc.chat("", "hello", "")
-        except Exception as exc:  # noqa: BLE001
-            return f"输入校验: {type(exc).__name__}"
-        return "无异常"
+            svc.ask(conv_id, "   ")
+        except ValueError as exc:
+            return str(exc)
+        raise AssertionError("空问题没有报错")
 
-    check("空消息聊天", chat_empty)
+    check("空消息聊天给明确提示", lambda: "问题不能为空" in chat_empty())
 
     print("\n[生词本/导出]")
     check("生词列表", lambda: isinstance(svc.store.list_words(), list))
