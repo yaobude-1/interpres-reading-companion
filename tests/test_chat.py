@@ -53,11 +53,12 @@ def main() -> int:
     check("累计 4 条消息", len(again["messages"]) == 4, str(len(again["messages"])))
 
     print("\n[长段落完整进上下文]")
+    service.config.data["chat_passage_chars"] = 0  # 这一段专门验证 0 = 不限制
     long_passage = "This is a long paragraph. " * 800 + "TAILMARKER_END"
     long_conv = service.start_conversation("Long Book", "en", long_passage, "很长的一段译文。")
     service.ask(long_conv["id"], "这段讲了什么？")
     system = mock_openai._Handler.last_body["messages"][0]["content"]
-    check("两万字也能完整进上下文", "TAILMARKER_END" in system, f"{len(long_passage)} 字")
+    check("上限 0 时两万字也能完整进上下文", "TAILMARKER_END" in system, f"{len(long_passage)} 字")
     check("标注了全文长度", "共" in system and "字" in system, system[system.find("用户正在读"):][:60])
 
     print("\n[超上限时明确告知]")

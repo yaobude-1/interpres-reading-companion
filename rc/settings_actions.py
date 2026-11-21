@@ -98,6 +98,9 @@ class SettingsActionsMixin:
                 )
             except ValueError:
                 self.config.data["chat_passage_chars"] = 0
+            self.config.data["chat_auto_context"] = bool(
+                self.var_chat_auto_context.get()
+            )
             self.config.data["quit_on_panel_close"] = bool(self.var_quit_on_close.get())
             _audio_value = self.var_audio_source.get()
             self.config.data["audio_source"] = self._audio_label_to_key.get(

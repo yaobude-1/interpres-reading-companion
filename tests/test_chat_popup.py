@@ -53,6 +53,37 @@ def main() -> int:
             return False
 
         check("回复已显示", find_text(popup.win, "hello world"))
+
+        print("\n[上下文状态]")
+        popup.show_chat(
+            {
+                "id": 2,
+                "book": "Interrogating the Real",
+                "passage": "vacuola",
+                "context": "The quick brown fox jumps over the lazy dog.",
+                "messages": [],
+            }
+        )
+        root.update()
+        check("显示已读取段落", find_text(popup.win, "已读取所在段落"))
+        check(
+            "上下文长度",
+            str(len(popup._chat_context)) in str(popup._chat_context_label.cget("text")),
+            popup._chat_context_label.cget("text"),
+        )
+
+        popup.show_chat(
+            {
+                "id": 3,
+                "book": "Interrogating the Real",
+                "passage": "vacuola",
+                "context": "",
+                "messages": [],
+            }
+        )
+        root.update()
+        check("显示只收到选中的词", find_text(popup.win, "只收到选中的词"))
+        check("按钮提示补充", popup._chat_context_button.cget("text") == "补充上下文")
     finally:
         try:
             root.destroy()

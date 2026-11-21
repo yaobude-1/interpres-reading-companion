@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     lang        TEXT NOT NULL DEFAULT '',
     passage     TEXT NOT NULL DEFAULT '',
     translation TEXT NOT NULL DEFAULT '',
+    context     TEXT NOT NULL DEFAULT '',
     created     TEXT NOT NULL,
     updated     TEXT NOT NULL
 );
@@ -214,6 +215,13 @@ class Store:
         if "anki_json" not in wb_columns:
             self._conn.execute(
                 "ALTER TABLE wordbooks ADD COLUMN anki_json TEXT NOT NULL DEFAULT ''"
+            )
+        conv_columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(conversations)")
+        }
+        if "context" not in conv_columns:
+            self._conn.execute(
+                "ALTER TABLE conversations ADD COLUMN context TEXT NOT NULL DEFAULT ''"
             )
         # 老生词按语言归入各自默认词本
         for row in self._conn.execute(
@@ -703,16 +711,26 @@ class Store:
             self._conn.commit()
             return int(cur.rowcount or 0)
 
-    def start_conversation(self, book: str, lang: str, passage: str, translation: str) -> int:
+    def start_conversation(
+        self, book: str, lang: str, passage: str, translation: str, context: str = ""
+    ) -> int:
         ts = now()
         with self._lock:
             cur = self._conn.execute(
-                """INSERT INTO conversations (book, lang, passage, translation, created, updated)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (book or "", lang or "", passage or "", translation or "", ts, ts),
+                """INSERT INTO conversations (book, lang, passage, translation, context, created, updated)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (book or "", lang or "", passage or "", translation or "", context or "", ts, ts),
             )
             self._conn.commit()
             return int(cur.lastrowid)
+
+    def set_conversation_context(self, conv_id: int, context: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE conversations SET context = ?, updated = ? WHERE id = ?",
+                (context or "", now(), int(conv_id)),
+            )
+            self._conn.commit()
 
     def conversation(self, conv_id: int) -> dict | None:
         with self._lock:

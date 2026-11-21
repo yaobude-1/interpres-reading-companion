@@ -35,7 +35,7 @@ class ChatViewMixin:
         if conversation:
             self.show_chat(conversation)
 
-    def show_chat_pending(self, text: str, book: str, anchor) -> None:
+    def show_chat_pending(self, text: str, book: str, anchor, hwnd: int = 0) -> None:
         """不经过翻译，直接围绕一段文字开聊（悬浮按钮的「聊」走这里）。"""
         self.current = None
         self._anchor = anchor
@@ -47,6 +47,7 @@ class ChatViewMixin:
             "terms": [],
             "grammar": None,
             "meta": {},
+            "hwnd": hwnd,
         }
         self._reset_to_translate(chat_button=True)
         self._open_chat()
@@ -67,7 +68,7 @@ class ChatViewMixin:
 
         if payload is None:
             payload = self.current or self._pending_payload or {}
-        source = payload.get("text") or ""
+        source = payload.get("text") or conversation.get("passage") or ""
         if source:
             quote = tk.Frame(self.body, bg=PANEL_ALT)
             quote.pack(fill="x", pady=(0, 10))
@@ -82,6 +83,25 @@ class ChatViewMixin:
                 bg=PANEL_ALT,
                 wraplength=self.width - 54,
             ).pack(fill="x", padx=10, pady=(2, 8))
+
+        if source:
+            self._chat_source = source
+            self._chat_context = (conversation.get("context") or "").strip()
+            ctx_bar = tk.Frame(self.body, bg=BG)
+            ctx_bar.pack(fill="x", pady=(0, 8))
+            self._chat_context_label = self._label(
+                ctx_bar, "", fg=DIM, font=(FONT_FAMILY, 8)
+            )
+            self._chat_context_label.pack(side="left")
+            self._chat_context_button = self._label(
+                ctx_bar, "", fg=ACCENT, font=(FONT_FAMILY, 8)
+            )
+            self._chat_context_button.pack(side="left", padx=(8, 0))
+            self._chat_context_button.configure(cursor="hand2")
+            self._chat_context_button.bind(
+                "<Button-1>", lambda _e: self._edit_chat_context()
+            )
+            self._update_chat_context()
 
         self.messages_frame = tk.Frame(self.body, bg=BG)
         self.messages_frame.pack(fill="both", expand=True)
@@ -134,6 +154,66 @@ class ChatViewMixin:
     def _on_input_return(self, _event=None) -> str:
         self._send_chat()
         return "break"
+
+    def _update_chat_context(self) -> None:
+        if not hasattr(self, "_chat_context_label"):
+            return
+        context = getattr(self, "_chat_context", "")
+        source = getattr(self, "_chat_source", "")
+        if context:
+            text = f"已读取所在段落（{len(context)} 字）"
+            action = "编辑上下文"
+        elif len(source) >= 40:
+            text = f"已收到选中的段落（{len(source)} 字）"
+            action = "补充上下文"
+        else:
+            text = "只收到选中的词，可补充上下文"
+            action = "补充上下文"
+        self._chat_context_label.configure(text=text)
+        self._chat_context_button.configure(text=action)
+
+    def _edit_chat_context(self) -> None:
+        if not self._conv_id:
+            return
+        win = tk.Toplevel(self.win)
+        win.title("补充上下文")
+        win.configure(bg=BG)
+        win.transient(self.win)
+        x = self.win.winfo_rootx() + 30
+        y = self.win.winfo_rooty() + 30
+        win.geometry(f"480x300+{x}+{y}")
+        tk.Label(
+            win,
+            text="粘贴选中文字前后的句子或段落；AI 下次回答会参考它。",
+            bg=BG, fg=MUTED, font=(FONT_FAMILY, 9), justify="left",
+            wraplength=450,
+        ).pack(fill="x", padx=12, pady=(10, 4))
+        box = tk.Text(
+            win, bg=PANEL, fg=TEXT, insertbackground=TEXT, relief="flat",
+            font=(FONT_FAMILY, 10), wrap="word", padx=8, pady=6,
+        )
+        box.pack(fill="both", expand=True, padx=12)
+        box.insert("1.0", getattr(self, "_chat_context", ""))
+
+        def save() -> None:
+            value = box.get("1.0", "end-1c").strip()
+            self.cb.get("set_chat_context", lambda *_a: None)(self._conv_id, value)
+            self._chat_context = value
+            self._update_chat_context()
+            win.destroy()
+
+        btns = tk.Frame(win, bg=BG)
+        btns.pack(fill="x", padx=12, pady=8)
+        tk.Button(
+            btns, text="保存", command=save, bg=ACCENT, fg="#10131a",
+            relief="flat", font=(FONT_FAMILY, 9), padx=12, pady=3,
+        ).pack(side="right")
+        tk.Button(
+            btns, text="取消", command=win.destroy, bg=PANEL, fg=TEXT,
+            relief="flat", font=(FONT_FAMILY, 9), padx=12, pady=3,
+        ).pack(side="right", padx=(0, 8))
+        win.bind("<Escape>", lambda _e: win.destroy())
+        box.focus_set()
 
     def _bubble(self, role: str, content: str, typing: bool = False) -> tk.Frame:
         row = tk.Frame(self.messages_frame, bg=BG)

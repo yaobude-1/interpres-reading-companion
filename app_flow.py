@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 
-from rc import capture, textutil
+from rc import capture, textutil, uia_context
 from rc.htmlview import EntryViewer
 from rc.selection import capture_selected_text
 
@@ -25,18 +25,19 @@ class FlowMixin:
             time.sleep(delay)
             with self._capture_lock:
                 title = capture.foreground_title()
+                hwnd = capture.foreground_hwnd()
                 text = capture_selected_text()
             if not text or not text.strip():
                 return
             book = capture.book_from_title(title)
-            self.events.put(("sel_button", (gen, text, book, pos)))
+            self.events.put(("sel_button", (gen, text, book, pos, hwnd)))
 
         threading.Thread(target=worker, daemon=True, name="selection").start()
 
     def _open_selection_bubble(self, anchor) -> None:
         if not self._pending_selection:
             return
-        text, book, _ = self._pending_selection
+        text, book, _pos, *_rest = self._pending_selection
         clean = textutil.normalize(text)
         if not clean:
             return
@@ -109,8 +110,9 @@ class FlowMixin:
         """悬浮按钮点「聊」：不翻译，直接围绕选中的段落开聊。"""
         if not self._pending_selection:
             return
-        text, book, _pos = self._pending_selection
-        self.popup.show_chat_pending(text, book, anchor)
+        text, book, _pos, *rest = self._pending_selection
+        hwnd = rest[0] if rest else 0
+        self.popup.show_chat_pending(text, book, anchor, hwnd)
 
     def _bubble_chat(self, payload: dict, anchor) -> None:
         """从气泡直接进入对话：先在浮窗里展示译文，再切到聊天。"""
@@ -119,12 +121,23 @@ class FlowMixin:
 
     # ------------------------------------------------------------------ 对话
     def start_chat(self, payload: dict) -> dict:
+        context = ""
+        if bool(self.config.get("chat_auto_context", True)):
+            hwnd = int(payload.get("hwnd") or 0)
+            if hwnd:
+                info = uia_context.read_context(hwnd)
+                if info.get("ok"):
+                    context = str(info.get("paragraph") or "").strip()[:6000]
         return self.service.start_conversation(
             payload.get("book") or "",
             payload.get("source_lang") or "",
             payload.get("text") or "",
             payload.get("translation") or "",
+            context,
         )
+
+    def set_chat_context(self, conv_id: int, context: str) -> None:
+        self.service.set_conversation_context(int(conv_id), (context or "")[:6000])
 
     def ask_chat(self, conv_id, question: str) -> None:
         def worker() -> None:

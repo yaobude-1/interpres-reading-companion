@@ -117,9 +117,21 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
             path.write_text("\n".join(parts), encoding="utf-8")
         return {"path": str(path), "count": len(rows), "dir": str(out_dir)}
 
-    def start_conversation(self, book: str, lang: str, passage: str, translation: str) -> dict:
-        conv_id = self.store.start_conversation(book, lang, passage, translation)
-        return {"id": conv_id, "messages": self.chat_messages(conv_id), "book": book}
+    def start_conversation(
+        self, book: str, lang: str, passage: str, translation: str, context: str = ""
+    ) -> dict:
+        conv_id = self.store.start_conversation(book, lang, passage, translation, context)
+        return {
+            "id": conv_id,
+            "messages": self.chat_messages(conv_id),
+            "book": book,
+            "passage": passage,
+            "translation": translation,
+            "context": context,
+        }
+
+    def set_conversation_context(self, conv_id: int, context: str) -> None:
+        self.store.set_conversation_context(conv_id, context)
 
     def chat_messages(self, conv_id: int) -> list[dict]:
         return [
@@ -182,6 +194,12 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
                 parts.append(f"The passage the user is reading ({len(passage)} characters, full text):\n{passage}")
         if translation:
             parts.append(f"Translation of the passage:\n{translation[:5000]}")
+        context = (conv.get("context") or "").strip()
+        if context:
+            parts.append(
+                "The paragraph around the selected text (read automatically; it may be incomplete):\n"
+                f"{context[:4000]}"
+            )
         recent = [t for t in self.store.recent_history(book, 3) if t and t != passage]
         if recent:
             parts.append(
@@ -219,6 +237,12 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
                 parts.append(f"用户正在读的段落（共 {len(passage)} 字，以下是全文）：\n{passage}")
         if translation:
             parts.append(f"这段的译文：\n{translation[:5000]}")
+
+        context = (conv.get("context") or "").strip()
+        if context:
+            parts.append(
+                f"选中文字所在的段落（自动读取，可能不完整）：\n{context[:4000]}"
+            )
 
         recent = [t for t in self.store.recent_history(book, 3) if t and t != passage]
         if recent:

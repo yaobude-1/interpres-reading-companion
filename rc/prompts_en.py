@@ -53,5 +53,8 @@ CHAT_RULES_EN = (
     "Answer requirements:\n"
     "1. Answer in English, ground it in the source text, quote when useful;\n"
     "2. Do not invent content not in the book; say so when unsure;\n"
-    "3. Keep it concise, not an essay."
+    "3. Keep it concise, not an essay;\n"
+    "4. If you only have the selected word and no surrounding sentence, first give its "
+    "meaning, part of speech and common collocations, then say clearly that you cannot see "
+    "the sentence in the book and ask the user for the surrounding line; do not just refuse."
 )

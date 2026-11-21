@@ -10,7 +10,9 @@ English | [中文说明](docs/README.zh-CN.md)
 
 - **Selection translation** — press `Ctrl+Alt+T` over selected text (or click the floating “译” button) and get a translation next to it. Works in Chrome, Edge, Firefox, Calibre, SumatraPDF, Acrobat, Okular and Thorium.
 - **Local MDX/MDD dictionaries** — bring your own Longman, Oxford, etc. Lookup is offline; fuzzy search handles accents and typos. The AI only fills context that the dictionary cannot.
-- **AI chat with context** — ask questions about the passage or the book; the current paragraph and translation are sent along so answers stay grounded.
+- **AI chat with context** — ask questions about the passage or the book; in
+  Edge/Chrome the paragraph around the selection is read automatically (can be
+  turned off in settings), and other readers can paste context manually.
 - **Per-language vocabulary books** — words are grouped by language, and you can create your own word books (e.g. “English · IELTS”). Each book maps to its own Anki deck.
 - **Anki sync** — English uses the [Dict2Anki](https://github.com/ninja33/anki-dict-helper) note type by default; other languages use the bundled `Interpres` note type with structured senses, examples and audio.
 - **Languages are data, not code** — add any language (Italian, Japanese, Russian, …): code, display name, voice, deck. Dictionaries attach per language.

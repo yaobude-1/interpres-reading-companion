@@ -187,6 +187,11 @@ def foreground_title() -> str:
     return buf.value.strip()
 
 
+def foreground_hwnd() -> int:
+    """当前前台窗口句柄；留给 UI Automation 读选区上下文。"""
+    return int(user32.GetForegroundWindow() or 0)
+
+
 def cursor_pos() -> tuple[int, int]:
     point = wt.POINT()
     user32.GetCursorPos(ctypes.byref(point))

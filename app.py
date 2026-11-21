@@ -107,6 +107,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 "stop_speak": self.service.tts.stop,
                 "settings": self.open_settings,
                 "toast": self.toast,
+                "set_chat_context": self.set_chat_context,
                 "lang_label": self.service.lang_label,
                 "lock_term": self.lock_term,
                 "manual_translate": self.manual_translate,
@@ -130,7 +131,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self.quick = QuickButton(
             self.root, config, self._open_selection_bubble, self._open_chat_from_selection
         )
-        self._pending_selection: tuple[str, str, tuple[int, int]] | None = None
+        self._pending_selection: tuple[str, str, tuple[int, int], int] | None = None
         self._sel_gen = 0
         self._bubble_gen = 0
         self._sel_watcher: MouseWatcher | None = None
@@ -312,9 +313,9 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                     pos, exe = payload
                     self._handle_selection(pos, exe)
                 elif kind == "sel_button":
-                    gen, text, book, pos = payload
+                    gen, text, book, pos, hwnd = payload
                     if gen == self._sel_gen:
-                        self._pending_selection = (text, book, pos)
+                        self._pending_selection = (text, book, pos, hwnd)
                         self.popup.hide()
                         self.bubble.hide()
                         self.quick.show(pos)

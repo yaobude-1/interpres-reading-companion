@@ -100,7 +100,8 @@ DEFAULT_CONFIG: dict = {
     "prompt_translate_system": "",
     "prompt_chat_persona": "",
     "prompt_chat_rules": "",
-    "chat_passage_chars": 0,
+    "chat_passage_chars": 4000,
+    "chat_auto_context": True,
     "audio_source": "dict_first",
     "history_keep": 30,
     # 本地词典：按语种配置 mdx / mdd

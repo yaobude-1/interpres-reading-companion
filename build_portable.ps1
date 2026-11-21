@@ -31,6 +31,7 @@ Write-Host "Building portable folder (about 1 minute)..."
     --add-data "rc\tts_script.ps1;rc" `
     --add-data "rc\tts_onecore.ps1;rc" `
     --add-data "rc\play_mp3.ps1;rc" `
+    --add-data "rc\uia_context.ps1;rc" `
     --collect-submodules lxml `
     --paths "$vendor" `
     --hidden-import pystray `

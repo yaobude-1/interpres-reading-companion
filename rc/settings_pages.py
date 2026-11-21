@@ -407,9 +407,23 @@ class SettingsPagesMixin:
         ).pack(side="left", ipady=3)
         tk.Label(
             passage_row,
-            text="对话时最多引用多少字原文；0 = 不限制。越小越省 token、越快",
+            text="对话时最多引用多少字原文；默认 4000，0 = 不限制。越小越省 token、越快",
             bg=PANEL, fg=DIM, font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(10, 0))
+
+        auto_row = tk.Frame(outer, bg=BG)
+        auto_row.pack(fill="x", pady=(0, 6))
+        self.var_chat_auto_context = tk.BooleanVar(
+            value=bool(self.config.get("chat_auto_context", True))
+        )
+        tk.Checkbutton(
+            auto_row,
+            text="自动读取选中文字所在段落（Edge/Chrome 可用；其他阅读器可手动补充）",
+            variable=self.var_chat_auto_context,
+            bg=BG, fg=TEXT, selectcolor=PANEL, activebackground=BG,
+            activeforeground=TEXT, font=(FONT_FAMILY, 9), anchor="w",
+            highlightthickness=0, bd=0,
+        ).pack(anchor="w", padx=12, pady=(2, 2))
 
         speed_row = tk.Frame(outer, bg=BG)
         speed_row.pack(fill="x", pady=(4, 4))
