@@ -100,6 +100,10 @@ git push origin vX.Y.Z
 gh release create vX.Y.Z dist/Interpres.zip
 ```
 
+Release notes are bilingual: Chinese first, then the English version under a
+`## English` heading. GitHub has no language metadata; the body is just Markdown,
+so it can be edited later with `gh release edit` without rebuilding.
+
 Before replacing a release asset, verify on Windows:
 
 - [ ] App starts from source and from the packaged portable folder.
