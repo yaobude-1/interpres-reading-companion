@@ -1,4 +1,4 @@
-"""回归：列宽按比例铺满表格，拖动后归一，不出现横向溢出。"""
+"""回归：拖动分隔线时只移动那条交界线，列到最小宽度后把余量传给下一条。"""
 
 from __future__ import annotations
 
@@ -45,42 +45,92 @@ def main() -> int:
     panel.load_words()
     root.update()
 
+    print("\n[初始铺满]")
     tree_width = panel.word_tree.winfo_width()
-    print("\n[铺满]")
-    check("初始铺满表格宽度", abs(sum(widths(panel)) - tree_width) <= 2, f"{widths(panel)} vs {tree_width}")
-    check("不出现横向滚动", panel.word_tree.xview()[1] > 0.99, str(panel.word_tree.xview()))
+    check("列宽填满表格", abs(sum(widths(panel)) - tree_width) <= 2, f"{widths(panel)} vs {tree_width}")
 
-    print("\n[拖动后归一]")
+    mins = [panel._COL_MINS[c] for c in panel._COLS]
+    start = [100, 100, 100, 100, 100, 100]
+    total = sum(start)
+
+    print("\n[只动一条交界线]")
+    result = panel._drag_widths(start, 3, 30)
+    check("左列加宽、右列变窄", result[2] == 130 and result[3] == 70, str(result))
+    check("总宽不变", sum(result) == total, str(sum(result)))
+    check("其他列不动", result[:2] == start[:2] and result[4:] == start[4:], str(result))
+
+    print("\n[右列到最小宽度后传给下一条]")
+    room = start[3] - panel._COL_MINS[panel._COLS[3]]
+    result = panel._drag_widths(start, 3, room + 20)
+    check("第三条列到最小", result[3] == panel._COL_MINS[panel._COLS[3]], str(result))
+    check("下一条列接着让位", result[4] == 100 - 20, str(result))
+    check("总宽还是不变", sum(result) == total, str(sum(result)))
+
+    print("\n[拖到边界就停]")
+    result = panel._drag_widths(start, 3, 9999)
+    check("右侧列全部到最小", result[3:] == mins[3:], str(result))
+    check("总量守恒", sum(result) == total, str(sum(result)))
+    check("没有小于最小宽度", all(w >= m for w, m in zip(result, mins, strict=False)), str(result))
+
+    print("\n[向左拖是对称的]")
+    result = panel._drag_widths(start, 3, -30)
+    check("右列加宽、左列变窄", result[3] == 130 and result[2] == 70, str(result))
+    result = panel._drag_widths(start, 3, -9999)
+    check("左侧列全部到最小", result[:3] == mins[:3], str(result))
+    check("左侧拖动的总量守恒", sum(result) == total, str(sum(result)))
+
+    print("\n[拖动保存宽度]")
+    panel._dragging = True
+    panel._drag_right = 3
+    panel._drag_start_x = 500
+    panel._drag_start = widths(panel)
+
+    class Event:
+        x_root = 0
+
+    event = Event()
+    event.x_root = 540
+    panel._on_tree_drag(event)
+    panel._on_tree_release(event)
+    root.update()
+    saved = cfg.get("vocab_col_widths")
+    check("写入 vocab_col_widths", isinstance(saved, list) and len(saved) == 6, str(saved))
+    check("保存的是拖后宽度", saved == widths(panel), f"{saved} vs {widths(panel)}")
+
+    print("\n[真实事件绑定]")
+    boundary = sum(widths(panel)[:3])
     before = widths(panel)
-    word_index = panel._COLS.index("word")
-    panel.word_tree.column("word", width=before[word_index] + 150)
-    check("拖动后总宽暂时溢出", sum(widths(panel)) > tree_width)
-    panel._normalize_widths()
+    panel.word_tree.event_generate("<Button-1>", x=boundary, y=10)
     root.update()
-    after = widths(panel)
-    check("归一后总宽等于表格", abs(sum(after) - tree_width) <= 2, f"{after} vs {tree_width}")
-    check("被拖的列变宽", after[word_index] > before[word_index], f"{before} -> {after}")
-    check(
-        "每列不低于最小宽度",
-        all(w >= panel._COL_MINS[c] for w, c in zip(after, panel._COLS, strict=False)),
-        str(after),
-    )
-    check("比例已保存", isinstance(cfg.get("vocab_col_ratios"), list), str(cfg.get("vocab_col_ratios")))
-
-    print("\n[窗口缩放]")
-    root.geometry("720x620")
+    check("按下分隔线进入拖拽", panel._dragging)
+    panel.word_tree.event_generate("<B1-Motion>", x=boundary - 30, y=10)
     root.update()
-    scaled = widths(panel)
-    check("缩放后仍铺满", abs(sum(scaled) - panel.word_tree.winfo_width()) <= 2, f"{scaled}")
+    check("拖动改变列宽", widths(panel) != before, f"{before} -> {widths(panel)}")
+    panel.word_tree.event_generate("<ButtonRelease-1>", x=boundary - 30, y=10)
+    root.update()
+    check("松手结束拖拽", not panel._dragging)
+    check("松手后总宽仍铺满", abs(sum(widths(panel)) - panel.word_tree.winfo_width()) <= 2, str(widths(panel)))
 
-    print("\n[重启恢复比例]")
-    saved = list(cfg.get("vocab_col_ratios") or [])
+    print("\n[窗口缩放仍铺满]")
+    root.geometry("740x620")
+    root.update()
+    check("变窄后铺满", abs(sum(widths(panel)) - panel.word_tree.winfo_width()) <= 2, str(widths(panel)))
+    root.geometry("980x620")
+    root.update()
+    check("变宽后铺满", abs(sum(widths(panel)) - panel.word_tree.winfo_width()) <= 2, str(widths(panel)))
+
+    print("\n[重启恢复宽度]")
+    saved = list(cfg.get("vocab_col_widths") or [])
     panel2 = VocabPanel(frame, svc, cfg)
     root.update()
-    check("新面板沿用比例", all(abs(a - b) < 0.01 for a, b in zip(panel2._col_ratios, saved, strict=False)), f"{panel2._col_ratios} vs {saved}")
-
-    print("\n[表头文字]")
-    check("时间列简洁", panel.word_tree.heading("time", "text").startswith("时间"), panel.word_tree.heading("time", "text"))
+    flex = panel2._COLS.index("meaning")
+    check(
+        "非弹性列沿用保存的宽度",
+        [panel2._col_widths[i] for i in range(6) if i != flex]
+        == [saved[i] for i in range(6) if i != flex],
+        f"{panel2._col_widths} vs {saved}",
+    )
+    check("释义列按窗口铺满", panel2._col_widths[flex] >= saved[flex], str(panel2._col_widths))
 
     root.destroy()
     svc.store.close()

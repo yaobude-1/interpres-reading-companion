@@ -55,18 +55,22 @@ class VocabPanel:
         self.book_id: int | None = None
         self._sync_result = None
         self._sync_ready = False
+        self._dragging = False
+        self._drag_left = 0
+        self._drag_right = 1
+        self._drag_start_x = 0
+        self._drag_start: list[int] = []
         defaults = [self._COL_DEFAULTS[c] for c in self._COLS]
-        default_ratios = [w / sum(defaults) for w in defaults]
-        saved = config.get("vocab_col_ratios")
-        self._col_ratios = default_ratios
+        mins = [self._COL_MINS[c] for c in self._COLS]
+        self._col_widths = list(defaults)
+        saved = config.get("vocab_col_widths")
         if isinstance(saved, list) and len(saved) == len(self._COLS):
             try:
-                ratios = [float(v) for v in saved]
+                values = [int(v) for v in saved]
             except (TypeError, ValueError):
-                ratios = default_ratios
-            if sum(ratios) > 0 and all(v >= 0 for v in ratios):
-                total = sum(ratios)
-                self._col_ratios = [v / total for v in ratios]
+                values = []
+            if values and all(v >= m for v, m in zip(values, mins, strict=False)):
+                self._col_widths = values
         self._sort_key = str(config.get("vocab_sort_key") or "time")
         if self._sort_key not in self._COL_LABELS:
             self._sort_key = "time"
@@ -172,7 +176,10 @@ class VocabPanel:
         self.word_tree.bind("<Delete>", lambda _e: self.delete_selected())
         self.word_tree.bind("<Double-1>", self._open_word)
         self.word_tree.bind("<Configure>", self._on_tree_configure)
+        self.word_tree.bind("<Button-1>", self._on_tree_press)
+        self.word_tree.bind("<B1-Motion>", self._on_tree_drag)
         self.word_tree.bind("<ButtonRelease-1>", self._on_tree_release)
+        self.word_tree.bind("<Motion>", self._on_tree_motion)
 
         self._style_trees()
 
@@ -349,61 +356,115 @@ class VocabPanel:
         self._update_headings()
 
     def _on_tree_configure(self, event) -> None:
-        if event.width > 80:
-            self._apply_ratios(event.width)
+        if event.width > 80 and not self._dragging:
+            self._fit_widths(event.width)
 
-    def _apply_ratios(self, total: int) -> None:
-        """按保存的比例把列宽铺满表格。"""
+    def _fit_widths(self, total: int) -> None:
+        """窗口尺寸变化时保持铺满：多余的给释义，不够就先压释义再压右侧列。"""
+        widths = list(self._col_widths)
         mins = [self._COL_MINS[c] for c in self._COLS]
-        widths = [max(m, int(round(total * r))) for m, r in zip(mins, self._col_ratios, strict=False)]
-        self._fix_total(widths, total, mins)
-        if [int(self.word_tree.column(c, "width")) for c in self._COLS] == widths:
-            return
-        for key, width in zip(self._COLS, widths, strict=False):
-            self.word_tree.column(key, width=width)
-
-    def _on_tree_release(self, _event) -> None:
-        self._normalize_widths()
-
-    def _normalize_widths(self) -> None:
-        """拖动分隔线后按比例归一：总宽始终等于表格宽度，不出现横向滚动。"""
-        total = self.word_tree.winfo_width()
-        mins = [self._COL_MINS[c] for c in self._COLS]
-        widths = [int(self.word_tree.column(c, "width")) for c in self._COLS]
+        flex = self._COLS.index("meaning")
         current = sum(widths)
-        if total <= 1 or current <= 0 or abs(current - total) <= 1:
-            return
-        ratio = total / current
-        widths = [max(m, int(round(w * ratio))) for w, m in zip(widths, mins, strict=False)]
-        self._fix_total(widths, total, mins)
-        for key, width in zip(self._COLS, widths, strict=False):
-            self.word_tree.column(key, width=width)
-        self._col_ratios = [w / total for w in widths]
-        self.config.data["vocab_col_ratios"] = [round(r, 4) for r in self._col_ratios]
-        self.config.save()
-
-    @staticmethod
-    def _fix_total(widths: list[int], total: int, mins: list[int]) -> None:
-        """匀掉取整误差：多退少补，且不突破最小宽度。"""
-        diff = total - sum(widths)
-        order = (2, 0, 1, 3, 4, 5)
-        guard = 0
-        while diff and guard < 1000:
-            guard += 1
-            moved = False
+        if current < total:
+            widths[flex] += total - current
+        elif current > total:
+            need = current - total
+            order = [flex] + [i for i in range(len(widths) - 1, -1, -1) if i != flex]
             for i in order:
-                if diff > 0:
-                    widths[i] += 1
-                    diff -= 1
-                    moved = True
-                elif widths[i] > mins[i]:
-                    widths[i] -= 1
-                    diff += 1
-                    moved = True
-                if diff == 0:
+                if need <= 0:
                     break
-            if not moved:
-                break
+                take = min(need, widths[i] - mins[i])
+                if take > 0:
+                    widths[i] -= take
+                    need -= take
+        self._col_widths = widths
+        self._apply_widths(widths)
+
+    def _apply_widths(self, widths: list[int]) -> None:
+        for key, width in zip(self._COLS, widths, strict=False):
+            self.word_tree.column(key, width=int(width))
+
+    def _on_tree_press(self, event) -> str | None:
+        """只有落在分隔线上才接管拖拽，返回 break 阻止 ttk 自己改单列宽度。"""
+        if self.word_tree.identify_region(event.x, event.y) != "separator":
+            return None
+        column = self.word_tree.identify_column(event.x)
+        try:
+            left = int(column[1:]) - 1
+        except (ValueError, IndexError):
+            return None
+        if not (0 <= left < len(self._COLS) - 1):
+            return None
+        self._dragging = True
+        self._drag_right = left + 1
+        self._drag_start_x = event.x_root
+        self._drag_start = [int(self.word_tree.column(c, "width")) for c in self._COLS]
+        try:
+            self.word_tree.grab_set()
+        except tk.TclError:
+            pass
+        return "break"
+
+    def _on_tree_drag(self, event) -> str | None:
+        if not self._dragging:
+            return None
+        delta = event.x_root - self._drag_start_x
+        widths = self._drag_widths(self._drag_start, self._drag_right, delta)
+        self._col_widths = widths
+        self._apply_widths(widths)
+        return "break"
+
+    def _on_tree_release(self, _event) -> str | None:
+        if not self._dragging:
+            return None
+        self._dragging = False
+        try:
+            self.word_tree.grab_release()
+        except tk.TclError:
+            pass
+        self.config.data["vocab_col_widths"] = list(self._col_widths)
+        self.config.save()
+        return "break"
+
+    def _drag_widths(self, start: list[int], boundary: int, delta: int) -> list[int]:
+        """拖动 boundary 这条交界线：压缩对侧列，某列到最小宽度后余量传给下一条交界线。"""
+        widths = list(start)
+        mins = [self._COL_MINS[c] for c in self._COLS]
+        if delta > 0:
+            capacity = sum(max(0, widths[j] - mins[j]) for j in range(boundary, len(widths)))
+            move = min(delta, capacity)
+            widths[boundary - 1] += move
+            rest = move
+            for j in range(boundary, len(widths)):
+                if rest <= 0:
+                    break
+                take = min(rest, widths[j] - mins[j])
+                widths[j] -= take
+                rest -= take
+        elif delta < 0:
+            capacity = sum(max(0, widths[j] - mins[j]) for j in range(0, boundary))
+            move = max(delta, -capacity)
+            widths[boundary] += -move
+            rest = -move
+            for j in range(boundary - 1, -1, -1):
+                if rest <= 0:
+                    break
+                take = min(rest, widths[j] - mins[j])
+                widths[j] -= take
+                rest -= take
+        return widths
+
+    def _on_tree_motion(self, event) -> None:
+        if self._dragging:
+            self.word_tree.configure(cursor="sb_h_double_arrow")
+            return
+        cursor = (
+            "sb_h_double_arrow"
+            if self.word_tree.identify_region(event.x, event.y) == "separator"
+            else ""
+        )
+        if self.word_tree.cget("cursor") != cursor:
+            self.word_tree.configure(cursor=cursor)
 
     def _update_headings(self) -> None:
         for key, label in self._COL_LABELS.items():

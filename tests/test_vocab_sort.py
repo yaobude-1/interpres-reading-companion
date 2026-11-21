@@ -65,6 +65,12 @@ def main() -> int:
     check("再点变降序", order(panel) == ["cherry", "banana", "apple"], str(order(panel)))
     check("降序表头", "▼" in panel.word_tree.heading("word", "text"), panel.word_tree.heading("word", "text"))
 
+    print("\n[点表头]")
+    panel.word_tree.event_generate("<Button-1>", x=30, y=10)
+    panel.word_tree.event_generate("<ButtonRelease-1>", x=30, y=10)
+    root.update()
+    check("点表头切换排序", panel._sort_key == "word", str(panel._sort_key))
+
     print("\n[记住选择]")
     check("配置写入 key", cfg.get("vocab_sort_key") == "word", str(cfg.get("vocab_sort_key")))
     check("配置写入方向", bool(cfg.get("vocab_sort_desc")) is True)
