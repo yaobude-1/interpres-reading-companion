@@ -152,25 +152,26 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         # 单词操作放在表格下方，和右侧内容对齐；词本操作留在左栏
         word_actions = tk.Frame(right, bg=BG)
         word_actions.pack(side="bottom", fill="x", pady=(6, 0))
-        sync_row = tk.Frame(word_actions, bg=BG)
-        sync_row.pack(fill="x")
-        self._small_button(sync_row, "同步 Anki", self.sync_book, primary=True).pack(
-            side="left"
+        self._word_toolbar = tk.Frame(word_actions, bg=BG)
+        self._word_toolbar.pack(fill="x")
+        self._btn_sync = self._small_button(
+            self._word_toolbar, "同步 Anki", self.sync_book, primary=True
         )
-        self._small_button(
-            sync_row, "Anki 设置…", self.open_anki_settings
-        ).pack(side="right")
-        tools_row = tk.Frame(word_actions, bg=BG)
-        tools_row.pack(fill="x", pady=(4, 0))
-        self._small_button(tools_row, "删除所选", self.delete_selected, danger=True).pack(
-            side="left"
+        self._btn_delete = self._small_button(
+            self._word_toolbar, "删除所选", self.delete_selected, danger=True
         )
-        self._small_button(tools_row, "移动到…", self.move_selected).pack(
-            side="left", padx=(6, 0)
+        self._btn_move = self._small_button(
+            self._word_toolbar, "移动到…", self.move_selected
         )
-        self._small_button(tools_row, "导出 CSV", self.export_book).pack(
-            side="left", padx=(6, 0)
+        self._btn_export = self._small_button(
+            self._word_toolbar, "导出 CSV", self.export_book
         )
+        self._btn_anki = self._small_button(
+            self._word_toolbar, "Anki 设置…", self.open_anki_settings
+        )
+        self._toolbar_narrow = None
+        self._word_toolbar.bind("<Configure>", self._layout_word_toolbar)
+        self._layout_word_toolbar()
 
         # 先占住底部按钮区，再让表格撑满剩余空间
         self.word_tree = ttk.Treeview(
@@ -208,6 +209,31 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         self.word_tree.bind("<Motion>", self._on_tree_motion)
 
         self._style_trees()
+
+    def _layout_word_toolbar(self, event=None) -> None:
+        """一行工具栏：宽时用全称，窄时缩短并把 Anki 设置收成齿轮。"""
+        width = event.width if event is not None else self._word_toolbar.winfo_width()
+        narrow = width < 400
+        if self._toolbar_narrow == narrow:
+            return
+        self._toolbar_narrow = narrow
+        for button in (
+            self._btn_sync,
+            self._btn_delete,
+            self._btn_move,
+            self._btn_export,
+            self._btn_anki,
+        ):
+            button.pack_forget()
+        self._btn_delete.configure(text="删除" if narrow else "删除所选")
+        self._btn_move.configure(text="移动…" if narrow else "移动到…")
+        self._btn_export.configure(text="导出" if narrow else "导出 CSV")
+        self._btn_anki.configure(text="⚙" if narrow else "Anki 设置…")
+        self._btn_sync.pack(side="left")
+        self._btn_delete.pack(side="left", padx=(6, 0))
+        self._btn_move.pack(side="left", padx=(6, 0))
+        self._btn_export.pack(side="left", padx=(6, 0))
+        self._btn_anki.pack(side="right")
 
     def _style_trees(self) -> None:
         style = ttk.Style(self.parent)

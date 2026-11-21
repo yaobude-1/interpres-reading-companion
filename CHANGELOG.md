@@ -5,9 +5,9 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
-- Vocabulary tab: word actions (sync/move/delete/export/Anki settings) now sit
-  under the word table, while new/rename/delete for word books stay in the left
-  pane; the buttons no longer float under the book list.
+- Vocabulary tab: word actions now form one row under the word table (full
+  labels on wide windows; short labels and a gear for Anki settings when
+  narrow), while new/rename/delete for word books stay in the left pane.
 - A new selection no longer closes the open translation popup; the “译/聊”
   quick button is raised above it, and the popup is replaced when a new result
   arrives.
