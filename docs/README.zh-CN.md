@@ -203,6 +203,10 @@ rc/panel_translate.py     翻译页：流式输出、进度、错误
 rc/panel_dict.py          查词页：查询、义项、词形、收藏
 rc/panel_chat.py          对话页：消息与流式回复
 rc/panel_suggest.py       查词联想弹层与键盘处理
+rc/vocab_panel.py         生词本外壳：布局、搜索、刷新
+rc/vocab_table.py         单词表：排序、列宽、双击词卡
+rc/vocab_books.py         词本列表与新建/改名/删除对话框
+rc/vocab_actions.py       移动/删除/导出单词、Anki 同步
 rc/popup.py               划词弹窗外壳：生命周期、定位、滚轮
 rc/popup_dict.py          词典卡片：义项、词形、近义词
 rc/popup_chat.py          内联对话卡片：气泡、输入栏、流式

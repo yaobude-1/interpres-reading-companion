@@ -236,6 +236,10 @@ rc/panel_translate.py     translate tab: streaming output, progress, errors
 rc/panel_dict.py          dictionary tab: lookup, senses, morphology, save
 rc/panel_chat.py          conversation tab: messages and streaming replies
 rc/panel_suggest.py       dictionary suggestion popup and key handling
+rc/vocab_panel.py         vocabulary tab shell: layout, search, refresh
+rc/vocab_table.py         word table: sorting, column widths, word cards
+rc/vocab_books.py         word-book list and book dialogs
+rc/vocab_actions.py       move/delete/export words, Anki sync
 rc/popup.py               selection popup shell: lifecycle, placement, wheel
 rc/popup_dict.py          dictionary card: senses, morphology, similar words
 rc/popup_chat.py          inline chat card: bubbles, input bar, streaming
