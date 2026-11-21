@@ -1,4 +1,9 @@
-"""生成 README 用的演示截图：临时数据目录，不含个人配置。"""
+"""生成 README 用的演示截图：临时数据目录，不含个人配置。
+
+用法：
+    python tests/make_doc_screenshots.py en   # 英文界面 + 法语→英语（英文 README 用）
+    python tests/make_doc_screenshots.py zh   # 中文界面 + 英语→中文（中文 README 用）
+"""
 
 from __future__ import annotations
 
@@ -41,6 +46,10 @@ def grab(widget, name: str) -> None:
 
 
 def main() -> int:
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "en").lower()
+    if mode not in ("en", "zh"):
+        print("usage: make_doc_screenshots.py [en|zh]")
+        return 2
     OUT.mkdir(parents=True, exist_ok=True)
     shutil.rmtree(DATA, ignore_errors=True)
     DATA.mkdir(parents=True)
@@ -49,7 +58,9 @@ def main() -> int:
     from rc import i18n
 
     cfg = Config(DATA)
-    cfg.data["ui_lang"] = "en"
+    cfg.data["ui_lang"] = mode
+    # 演示内容要和界面语言一致：英文界面配“法语→英语”，中文界面配“英语→中文”。
+    cfg.data["target_lang"] = "en" if mode == "en" else "zh-CN"
     cfg.data["api"].update(
         {
             "base_url": "https://api.deepseek.com/v1",
@@ -69,7 +80,7 @@ def main() -> int:
         lang["deck"] = deck
     cfg.save()
 
-    i18n.set_language("en")
+    i18n.set_language(mode)
     i18n.install()
 
     from app import Application
@@ -138,20 +149,34 @@ def main() -> int:
         try:
             if step == 0:
                 app.open_panel()
-                app.panel.input.insert(
-                    "1.0",
-                    "Fashion is by nature ephemeral, and the desire for novelty keeps the industry moving.",
-                )
+                if mode == "en":
+                    source = (
+                        "La mode est par nature éphémère, et le désir de nouveauté "
+                        "fait avancer l'industrie."
+                    )
+                    translation = (
+                        "Fashion is by nature ephemeral, and the desire for novelty "
+                        "keeps the industry moving."
+                    )
+                else:
+                    source = (
+                        "Fashion is by nature ephemeral, and the desire for novelty "
+                        "keeps the industry moving."
+                    )
+                    translation = "时尚本质上是短暂的，而对新奇事物的渴望让这个行业不断向前。"
+                app.panel.input.insert("1.0", source)
                 app.panel._finish_result(
                     {
-                        "translation": (
-                            "时尚本质上是短暂的，而对新奇事物的渴望让这个行业不断向前。"
-                        )
+                        "translation": translation,
+                        "meta": {"elapsed_ms": 1840, "cached": False},
                     }
                 )
                 app.root.after(700, next_step)
             elif step == 1:
-                grab(app.panel.win, "panel-en.png")
+                grab(app.panel.win, f"panel-{mode}.png")
+                if mode == "zh":
+                    app.shutdown()
+                    return
                 app.panel._show_tab("vocab")
                 app.root.after(700, next_step)
             elif step == 2:

@@ -4,7 +4,7 @@
 
 [English](README.md) | 中文
 
-![主面板](screenshots/panel-en.png)
+![主面板](screenshots/panel-zh.png)
 
 ## 功能
 
