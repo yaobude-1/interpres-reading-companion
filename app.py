@@ -23,19 +23,19 @@ from pathlib import Path
 from tkinter import messagebox
 
 from rc import __version__
-from rc import capture, textutil
+from rc import capture
 from rc.bubble import Bubble, QuickButton
 from rc.config import Config
 from rc.hotkey import HotkeyWatcher
-from rc.htmlview import EntryViewer
 from rc.instance import SingleInstance
 from rc.panel import MainPanel
 from rc.popup import PopupWindow
-from rc.selection import MouseWatcher, capture_selected_text, foreground_exe
+from rc.selection import MouseWatcher, foreground_exe
 from rc.server import ApiServer
 from rc.service import Service
 from rc.settings_ui import SettingsWindow
 
+from app_flow import FlowMixin
 from app_panel import PanelMixin
 
 log = logging.getLogger("rc")
@@ -55,7 +55,7 @@ def restore_panel_geometry(config, panel) -> None:
         log.debug("恢复面板几何失败", exc_info=True)
 
 
-class Application(PanelMixin):
+class Application(PanelMixin, FlowMixin):
     def __init__(self, config: Config, *, enable_hotkeys: bool = True, silent: bool = False) -> None:
         self.config = config
         self.silent = silent
@@ -527,145 +527,6 @@ class Application(PanelMixin):
         )
         return False
 
-    def _handle_selection(self, pos: tuple[int, int], exe: str) -> None:
-        if not self._enable_hotkeys:
-            return
-        self._sel_gen += 1
-        gen = self._sel_gen
-        delay = int((self.config.get("selection") or {}).get("delay_ms", 150)) / 1000.0
-
-        def worker() -> None:
-            time.sleep(delay)
-            with self._capture_lock:
-                title = capture.foreground_title()
-                text = capture_selected_text()
-            if not text or not text.strip():
-                return
-            book = capture.book_from_title(title)
-            self.events.put(("sel_button", (gen, text, book, pos)))
-
-        threading.Thread(target=worker, daemon=True, name="selection").start()
-
-    def _open_selection_bubble(self, anchor) -> None:
-        if not self._pending_selection:
-            return
-        text, book, _ = self._pending_selection
-        clean = textutil.normalize(text)
-        if not clean:
-            return
-        # 单个词先走本地词典，不花 token
-        if textutil.looks_like_word(clean):
-            log.info("选词走词典")
-            self.bubble.hide()
-            self._open_dictionary(clean, anchor)
-            return
-        log.info("选段走翻译（%d 字）", len(clean))
-        # 长段落直接进大浮窗：气泡放不下，也没法滚动
-        if len(clean) >= 280:
-            self.bubble.hide()
-            self._begin(clean, book, anchor)
-            return
-        self._bubble_gen += 1
-        gen = self._bubble_gen
-        self.bubble.show_loading(anchor)
-
-        def worker() -> None:
-            try:
-                payload = self._translate_sync(clean, book)
-                self.events.put(("bubble_result", (gen, payload, anchor)))
-            except Exception as exc:  # noqa: BLE001
-                log.exception("气泡翻译失败")
-                self.events.put(("bubble_error", (gen, str(exc), anchor)))
-
-        threading.Thread(target=worker, daemon=True, name="bubble").start()
-
-    def _dict_jump(self, word: str) -> None:
-        """在查词卡片里点原形/变位形式：按新词再查一次。"""
-        if not word:
-            return
-        anchor = getattr(self.popup, "_anchor", (300, 200)) or (300, 200)
-        self._open_dictionary(word, anchor)
-
-    def _open_dictionary(self, word: str, anchor) -> None:
-        """本地词典查词：不调用模型。"""
-
-        def worker() -> None:
-            try:
-                hits = self.service.lookup_all(word)
-            except Exception:  # noqa: BLE001
-                log.exception("查词失败")
-                hits = []
-            log.info("查词命中 %d 本词典", len(hits))
-            if hits:
-                self.events.put(("dict", (word, hits[0]["entry"], anchor, hits)))
-            else:
-                self.events.put(("dict_missing", (word, anchor)))
-
-        threading.Thread(target=worker, daemon=True, name="lookup").start()
-
-    def show_entry_html(self, word: str, lang: str = "") -> None:
-        """打开词典原版条目（Chromium 渲染）。"""
-        html = self.service.entry_html(word, lang or "en")
-        if not html:
-            self.toast("这本词典没有原版条目")
-            return
-        if self._entry_viewer is None or not self._entry_viewer.win or not self._entry_viewer.win.winfo_exists():
-            self._entry_viewer = EntryViewer(
-                self.root, on_close=lambda: setattr(self, "_entry_viewer", None)
-            )
-        self._entry_viewer.show(html, word)
-
-    def _show_details(self, payload: dict, anchor) -> None:
-        self.popup.show_result(payload, anchor)
-
-    def _open_chat_from_selection(self, anchor) -> None:
-        """悬浮按钮点「聊」：不翻译，直接围绕选中的段落开聊。"""
-        if not self._pending_selection:
-            return
-        text, book, _pos = self._pending_selection
-        self.popup.show_chat_pending(text, book, anchor)
-
-    def _bubble_chat(self, payload: dict, anchor) -> None:
-        """从气泡直接进入对话：先在浮窗里展示译文，再切到聊天。"""
-        self.popup.show_result(payload, anchor)
-        self.popup._open_chat()
-
-    # ------------------------------------------------------------------ 对话
-    def start_chat(self, payload: dict) -> dict:
-        return self.service.start_conversation(
-            payload.get("book") or "",
-            payload.get("source_lang") or "",
-            payload.get("text") or "",
-            payload.get("translation") or "",
-        )
-
-    def ask_chat(self, conv_id, question: str) -> None:
-        def worker() -> None:
-            try:
-                last = [0.0]
-
-                def on_delta(partial: str) -> None:
-                    import time as _t
-
-                    now = _t.time()
-                    if now - last[0] < 0.05:
-                        return
-                    last[0] = now
-                    self.events.put(("chat_delta", (conv_id, partial)))
-
-                result = self.service.ask(conv_id, question, on_delta=on_delta)
-                self.events.put(("chat_reply", (conv_id, result["reply"])))
-            except Exception as exc:  # noqa: BLE001
-                log.exception("对话失败")
-                self.events.put(("chat_error", (conv_id, str(exc))))
-
-        threading.Thread(target=worker, daemon=True, name="chat").start()
-
-    def _retry(self) -> None:
-        if self.popup._pending_text:
-            self.start_translation(self.popup._pending_text)
-
-    # ------------------------------------------------------------------ 回调
     def save_word(self, data: dict) -> dict:
         result = self.service.add_vocab(**data)
         return result
