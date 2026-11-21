@@ -11,12 +11,12 @@ import json
 import tkinter as tk
 
 from . import textutil
-from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 from .panel_chat import PanelChatMixin
 from .panel_dict import PanelDictMixin
 from .panel_suggest import PanelSuggestMixin
 from .panel_translate import PanelTranslateMixin
 from .slimscroll import SlimScrollbar
+from .theme import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 
 
 class MainPanel(

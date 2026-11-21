@@ -193,8 +193,17 @@ rc/service_common.py      chunking/cache helpers shared by the mixins
 rc/llm.py                 chat/translation client (streaming, JSON parsing)
 rc/rich.py                dictionary HTML → structured senses/examples
 rc/mdx.py                 pure-stdlib MDX/MDD reader
-rc/panel.py               main window (translate / dictionary / chat / words)
-rc/popup.py               selection popup and bubble
+rc/panel.py               main window shell: layout, books, scrolling, status
+rc/panel_translate.py     translate tab: streaming output, progress, errors
+rc/panel_dict.py          dictionary tab: lookup, senses, morphology, save
+rc/panel_chat.py          conversation tab: messages and streaming replies
+rc/panel_suggest.py       dictionary suggestion popup and key handling
+rc/popup.py               selection popup shell: lifecycle, placement, wheel
+rc/popup_dict.py          dictionary card: senses, morphology, similar words
+rc/popup_chat.py          inline chat card: bubbles, input bar, streaming
+rc/popup_result.py        translation result card: terms, grammar, actions
+rc/popup_common.py        small popup helpers
+rc/theme.py               shared palette and font
 rc/store.py               SQLite storage
 rc/i18n.py                zh/en display-layer translation
 ```
