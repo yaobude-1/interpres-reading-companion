@@ -29,6 +29,8 @@ This is the command used by `.github/workflows/checks.yml`, after the
 - panel geometry restore, so a saved window size is actually applied
 - the translation-history window and the panel playback path (this one does
   open Tk windows, and it passes on `windows-latest`)
+- the settings window: every page builds and switches, plus the UX scenario
+  and voice-preview scripts
 
 The gate must pass before a release. It does not require a visible desktop,
 though some pronunciation checks are skipped when the machine has no matching
