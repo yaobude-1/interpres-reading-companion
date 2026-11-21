@@ -156,6 +156,9 @@ class PanelDictMixin:
             tk.Label(
                 head, text=source_label(entry["source"]), bg=BG, fg=GREEN, font=(FONT_FAMILY, 8)
             ).pack(side="left", padx=(8, 0))
+        redirect = (entry.get("redirect") or "").strip()
+        if redirect:
+            self._render_redirect_notice(redirect, entry, word)
 
         alternatives = alternatives or []
         if len(alternatives) > 1:
@@ -220,6 +223,40 @@ class PanelDictMixin:
         if morph:
             self._panel_render_tables(self._panel_conj, morph)
 
+
+    def _render_redirect_notice(self, target: str, entry: dict, word: str) -> None:
+        """词典把查询词重定向到另一个词条：明确提示，别冒充。"""
+        box = tk.Frame(self.dict_result, bg=PANEL_ALT)
+        box.pack(fill="x", pady=(4, 6))
+        source = source_label(entry.get("source") or "")
+        tk.Label(
+            box,
+            text=f"{source or '词典'} 把「{word}」重定向到「{target}」，"
+            f"下面是 {target} 的词条。",
+            bg=PANEL_ALT,
+            fg=MUTED,
+            font=(FONT_FAMILY, 8),
+            justify="left",
+            anchor="w",
+            wraplength=520,
+        ).pack(fill="x", padx=10, pady=(6, 2))
+        row = tk.Frame(box, bg=PANEL_ALT)
+        row.pack(fill="x", padx=10, pady=(0, 6))
+        view = tk.Label(
+            row, text=f"查看 {target}", bg=PANEL_ALT, fg=ACCENT,
+            font=(FONT_FAMILY, 8), cursor="hand2",
+        )
+        view.pack(side="left")
+        view.bind("<Button-1>", lambda _e: self._dict_lookup_word(target))
+        ai = tk.Label(
+            row, text="用 AI 译这个词", bg=PANEL_ALT, fg=ACCENT,
+            font=(FONT_FAMILY, 8), cursor="hand2",
+        )
+        ai.pack(side="left", padx=(10, 0))
+        ai.bind(
+            "<Button-1>",
+            lambda _e: self.cb.get("translate", lambda *_a: None)(word, self.book),
+        )
 
     def _panel_show_tab(self, name: str) -> None:
         if not hasattr(self, "_panel_tab_conj") or not hasattr(self, "_panel_conj"):

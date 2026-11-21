@@ -3,6 +3,13 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
+## Unreleased
+
+- Dictionary entries reached through an MDX `@@@LINK` redirect are labelled:
+  inflections show "按原形 X 查到"; lexical redirects (e.g. decomposition →
+  composition) show a notice with "查看目标词条" and "用 AI 译" actions instead of
+  presenting the other word's senses as the query's own.
+
 ## 1.0.6 — 2026-11-22
 
 ### Added

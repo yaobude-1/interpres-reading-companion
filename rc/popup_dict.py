@@ -113,6 +113,9 @@ class DictViewMixin:
             self._label(head, source_label(source), fg=GREEN, font=(FONT_FAMILY, 8)).pack(
                 side="left", padx=(8, 0)
             )
+        redirect = (entry.get("redirect") or "").strip()
+        if redirect:
+            self._show_redirect_notice(redirect, entry)
 
         alternatives = alternatives or []
         if len(alternatives) > 1:
@@ -195,6 +198,34 @@ class DictViewMixin:
             self._dict_meaning.pack(fill="x")
             self._dict_tab_meaning.configure(bg=PANEL, fg=TEXT)
             self._dict_tab_conj.configure(bg=BG, fg=DIM)
+
+    def _show_redirect_notice(self, target: str, entry: dict) -> None:
+        """词典把查询词重定向到了另一个词条：明确提示，别冒充。"""
+        source = source_label(entry.get("source") or "")
+        box = tk.Frame(self.body, bg=PANEL_ALT)
+        box.pack(fill="x", pady=(0, 8))
+        self._label(
+            box,
+            f"{source or '词典'} 把「{self._dict_word}」重定向到「{target}」，"
+            f"下面是 {target} 的词条。",
+            fg=MUTED,
+            font=(FONT_FAMILY, 8),
+            bg=PANEL_ALT,
+        ).pack(fill="x", padx=10, pady=(6, 2))
+        row = tk.Frame(box, bg=PANEL_ALT)
+        row.pack(fill="x", padx=10, pady=(0, 6))
+        view = self._label(
+            row, f"查看 {target}", fg=ACCENT, font=(FONT_FAMILY, 8), bg=PANEL_ALT
+        )
+        view.pack(side="left")
+        view.configure(cursor="hand2")
+        view.bind("<Button-1>", lambda _e: self._dict_jump(target))
+        ai = self._label(
+            row, "用 AI 译这个词", fg=ACCENT, font=(FONT_FAMILY, 8), bg=PANEL_ALT
+        )
+        ai.pack(side="left", padx=(10, 0))
+        ai.configure(cursor="hand2")
+        ai.bind("<Button-1>", lambda _e: self._translate_dict_word())
 
     def _render_dict_senses(self, parent, entry: dict) -> None:
         matched = entry.get("matched") or ""

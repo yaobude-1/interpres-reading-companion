@@ -36,6 +36,7 @@ jobs:
           python tests/test_popup_long.py
           python tests/test_settings_smoke.py
           python tests/test_chat_context.py
+          python tests/test_dictionary_redirect.py
           python tests/test_ux_scenarios.py
           python tests/test_voice_preview.py
           python tests/test_language_naming.py

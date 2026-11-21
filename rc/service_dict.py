@@ -92,6 +92,7 @@ class DictMixin(ServiceBase):
                         entry["morph"] = analysis
             if not entry:
                 continue
+            self._annotate_redirect(entry, text, code)
             # 英语：即使原词本身有条目，也把可能的原形列出来让用户选
             if code == "en" and (entry.get("matched") or "").lower() == text.lower():
                 suggestions: list[str] = []
@@ -104,7 +105,10 @@ class DictMixin(ServiceBase):
                 if suggestions:
                     entry["lemma_suggestions"] = suggestions[:4]
             matched = entry.get("matched") or ""
-            if matched and matched.lower() != text.lower():
+            if entry.get("redirect"):
+                # 词典把查询词重定向到另一个词条；不要生成变形表
+                pass
+            elif matched and matched.lower() != text.lower():
                 # 靠词形还原命中的原形：补上「这是哪个变形」的说明和整表
                 analysis = self.morph_analysis(text, code)
                 if analysis:
@@ -136,6 +140,26 @@ class DictMixin(ServiceBase):
             )
         )
         return hits
+
+    def _annotate_redirect(self, entry: dict, query: str, code: str) -> str:
+        """标记 MDX @@@LINK 重定向：屈折词返回 inflection，词义重定向返回 lexical。"""
+        headword = str(entry.get("word") or "").strip()
+        if not headword or headword.casefold() == query.casefold():
+            return ""
+        forms = {c.casefold() for c in lemma.candidates(query, code)}
+        if headword.casefold() in forms:
+            entry["matched"] = headword
+            if not entry.get("morph"):
+                analysis = self.morph_analysis(query, code)
+                if analysis:
+                    entry["morph"] = analysis
+                else:
+                    table = self.conjugation_table(query, code)
+                    if table:
+                        entry["morph"] = table
+            return "inflection"
+        entry["redirect"] = headword
+        return "lexical"
 
     def conjugation_table(self, word: str, lang: str) -> dict | None:
         """原形词条的变位/变格表（查原形时也能看「时态」页签）。"""
@@ -238,18 +262,20 @@ class DictMixin(ServiceBase):
                     entry["query"] = word
                     entry["matched"] = candidate
                     entry["lang"] = code
-                    if candidate.lower() != word.lower():
-                        analysis = self.morph_analysis(word, code)
-                        if analysis:
-                            entry["morph"] = analysis
-                    else:
-                        table = self.conjugation_table(word, code)
-                        if table:
-                            entry["morph"] = table
-                        else:
+                    kind = self._annotate_redirect(entry, word, code)
+                    if kind != "lexical":
+                        if (entry.get("matched") or "").lower() != word.lower():
                             analysis = self.morph_analysis(word, code)
                             if analysis:
                                 entry["morph"] = analysis
+                        else:
+                            table = self.conjugation_table(word, code)
+                            if table:
+                                entry["morph"] = table
+                            else:
+                                analysis = self.morph_analysis(word, code)
+                                if analysis:
+                                    entry["morph"] = analysis
                     return entry
         # 查不到词条时，试着分析变位/变格，给出原形词条
         for code in langs:
