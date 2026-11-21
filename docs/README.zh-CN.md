@@ -2,7 +2,7 @@
 
 一款 Windows 外文阅读助手：在阅读器里选中文字，按 `Ctrl+Alt+T` 翻译；结合本地 MDX 词典给出音标、释义和例句；生词按语言分本管理，可同步到 Anki。
 
-[English](README.md) | 中文
+[English](../README.md) | 中文
 
 ![主面板](screenshots/panel-zh.png)
 
@@ -16,11 +16,13 @@
 - **语言是数据，不是代码**：可以添加任意语言（意大利语、日语、俄语……），填代码、显示名、音色和牌组即可；词典按语言挂载。
 - **发音**：Windows SAPI/OneCore、Edge 在线神经音色，或自定义命令（Piper、eSpeak、自己的脚本）。
 - **流式显示**：译文和对话按可配置的字速逐字显示。
+- **记录**：翻译记录和对话记录按书分组，可搜索，可导出 Markdown / TSV / CSV。
+- **本地 HTTP 接口**：仅回环、带 token，方便自己写脚本调用（翻译、生词、术语、发音、Anki 推送）。
 - **托盘图标、中英文界面（切换语言会自动重启）、深色主题。**
 
 | 设置 | 生词本 | 添加语言 |
 |---|---|---|
-| ![设置](screenshots/settings-en.png) | ![生词本](screenshots/vocabulary.png) | ![添加语言](screenshots/language-dialog.png) |
+| ![设置](screenshots/settings-zh.png) | ![生词本](screenshots/vocabulary-zh.png) | ![添加语言](screenshots/language-dialog-zh.png) |
 
 ## 环境
 
@@ -48,7 +50,7 @@
 
 1. 从 Releases 下载 `Interpres.zip` 并解压。
 2. 进入解压后的文件夹，运行 `Interpres.exe`。它是绿色版，数据保存在用户目录，不往系统里安装东西。
-3. 按 `Ctrl+Alt+S` 打开设置，填入 API Key，点 **测试连接**。
+3. 按 `Ctrl+Alt+S` 打开主面板，点右上角齿轮进入设置，填入 API Key，点 **测试连接**。
 4. 在阅读器里选中文字，按 `Ctrl+Alt+T`。
 
 每个版本改了什么：见 [`CHANGELOG.md`](../CHANGELOG.md) 或 Releases 页面。
@@ -63,7 +65,7 @@
 
 ## Anki 卡片
 
-![Anki 卡片设置](screenshots/anki-cards.png)
+![Anki 卡片设置](screenshots/anki-cards-zh.png)
 
 默认两套笔记类型：
 
@@ -95,7 +97,7 @@
 
 词典是有版权的作品，请合法获取和使用。词典文件不会被发送到任何地方，查询完全在本地进行。
 
-如果你的词典 HTML 结构特殊，不用改代码，可以在 **设置 → 语言、词典与发音 → 词典设置… → 词典映射…** 里配置。字段格式和朗文示例见 [docs/DICT_PROFILES.md](DICT_PROFILES.md)。
+如果你的词典 HTML 结构特殊，不用改代码，可以在 **设置 → 语言、词典与发音 → 词典设置… → 词典映射…** 里配置。字段格式和朗文示例见 [DICT_PROFILES.md](DICT_PROFILES.md)。
 
 ## 数据与隐私
 
@@ -116,6 +118,17 @@ exports/      CSV/TSV/Markdown 导出
 - Microsoft Edge TTS 接口（仅当选了 Edge 引擎时）
 
 没有遥测。API Key 用 Windows DPAPI 加密后存在本地，除了向你自己配置的接口发请求，不会离开这台机器。
+
+## 本地 HTTP 接口
+
+程序还会在 `127.0.0.1:18777` 监听（端口可用 `server_port` 调整）。除 `GET /api/health` 外，
+请求都要带 `X-RC-Token` 头，值就是 `config.json` 里的 `server_token`；服务只绑定回环，
+请求体上限 1 MiB。
+
+- `GET /api/health`、`GET /api/status`
+- `POST /api/translate`、`GET|POST /api/vocab`、`GET|POST /api/glossary`
+- `POST /api/anki/push`、`POST /api/export`、`POST /api/speak`、`GET /api/tts`
+- `POST /api/config/test`、`POST /api/config`、`POST /api/show-settings`、`POST /api/show-panel`
 
 ## 从源码运行
 
@@ -147,6 +160,16 @@ python tests\test_ux_scenarios.py
 ```
 
 部分测试使用模拟的 OpenAI/AnkiConnect 服务；Anki 未运行时，相关集成测试会自动跳过。
+
+CI 除 `run_checks.py` 外还会跑回归脚本和 Tk 界面测试，完整列表见 `.github/workflows/checks.yml`。
+静态检查（ruff）也是门禁的一部分，必须零告警：
+
+```powershell
+python -m pip install -r requirements-dev.txt
+ruff check .
+```
+
+发布清单和“哪些测试必须手动跑”的区别见 [`TESTING.md`](TESTING.md)。
 
 ## 架构
 
@@ -191,6 +214,9 @@ rc/tts.py                 发音：SAPI、Edge 或自定义命令
 rc/theme.py               共享配色与字体
 rc/store.py               SQLite 存储
 rc/i18n.py                中英文显示层翻译
+# 其余对话框/子窗口：book_settings、entry_settings、selection_settings、
+# dictionary_settings、dict_profiles、language_dialog、anki_card_settings、
+# wordbook_anki_settings、vocab_panel、translation_ui、chat_ui
 ```
 
 更完整的变更记录见 [`CHANGELOG.md`](../CHANGELOG.md)。

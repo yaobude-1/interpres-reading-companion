@@ -16,6 +16,10 @@ English | [中文说明](docs/README.zh-CN.md)
 - **Languages are data, not code** — add any language (Italian, Japanese, Russian, …): code, display name, voice, deck. Dictionaries attach per language.
 - **TTS** — Windows SAPI/OneCore voices, Edge online neural voices, or a custom command (Piper, eSpeak, your own script).
 - **Streaming UI** — translation and chat stream at a configurable character speed.
+- **History** — translation and conversation history per book, searchable and
+  exportable to Markdown, TSV or CSV.
+- **Local HTTP API** — a token-protected, loopback-only endpoint for your own
+  scripts (translate, vocabulary, glossary, TTS, Anki push).
 - **Tray icon, Chinese/English UI (language switch restarts automatically), dark theme.**
 
 | Settings | Vocabulary | Language setup |
@@ -48,7 +52,7 @@ What you *do* get is the source, the build script, and a local-first workflow yo
 
 1. Download `Interpres.zip` from Releases and extract it.
 2. Run `Interpres.exe` from the extracted folder. It is portable and keeps its data in your user profile; nothing is installed system-wide.
-3. Open settings (`Ctrl+Alt+S`), paste your API key, click **Test connection**.
+3. Press `Ctrl+Alt+S` to open the panel, then click the gear (top right) to open settings; paste your API key and click **Test connection**.
 4. Select text in a reader and press `Ctrl+Alt+T`.
 
 What changed in each version: see [CHANGELOG.md](CHANGELOG.md) or the Releases page.
@@ -70,7 +74,7 @@ By default the sync uses two note types:
 - **Dict2Anki** for English (when installed and enabled in settings)
 - **Interpres** for other languages, with structured senses, paired examples, audio and the book title
 
-To customise cards, open **Settings → Anki → 卡片模板…**:
+To customise cards, open **Settings → Anki → Card templates…**:
 
 - choose any existing note type and map its fields to the generated content
   (Word, Phonetic, POS, Meaning, Example, ExampleCN, Audio, Book, Language)
@@ -86,7 +90,7 @@ are left empty.
 
 ### Per-wordbook settings
 
-Open **Words tab → Anki 设置…** to configure cards for one wordbook:
+Open **Words tab → Anki settings…** to configure cards for one wordbook:
 
 - **Follow global** (default): shares the global note type and templates from
   Settings → Card templates
@@ -102,7 +106,7 @@ are left untouched, and the dialog warns first.
 
 ## Dictionaries
 
-The app does not ship dictionaries. Put `.mdx`/`.mdd` files anywhere and add them in **Settings → 语言、词典与发音 → 词典设置…**. The parser supports MDX 2.0; encrypted or MDX 1.2 files are not supported yet.
+The app does not ship dictionaries. Put `.mdx`/`.mdd` files anywhere and add them in **Settings → Language & audio → Dictionary settings…**. The parser supports MDX 2.0; encrypted or MDX 1.2 files are not supported yet.
 
 The original-entry viewer keeps the dictionary's HTML and CSS, but removes
 dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links
@@ -112,7 +116,7 @@ correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
 
-If your dictionary uses an unusual HTML layout, map it without code via **Settings → 语言、词典与发音 → 词典设置… → 词典映射…**. Schema and a working Longman example: [docs/DICT_PROFILES.md](docs/DICT_PROFILES.md).
+If your dictionary uses an unusual HTML layout, map it without code via **Settings → Language & audio → Dictionary settings… → dictionary mapping (词典映射…)**, which still shows its Chinese title in the English UI. Schema and a working Longman example: [docs/DICT_PROFILES.md](docs/DICT_PROFILES.md).
 
 ## Data & privacy
 
@@ -134,6 +138,18 @@ Network access is limited to:
 
 No telemetry. The API key is encrypted at rest with Windows DPAPI and never
 leaves your machine except as a request to the endpoint you configured.
+
+## Local HTTP API
+
+The app also listens on `127.0.0.1:18777` (configurable via `server_port`).
+Every request except `GET /api/health` needs the `X-RC-Token` header, whose value
+is `server_token` in `config.json`; the server binds to loopback only and rejects
+request bodies over 1 MiB.
+
+- `GET /api/health`, `GET /api/status`
+- `POST /api/translate`, `GET|POST /api/vocab`, `GET|POST /api/glossary`
+- `POST /api/anki/push`, `POST /api/export`, `POST /api/speak`, `GET /api/tts`
+- `POST /api/config/test`, `POST /api/config`, `POST /api/show-settings`, `POST /api/show-panel`
 
 ## Run from source
 
@@ -165,9 +181,11 @@ python tests\test_ux_flows.py
 python tests\test_ux_scenarios.py
 ```
 
-`tests\run_checks.py` is the automated CI gate. The `tests\test_*.py` scripts
-are direct assertions; some need a Windows desktop, clipboard, or Anki.
-`tests\ui_*.py` are manual probes and screenshot tools, not part of CI.
+`tests\run_checks.py` is the core of the automated CI gate; the workflow also runs
+the regression scripts and Tk GUI tests listed in `.github/workflows/checks.yml`.
+The `tests\test_*.py` scripts are direct assertions; some need a Windows desktop,
+clipboard, or Anki. `tests\ui_*.py` are manual probes and screenshot tools, not
+part of CI.
 
 Static checks are also part of the gate (`ruff.toml`); they must stay clean:
 
@@ -224,6 +242,9 @@ rc/tts.py                 speech: SAPI, Edge or a custom command
 rc/theme.py               shared palette and font
 rc/store.py               SQLite storage
 rc/i18n.py                zh/en display-layer translation
+# remaining dialog windows: book_settings, entry_settings, selection_settings,
+# dictionary_settings, dict_profiles, language_dialog, anki_card_settings,
+# wordbook_anki_settings, vocab_panel, translation_ui, chat_ui
 ```
 
 ## Known limitations and rough edges

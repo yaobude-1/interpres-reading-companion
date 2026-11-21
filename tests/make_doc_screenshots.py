@@ -50,6 +50,7 @@ def main() -> int:
     if mode not in ("en", "zh"):
         print("usage: make_doc_screenshots.py [en|zh]")
         return 2
+    suffix = "" if mode == "en" else "-zh"
     OUT.mkdir(parents=True, exist_ok=True)
     shutil.rmtree(DATA, ignore_errors=True)
     DATA.mkdir(parents=True)
@@ -174,31 +175,28 @@ def main() -> int:
                 app.root.after(700, next_step)
             elif step == 1:
                 grab(app.panel.win, f"panel-{mode}.png")
-                if mode == "zh":
-                    app.shutdown()
-                    return
                 app.panel._show_tab("vocab")
                 app.root.after(700, next_step)
             elif step == 2:
-                grab(app.panel.win, "vocabulary.png")
+                grab(app.panel.win, f"vocabulary{suffix}.png")
                 app.open_settings()
                 if app._settings:
                     app._settings.win.geometry("+60+30")
                 app.root.after(900, next_step)
             elif step == 3:
                 if app._settings:
-                    grab(app._settings.win, "settings-en.png")
+                    grab(app._settings.win, f"settings-{mode}.png")
                 dlg = LanguageDialog(app.panel.win, ["Microsoft Zira Desktop", "Microsoft David Desktop"])
                 dlg.entry_code.insert(0, "it")
-                dlg.entry_zh.insert(0, "Italian")
+                dlg.entry_zh.insert(0, "意大利语")
                 dlg.entry_label.insert(0, "Italiano")
                 dlg.win.geometry("+720+80")
-                app.root.after(800, lambda: (grab(dlg.win, "language-dialog.png"), dlg.win.destroy()))
+                app.root.after(800, lambda: (grab(dlg.win, f"language-dialog{suffix}.png"), dlg.win.destroy()))
                 app.root.after(1500, next_step)
             elif step == 4:
                 card = AnkiCardSettings(app.panel.win, cfg, DemoAnki())
                 card.win.geometry("+160+40")
-                app.root.after(1100, lambda: (grab(card.win, "anki-cards.png"), card.win.destroy()))
+                app.root.after(1100, lambda: (grab(card.win, f"anki-cards{suffix}.png"), card.win.destroy()))
                 app.root.after(2000, next_step)
             elif step >= 5:
                 app.shutdown()
