@@ -63,14 +63,27 @@ class VocabPanel:
         defaults = [self._COL_DEFAULTS[c] for c in self._COLS]
         mins = [self._COL_MINS[c] for c in self._COLS]
         self._col_widths = list(defaults)
-        saved = config.get("vocab_col_widths")
+        self._col_ratios = [w / sum(defaults) for w in defaults]
+        saved = config.get("vocab_col_ratios")
         if isinstance(saved, list) and len(saved) == len(self._COLS):
             try:
-                values = [int(v) for v in saved]
+                ratios = [float(v) for v in saved]
             except (TypeError, ValueError):
-                values = []
-            if values and all(v >= m for v, m in zip(values, mins, strict=False)):
-                self._col_widths = values
+                ratios = []
+            if ratios and sum(ratios) > 0 and all(v >= 0 for v in ratios):
+                total = sum(ratios)
+                self._col_ratios = [v / total for v in ratios]
+        else:
+            # 兼容上一版保存的绝对宽度，折算成比例
+            old = config.get("vocab_col_widths")
+            if isinstance(old, list) and len(old) == len(self._COLS):
+                try:
+                    values = [int(v) for v in old]
+                except (TypeError, ValueError):
+                    values = []
+                if values and all(v >= m for v, m in zip(values, mins, strict=False)):
+                    total = sum(values)
+                    self._col_ratios = [v / total for v in values]
         self._sort_key = str(config.get("vocab_sort_key") or "time")
         if self._sort_key not in self._COL_LABELS:
             self._sort_key = "time"
@@ -360,23 +373,26 @@ class VocabPanel:
             self._fit_widths(event.width)
 
     def _fit_widths(self, total: int) -> None:
-        """窗口尺寸变化时保持铺满：多余的给释义，不够就先压释义再压右侧列。"""
-        widths = list(self._col_widths)
+        """按保存的比例铺满表格；低于最小宽度时先压释义，再从右侧列补。"""
         mins = [self._COL_MINS[c] for c in self._COLS]
+        widths = [
+            max(m, int(round(total * r)))
+            for m, r in zip(mins, self._col_ratios, strict=False)
+        ]
         flex = self._COLS.index("meaning")
-        current = sum(widths)
-        if current < total:
-            widths[flex] += total - current
-        elif current > total:
-            need = current - total
-            order = [flex] + [i for i in range(len(widths) - 1, -1, -1) if i != flex]
-            for i in order:
-                if need <= 0:
-                    break
-                take = min(need, widths[i] - mins[i])
-                if take > 0:
-                    widths[i] -= take
-                    need -= take
+        diff = total - sum(widths)
+        if diff:
+            widths[flex] += diff
+            if widths[flex] < mins[flex]:
+                deficit = mins[flex] - widths[flex]
+                widths[flex] = mins[flex]
+                for i in (0, 1, 3, 4, 5):
+                    if deficit <= 0:
+                        break
+                    take = min(deficit, widths[i] - mins[i])
+                    if take > 0:
+                        widths[i] -= take
+                        deficit -= take
         self._col_widths = widths
         self._apply_widths(widths)
 
@@ -422,7 +438,10 @@ class VocabPanel:
             self.word_tree.grab_release()
         except tk.TclError:
             pass
-        self.config.data["vocab_col_widths"] = list(self._col_widths)
+        total = sum(self._col_widths) or 1
+        self._col_ratios = [w / total for w in self._col_widths]
+        self.config.data["vocab_col_ratios"] = [round(r, 4) for r in self._col_ratios]
+        self.config.data.pop("vocab_col_widths", None)
         self.config.save()
         return "break"
 
