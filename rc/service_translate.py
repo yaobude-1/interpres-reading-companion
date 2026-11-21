@@ -16,11 +16,12 @@ from .service_common import (
     _starts_sentence,
     split_chunks,
 )
+from .service_base import ServiceBase
 
 log = logging.getLogger("rc")
 
 
-class TranslateMixin:
+class TranslateMixin(ServiceBase):
     def translate(
         self,
         text: str,

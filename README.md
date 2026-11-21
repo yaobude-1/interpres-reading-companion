@@ -183,7 +183,8 @@ Some tests use a mock OpenAI/AnkiConnect server; Anki integration tests skip aut
 
 ```
 app.py                    entry point, hotkeys, tray, local HTTP API
-rc/service.py             Service façade (composition) + chat, history, status
+rc/service.py             Service (mixin composition): chat, history, status
+rc/service_base.py        annotated attributes shared by the service mixins
 rc/service_translate.py   translation pipeline: chunking, cache, streaming
 rc/service_dict.py        dictionary lookup, morphology, entry HTML
 rc/service_vocab.py       vocabulary, languages, glossary

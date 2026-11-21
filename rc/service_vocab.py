@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from .service_base import ServiceBase
 
-class VocabMixin:
+
+class VocabMixin(ServiceBase):
     def add_vocab(
         self,
         *,

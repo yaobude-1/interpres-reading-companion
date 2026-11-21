@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 
 from . import audio, lemma
+from .service_base import ServiceBase
 
 log = logging.getLogger("rc")
 
 
-class DictMixin:
+class DictMixin(ServiceBase):
     def has_dictionaries(self) -> bool:
         """有没有配置任何本地词典。"""
         for code in (self.config.data.get("languages") or {}):

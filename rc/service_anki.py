@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 
 from .anki import export_tsv
+from .service_base import ServiceBase
 
 
-class AnkiMixin:
+class AnkiMixin(ServiceBase):
     _POS_SHORT = {
         "adjective": "adj.",
         "adverb": "adv.",
