@@ -118,6 +118,21 @@ Before replacing a release asset, verify on Windows:
 - [ ] Closing/restarting leaves no second instance and no stale tray icon.
 - [ ] The packaged EXE has the same version and behaviour as the source build.
 
+## UIA live test (opt-in)
+
+`rc/uia_context.ps1` needs a real Edge window and an interactive desktop, so it
+is not part of CI:
+
+```powershell
+$env:INTERPRES_LIVE_UIA = "1"
+python tests\test_uia_live.py
+```
+
+It launches Edge with a temporary profile, selects the sample paragraph with
+Ctrl+A, then asserts `read_context()` returns that paragraph. Run it on a
+Windows desktop after changing the UIA helper; CI covers the JSON parsing and
+wiring path with a mock.
+
 ## CI limitations
 
 CI runs on GitHub's `windows-latest` image (Windows Server), not desktop
