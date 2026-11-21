@@ -40,3 +40,4 @@ jobs:
           python tests/test_language_naming.py
           python tests/test_vocab_word_card.py
           python tests/test_vocab_sort.py
+          python tests/test_vocab_columns.py

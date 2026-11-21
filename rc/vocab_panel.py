@@ -11,6 +11,32 @@ from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PA
 
 
 class VocabPanel:
+    _COLS = ("word", "reading", "meaning", "book", "time", "synced")
+    _COL_LABELS = {
+        "word": "单词",
+        "reading": "音标",
+        "meaning": "释义",
+        "book": "来源",
+        "time": "时间",
+        "synced": "同步",
+    }
+    _COL_DEFAULTS = {
+        "word": 95,
+        "reading": 72,
+        "meaning": 150,
+        "book": 55,
+        "time": 78,
+        "synced": 48,
+    }
+    _COL_MINS = {
+        "word": 52,
+        "reading": 38,
+        "meaning": 68,
+        "book": 34,
+        "time": 68,
+        "synced": 44,
+    }
+
     def __init__(
         self,
         parent: tk.Frame,
@@ -29,16 +55,20 @@ class VocabPanel:
         self.book_id: int | None = None
         self._sync_result = None
         self._sync_ready = False
-        self._col_labels = {
-            "word": "单词",
-            "reading": "音标",
-            "meaning": "释义",
-            "book": "来源",
-            "time": "添加时间",
-            "synced": "同步",
-        }
+        defaults = [self._COL_DEFAULTS[c] for c in self._COLS]
+        default_ratios = [w / sum(defaults) for w in defaults]
+        saved = config.get("vocab_col_ratios")
+        self._col_ratios = default_ratios
+        if isinstance(saved, list) and len(saved) == len(self._COLS):
+            try:
+                ratios = [float(v) for v in saved]
+            except (TypeError, ValueError):
+                ratios = default_ratios
+            if sum(ratios) > 0 and all(v >= 0 for v in ratios):
+                total = sum(ratios)
+                self._col_ratios = [v / total for v in ratios]
         self._sort_key = str(config.get("vocab_sort_key") or "time")
-        if self._sort_key not in self._col_labels:
+        if self._sort_key not in self._COL_LABELS:
             self._sort_key = "time"
         # 时间列默认新→旧，其余列默认正序
         self._sort_desc = bool(config.get("vocab_sort_desc", self._sort_key == "time"))
@@ -119,18 +149,20 @@ class VocabPanel:
         self.count_label.pack(side="right")
 
         # 先占住底部按钮区，再让表格撑满剩余空间
-        cols = ("word", "reading", "meaning", "book", "time", "synced")
-        self.word_tree = ttk.Treeview(right, columns=cols, show="headings", selectmode="extended")
-        for key, label, width in (
-            ("word", "单词", 85),
-            ("reading", "音标", 60),
-            ("meaning", "释义", 110),
-            ("book", "来源", 65),
-            ("time", "添加时间", 65),
-            ("synced", "同步", 40),
-        ):
-            self.word_tree.heading(key, text=tr(label), command=lambda c=key: self._sort_by(c))
-            self.word_tree.column(key, width=width, anchor="w", stretch=(key == "meaning"))
+        self.word_tree = ttk.Treeview(
+            right, columns=self._COLS, show="headings", selectmode="extended"
+        )
+        for key in self._COLS:
+            self.word_tree.heading(
+                key, text=tr(self._COL_LABELS[key]), command=lambda c=key: self._sort_by(c)
+            )
+            self.word_tree.column(
+                key,
+                width=self._COL_DEFAULTS[key],
+                minwidth=self._COL_MINS[key],
+                anchor="w",
+                stretch=False,
+            )
         scroll = tk.Scrollbar(right, orient="vertical", command=self.word_tree.yview)
         xscroll = tk.Scrollbar(right, orient="horizontal", command=self.word_tree.xview)
         self.word_tree.configure(yscrollcommand=scroll.set, xscrollcommand=xscroll.set)
@@ -139,6 +171,8 @@ class VocabPanel:
         self.word_tree.pack(side="left", fill="both", expand=True, pady=(6, 0))
         self.word_tree.bind("<Delete>", lambda _e: self.delete_selected())
         self.word_tree.bind("<Double-1>", self._open_word)
+        self.word_tree.bind("<Configure>", self._on_tree_configure)
+        self.word_tree.bind("<ButtonRelease-1>", self._on_tree_release)
 
         self._style_trees()
 
@@ -272,7 +306,7 @@ class VocabPanel:
 
     def _sort_by(self, column: str) -> None:
         """点列头排序：同列切换升降序，换列用该列的默认方向。"""
-        if column not in self._col_labels:
+        if column not in self._COL_LABELS:
             return
         if column == self._sort_key:
             self._sort_desc = not self._sort_desc
@@ -305,7 +339,7 @@ class VocabPanel:
                     word.get("reading") or "",
                     (word.get("meaning") or "")[:80],
                     word.get("book") or "",
-                    (word.get("updated") or "")[:16],
+                    (word.get("updated") or "")[:10],
                     "已同步" if word.get("synced") else "未同步",
                 ),
             )
@@ -314,8 +348,65 @@ class VocabPanel:
             self.word_tree.selection_set(keep)
         self._update_headings()
 
+    def _on_tree_configure(self, event) -> None:
+        if event.width > 80:
+            self._apply_ratios(event.width)
+
+    def _apply_ratios(self, total: int) -> None:
+        """按保存的比例把列宽铺满表格。"""
+        mins = [self._COL_MINS[c] for c in self._COLS]
+        widths = [max(m, int(round(total * r))) for m, r in zip(mins, self._col_ratios, strict=False)]
+        self._fix_total(widths, total, mins)
+        if [int(self.word_tree.column(c, "width")) for c in self._COLS] == widths:
+            return
+        for key, width in zip(self._COLS, widths, strict=False):
+            self.word_tree.column(key, width=width)
+
+    def _on_tree_release(self, _event) -> None:
+        self._normalize_widths()
+
+    def _normalize_widths(self) -> None:
+        """拖动分隔线后按比例归一：总宽始终等于表格宽度，不出现横向滚动。"""
+        total = self.word_tree.winfo_width()
+        mins = [self._COL_MINS[c] for c in self._COLS]
+        widths = [int(self.word_tree.column(c, "width")) for c in self._COLS]
+        current = sum(widths)
+        if total <= 1 or current <= 0 or abs(current - total) <= 1:
+            return
+        ratio = total / current
+        widths = [max(m, int(round(w * ratio))) for w, m in zip(widths, mins, strict=False)]
+        self._fix_total(widths, total, mins)
+        for key, width in zip(self._COLS, widths, strict=False):
+            self.word_tree.column(key, width=width)
+        self._col_ratios = [w / total for w in widths]
+        self.config.data["vocab_col_ratios"] = [round(r, 4) for r in self._col_ratios]
+        self.config.save()
+
+    @staticmethod
+    def _fix_total(widths: list[int], total: int, mins: list[int]) -> None:
+        """匀掉取整误差：多退少补，且不突破最小宽度。"""
+        diff = total - sum(widths)
+        order = (2, 0, 1, 3, 4, 5)
+        guard = 0
+        while diff and guard < 1000:
+            guard += 1
+            moved = False
+            for i in order:
+                if diff > 0:
+                    widths[i] += 1
+                    diff -= 1
+                    moved = True
+                elif widths[i] > mins[i]:
+                    widths[i] -= 1
+                    diff += 1
+                    moved = True
+                if diff == 0:
+                    break
+            if not moved:
+                break
+
     def _update_headings(self) -> None:
-        for key, label in self._col_labels.items():
+        for key, label in self._COL_LABELS.items():
             arrow = ""
             if key == self._sort_key:
                 arrow = " ▼" if self._sort_desc else " ▲"
