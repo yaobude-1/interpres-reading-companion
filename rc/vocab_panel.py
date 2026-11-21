@@ -97,25 +97,6 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         self.refresh()
 
     def _build(self) -> None:
-        actions = tk.Frame(self.parent, bg=BG)
-        actions.pack(side="bottom", fill="x", padx=2, pady=(6, 0))
-        # 同步按钮单独一行靠右：窄窗口下也不会被左侧按钮挤出去
-        sync_row = tk.Frame(actions, bg=BG)
-        sync_row.pack(fill="x")
-        self._small_button(sync_row, "同步 Anki", self.sync_book, primary=True).pack(
-            side="left"
-        )
-        tools_row = tk.Frame(actions, bg=BG)
-        tools_row.pack(fill="x", pady=(4, 0))
-        self._small_button(tools_row, "删除所选", self.delete_selected, danger=True).pack(side="left")
-        self._small_button(tools_row, "移动到…", self.move_selected).pack(side="left", padx=(6, 0))
-        self._small_button(tools_row, "导出 CSV", self.export_book).pack(side="left", padx=(6, 0))
-        self._small_button(tools_row, "Anki 设置…", self.open_anki_settings).pack(
-            side="left", padx=(6, 0)
-        )
-
-
-
         outer = tk.Frame(self.parent, bg=BG)
         outer.pack(fill="both", expand=True, padx=2, pady=(4, 0))
 
@@ -167,6 +148,29 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         self._small_button(bar, "刷新", self.load_words).pack(side="left")
         self.count_label = tk.Label(bar, text="", bg=BG, fg=DIM, font=(FONT_FAMILY, 8))
         self.count_label.pack(side="right")
+
+        # 单词操作放在表格下方，和右侧内容对齐；词本操作留在左栏
+        word_actions = tk.Frame(right, bg=BG)
+        word_actions.pack(side="bottom", fill="x", pady=(6, 0))
+        sync_row = tk.Frame(word_actions, bg=BG)
+        sync_row.pack(fill="x")
+        self._small_button(sync_row, "同步 Anki", self.sync_book, primary=True).pack(
+            side="left"
+        )
+        self._small_button(
+            sync_row, "Anki 设置…", self.open_anki_settings
+        ).pack(side="right")
+        tools_row = tk.Frame(word_actions, bg=BG)
+        tools_row.pack(fill="x", pady=(4, 0))
+        self._small_button(tools_row, "删除所选", self.delete_selected, danger=True).pack(
+            side="left"
+        )
+        self._small_button(tools_row, "移动到…", self.move_selected).pack(
+            side="left", padx=(6, 0)
+        )
+        self._small_button(tools_row, "导出 CSV", self.export_book).pack(
+            side="left", padx=(6, 0)
+        )
 
         # 先占住底部按钮区，再让表格撑满剩余空间
         self.word_tree = ttk.Treeview(
