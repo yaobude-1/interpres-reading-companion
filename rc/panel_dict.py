@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
+from .popup_common import source_label
 from .theme import (
     ACCENT,
     BG,
@@ -153,7 +154,7 @@ class PanelDictMixin:
         original.bind("<Leave>", lambda _e: original.configure(bg=PANEL))
         if entry.get("source"):
             tk.Label(
-                head, text=entry["source"][:20], bg=BG, fg=GREEN, font=(FONT_FAMILY, 8)
+                head, text=source_label(entry["source"]), bg=BG, fg=GREEN, font=(FONT_FAMILY, 8)
             ).pack(side="left", padx=(8, 0))
 
         alternatives = alternatives or []
@@ -165,7 +166,7 @@ class PanelDictMixin:
                 active = (hit.get("source") or "", hit.get("lang") or "") == current
                 chip = tk.Label(
                     bar,
-                    text=f"{self.cb.get('lang_label', lambda c: c)(hit.get('lang', ''))}·{(hit.get('source') or '')[:14]}",
+                    text=source_label(hit.get("source", "")),
                     bg=PANEL if active else BG,
                     fg=TEXT if active else DIM,
                     font=(FONT_FAMILY, 8),

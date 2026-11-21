@@ -46,6 +46,13 @@ def main() -> int:
     check("英文默认词本名", _default_wordbook_name("en") == "English wordbook")
     check("未知语言用代码", _default_wordbook_name("xx") == "xx wordbook")
 
+    print("\n[词典显示名]")
+    from rc.popup_common import source_label
+
+    check("保留原词典名", source_label("  Oxford   Hachette ") == "Oxford Hachette")
+    long_name = "x" * 60
+    check("过长时截断", source_label(long_name).endswith("…") and len(source_label(long_name)) == 44)
+
     print("\n[添加语言：英文界面可只填本地名]")
     import rc.language_dialog as ld
 

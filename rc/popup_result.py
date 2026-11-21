@@ -5,7 +5,7 @@ from __future__ import annotations
 import tkinter as tk
 
 from . import textutil
-from .popup_common import _short_source
+from .popup_common import source_label
 from .theme import (
     ACCENT,
     BG,
@@ -196,7 +196,7 @@ class ResultViewMixin:
         if dict_info.get("source"):
             tk.Label(
                 top,
-                text="  " + _short_source(dict_info["source"]),
+                text="  " + source_label(dict_info["source"]),
                 bg=PANEL,
                 fg=GREEN,
                 font=(FONT_FAMILY, 7),

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from html import unescape
 from pathlib import Path
 
 from .htmldom import parse
@@ -85,8 +86,10 @@ class Dictionary:
     ) -> None:
         self.path = Path(mdx_path)
         self._profiles = profiles or []
-        self.name = self.path.stem
         self._mdx = MDX(self.path)
+        # 词典自己的名字优先（MDX 头里的 Title），没有才退回文件名
+        title = unescape(str(self._mdx.attrs.get("Title") or "")).strip()
+        self.name = title or self.path.stem
         self._mdd = None
         if mdd_path and Path(mdd_path).exists():
             try:

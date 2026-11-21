@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from .popup_common import _short_source
+from .popup_common import source_label
 from .theme import (
     ACCENT,
     BG,
@@ -110,7 +110,7 @@ class DictViewMixin:
         original.bind("<Leave>", lambda _e: original.configure(fg=TEXT))
         source = entry.get("source") or ""
         if source:
-            self._label(head, _short_source(source), fg=GREEN, font=(FONT_FAMILY, 8)).pack(
+            self._label(head, source_label(source), fg=GREEN, font=(FONT_FAMILY, 8)).pack(
                 side="left", padx=(8, 0)
             )
 
@@ -123,7 +123,7 @@ class DictViewMixin:
                 active = (hit.get("source") or "", hit.get("lang") or "") == current
                 label = tk.Label(
                     bar,
-                    text=f"{self.cb.get('lang_label', lambda c: c)(hit.get('lang', ''))}·{_short_source(hit.get('source', ''))}",
+                    text=source_label(hit.get("source", "")),
                     bg=PANEL if active else BG,
                     fg=TEXT if active else DIM,
                     font=(FONT_FAMILY, 8),
@@ -397,7 +397,7 @@ class DictViewMixin:
         source = (row.get("dict_source") or "").strip()
         if source:
             self._label(
-                self.body, _short_source(source), fg=GREEN, font=(FONT_FAMILY, 8)
+                self.body, source_label(source), fg=GREEN, font=(FONT_FAMILY, 8)
             ).pack(fill="x", pady=(4, 0))
 
         actions = tk.Frame(self.body, bg=BG)

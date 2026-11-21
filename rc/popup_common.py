@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
+# 词典名字保留原样，只在过长时截断；不做「Longman → 朗文」这类中英两套别名。
+_MAX_SOURCE_CHARS = 44
 
-def _short_source(name: str) -> str:
-    """把词典名缩成卡片/浮窗上的小标签。"""
-    text = (name or "").lower()
-    for key, label in (
-        ("朗文", "朗文"),
-        ("longman", "朗文"),
-        ("牛津", "牛津"),
-        ("oxford", "牛津"),
-        ("collins", "Collins"),
-        ("vocabulary", "Vocabulary"),
-        ("larousse", "Larousse"),
-        ("robert", "Robert"),
-    ):
-        if key in text:
-            return label
-    return (name or "")[:8]
+
+def source_label(name: str) -> str:
+    text = " ".join(str(name or "").split())
+    if len(text) <= _MAX_SOURCE_CHARS:
+        return text
+    return text[: _MAX_SOURCE_CHARS - 1] + "…"
