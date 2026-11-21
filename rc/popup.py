@@ -9,19 +9,19 @@ from __future__ import annotations
 import tkinter as tk
 
 from . import screens, textutil
-
-BG = "#1b1d24"
-PANEL = "#23262f"
-PANEL_ALT = "#2a2e39"
-TEXT = "#e6e9ef"
-MUTED = "#9aa5b1"
-DIM = "#6b7280"
-ACCENT = "#7aa2f7"
-GREEN = "#9ece6a"
-RED = "#f7768e"
-BORDER = "#3b414f"
-
-FONT_FAMILY = "Microsoft YaHei UI"
+from .theme import (
+    ACCENT as ACCENT,
+    BG as BG,
+    BORDER as BORDER,
+    DIM as DIM,
+    FONT_FAMILY as FONT_FAMILY,
+    GREEN as GREEN,
+    MUTED as MUTED,
+    PANEL as PANEL,
+    PANEL_ALT as PANEL_ALT,
+    RED as RED,
+    TEXT as TEXT,
+)
 
 
 class PopupWindow:
