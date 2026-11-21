@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from . import __version__
-from .i18n import tr
+from .i18n import lang_display_name, tr
 from .settings_actions import SettingsActionsMixin
 from .settings_pages import SettingsPagesMixin
 from .uiutil import bind_defocus
@@ -240,7 +240,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             voice_var, _deck_var = self.lang_vars[code]
             tk.Label(
                 table,
-                text=f"{entry.get('zh_label', code)}  {code}",
+                text=f"{lang_display_name(entry, code)}  {code}",
                 bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 9), anchor="w",
             ).grid(row=idx, column=0, sticky="w", padx=12, pady=3)
 
@@ -299,7 +299,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             _voice_var, deck_var = self.lang_vars[code]
             tk.Label(
                 table,
-                text=f"{entry.get('zh_label', code)}  {code}",
+                text=f"{lang_display_name(entry, code)}  {code}",
                 bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 9), anchor="w",
             ).grid(row=idx, column=0, sticky="w", padx=12, pady=3)
             cell = tk.Frame(table, bg=PANEL)
@@ -348,7 +348,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             return
         self.service.set_language(code, dialog.result)
         self._rebuild_language_tables()
-        self._set_lang_status(f"已添加语言：{dialog.result['zh_label']}")
+        self._set_lang_status(f"已添加语言：{lang_display_name(dialog.result, code)}")
 
     def edit_language(self, code: str) -> None:
         from .language_dialog import LanguageDialog
@@ -363,12 +363,12 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             return
         self.service.set_language(code, dialog.result)
         self._rebuild_language_tables()
-        self._set_lang_status(f"已保存语言：{dialog.result['zh_label']}")
+        self._set_lang_status(f"已保存语言：{lang_display_name(dialog.result, code)}")
 
     def delete_language(self, code: str) -> None:
         languages = self.config.data.get("languages") or {}
         entry = languages.get(code) or {}
-        name = entry.get("zh_label") or code
+        name = lang_display_name(entry, code)
         words, books = self.service.language_size(code)
         has_data = words > 0 or books > 0
         if has_data and bool(self.config.get("lang_delete_lock", True)):

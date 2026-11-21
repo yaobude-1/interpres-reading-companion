@@ -20,6 +20,29 @@ _INSTALLED = False
 _ORIGINALS: dict = {}
 
 
+def lang_display_name(entry: dict, code: str = "") -> str:
+    """按当前界面语言选一个语言的显示名。
+
+    英文界面优先本地名（label），中文界面优先中文名（zh_label）；缺了互相兜底，
+    最后回退到语言代码。语言显示名是数据，不该被界面语言硬编码成中文。
+    """
+    if not isinstance(entry, dict):
+        entry = {}
+    if LANGUAGE == "en":
+        return str(entry.get("label") or entry.get("zh_label") or code)
+    return str(entry.get("zh_label") or entry.get("label") or code)
+
+
+def wordbook_word() -> str:
+    """默认词本名里用的名词：中文「词本」，英文「wordbook」。"""
+    return "wordbook" if LANGUAGE == "en" else "词本"
+
+
+def wordbook_suffix() -> str:
+    """拼在语言名后面、用作默认词本名的后缀。"""
+    return " wordbook" if LANGUAGE == "en" else "词本"
+
+
 def _locale_dir() -> Path:
     return Path(__file__).resolve().parent / "locales"
 

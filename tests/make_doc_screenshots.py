@@ -70,14 +70,14 @@ def main() -> int:
         }
     )
     cfg.data["stream_cps"] = 60
-    for code, name, deck in (
-        ("en", "English", "Reading::English"),
-        ("fr", "French", "Reading::French"),
+    for code, name, zh_name, deck in (
+        ("en", "English", "英语", "Reading::English"),
+        ("fr", "French", "法语", "Reading::French"),
     ):
         lang = cfg.data["languages"].setdefault(code, {})
         lang["name"] = name
         lang["label"] = name
-        lang["zh_label"] = name
+        lang["zh_label"] = zh_name
         lang["deck"] = deck
     cfg.save()
 

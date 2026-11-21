@@ -131,6 +131,7 @@
   "自动跟随当前书籍时，窗口标题里含下面任意一条就忽略。每行一条，不分大小写。\n浏览器内部页（新建标签页、New Tab、设置…）已经默认过滤，不用重复加。": "When following the active book, ignore window titles containing any of these lines (case-insensitive).\nBrowser internal pages (New Tab, settings…) are already filtered.",
   "自动跟随当前书籍（在阅读器里换书时跟着切；关掉则手动切换）": "Follow the active book (switch with the reader; off = switch manually in the panel)",
   "自定义 CSS（追加到样式表末尾，可留空）": "Custom CSS (appended to the stylesheet; optional)",
+  "自定义服务地址会把选中的文本和 API Key 发送到该服务器；远程地址必须使用 HTTPS。": "A custom endpoint receives the selected text and your API key; remote endpoints must use HTTPS.",
   "英语  en": "English  en",
   "英语用 Dict2Anki 模板同步（多义项 + 例句 + 音频，字段更全）": "Sync English with the Dict2Anki note type (multi-sense + examples + audio; richer fields)",
   "西班牙语  es": "Spanish  es",
@@ -421,14 +422,15 @@
   "发音来源": "Audio source",
   "代码": "Code",
   "中文名": "Chinese name",
+  "中文名（可留空）": "Chinese name (optional)",
   "本地名": "Native name",
   "引擎": "Engine",
   "命令": "Command",
   "Edge 音色": "Edge voice",
   "系统语音 / Edge 在线 / 自定义命令": "System voice / Edge online / Custom command",
   "使用 Windows 已安装的 SAPI / OneCore 音色。": "Use SAPI / OneCore voices installed in Windows.",
-  "牌组留空会自动用 Reading::<中文名>；音色留空则按语言自动匹配": "Empty deck defaults to Reading::<Chinese name>; empty voice auto-matches the language.",
-  "Ctrl+Alt+S 打开设置 · Esc 关闭": "Ctrl+Alt+S opens settings · Esc closes",
+  "牌组留空会自动用 Reading::<名称>；音色留空则按语言自动匹配": "Empty deck defaults to Reading::<name>; an empty voice auto-matches the language.",
+  "Ctrl+Alt+S 打开面板 · Esc 关闭": "Ctrl+Alt+S opens the panel · Esc closes",
   "没连上 Anki（未运行？），可以直接手输牌组名": "Can't reach Anki (not running?); you can still type a deck name.",
   "出了点问题": "Something went wrong",
   "数字键收藏 · 点击也可": "Number keys save · clicking works too",
@@ -963,12 +965,12 @@
       "en": "Use SAPI / OneCore voices installed in Windows."
     },
     {
-      "zh": "牌组留空会自动用 Reading::<中文名>；音色留空则按语言自动匹配",
-      "en": "Empty deck defaults to Reading::<Chinese name>; empty voice auto-matches the language."
+      "zh": "牌组留空会自动用 Reading::<名称>；音色留空则按语言自动匹配",
+      "en": "Empty deck defaults to Reading::<name>; an empty voice auto-matches the language."
     },
     {
-      "zh": "Ctrl+Alt+S 打开设置 · Esc 关闭",
-      "en": "Ctrl+Alt+S opens settings · Esc closes"
+      "zh": "Ctrl+Alt+S 打开面板 · Esc 关闭",
+      "en": "Ctrl+Alt+S opens the panel · Esc closes"
     },
     {
       "zh": "没连上 Anki（未运行？），可以直接手输牌组名",
@@ -1140,7 +1142,7 @@
     }
   ],
   "还没有填写 API Key": "No API key yet.",
-  "没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写": "No API key configured. Press Ctrl+Alt+S to open settings.",
+  "没有配置 API Key，请先打开设置填写": "No API key configured. Open settings and add one.",
   "模型返回了空内容，可能是触发了长度限制，请缩短选中范围": "The model returned an empty response (possibly hit the length limit). Try selecting less text.",
   "模型响应超时，请检查网络或换用更短的选中范围": "The model timed out. Check your network or select less text.",
   "模型输出格式不对，请重试": "Unexpected model output. Please try again.",

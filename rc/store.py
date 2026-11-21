@@ -12,14 +12,22 @@ import threading
 import time
 from pathlib import Path
 
-LANG_BOOK_NAMES = {
-    "en": "英语词本",
-    "fr": "法语词本",
-    "la": "拉丁语词本",
-    "de": "德语词本",
-    "es": "西班牙语词本",
-    "it": "意大利语词本",
+from . import i18n
+
+_LANG_BOOK_LABELS = {
+    "en": ("英语", "English"),
+    "fr": ("法语", "French"),
+    "la": ("拉丁语", "Latin"),
+    "de": ("德语", "German"),
+    "es": ("西班牙语", "Spanish"),
+    "it": ("意大利语", "Italian"),
 }
+
+
+def _default_wordbook_name(lang: str) -> str:
+    """按界面语言给默认词本起名：中文「英语词本」，英文「English wordbook」。"""
+    zh, en = _LANG_BOOK_LABELS.get(lang, (lang, lang))
+    return f"{en} wordbook" if i18n.LANGUAGE == "en" else f"{zh}词本"
 
 
 SCHEMA = """
@@ -226,7 +234,7 @@ class Store:
         ).fetchone()
         if row:
             return int(row["id"])
-        name = name or LANG_BOOK_NAMES.get(lang, f"{lang} 词本")
+        name = name or _default_wordbook_name(lang)
         cur = self._conn.execute(
             "INSERT INTO wordbooks (lang, name, deck, is_default, created) VALUES (?, ?, '', 1, ?)",
             (lang, name, now()),

@@ -410,7 +410,7 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             btn.pack(anchor="w", padx=12, pady=(0, 10))
             btn.configure(cursor="hand2")
             btn.bind("<Button-1>", lambda _e: retry())
-        self.footer.configure(text="Ctrl+Alt+S 打开设置 · Esc 关闭")
+        self.footer.configure(text="Ctrl+Alt+S 打开面板 · Esc 关闭")
         self._reveal()
 
     def _fit_height(self) -> None:

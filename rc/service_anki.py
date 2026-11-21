@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+from . import i18n
 from .anki import export_tsv
 from .service_base import ServiceBase
 
@@ -213,7 +214,7 @@ class AnkiMixin(ServiceBase):
                 if mode != "inherit":
                     model = cfg.get("model") or ""
                     if mode == "independent" or not model:
-                        model = f"Interpres · {book.get('name') or '词本'}"
+                        model = f"Interpres · {book.get('name') or i18n.wordbook_word()}"
                     return {
                         "mode": mode,
                         "model": model,
@@ -334,7 +335,7 @@ class AnkiMixin(ServiceBase):
         if wordbook_id:
             book = self.store.wordbook(int(wordbook_id))
             words = self.store.words_in_book(int(wordbook_id), limit=100000) if book else []
-            label = (book or {}).get("name") or "词本"
+            label = (book or {}).get("name") or i18n.wordbook_word()
         else:
             words = self.store.list_words(lang, limit=100000)
             label = lang or "all"

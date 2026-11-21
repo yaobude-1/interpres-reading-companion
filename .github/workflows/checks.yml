@@ -37,3 +37,4 @@ jobs:
           python tests/test_settings_smoke.py
           python tests/test_ux_scenarios.py
           python tests/test_voice_preview.py
+          python tests/test_language_naming.py

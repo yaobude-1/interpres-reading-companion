@@ -243,7 +243,7 @@ class Translator:
         api = self.config.api
         key = self.config.api_key
         if not key:
-            raise LLMError("没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写")
+            raise LLMError("没有配置 API Key，请先打开设置填写")
 
         try:
             base = validate_base_url(api.get("base_url") or "https://api.deepseek.com/v1")
@@ -299,7 +299,7 @@ class Translator:
         api = self.config.api
         if not self.config.api_key:
             raise LLMError(
-                self.config.api_key_error or "没有配置 API Key，请按 Ctrl+Alt+S 打开设置填写"
+                self.config.api_key_error or "没有配置 API Key，请先打开设置填写"
             )
         try:
             base = validate_base_url(api.get("base_url") or "https://api.deepseek.com/v1")

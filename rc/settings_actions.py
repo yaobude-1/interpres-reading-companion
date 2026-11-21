@@ -5,6 +5,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox
 
+from .i18n import lang_display_name
 from .netpolicy import validate_base_url
 from .settings_common import (
     default_chat_persona,
@@ -185,7 +186,7 @@ class SettingsActionsMixin:
             n = self.service.store.word_count(code)
             if n:
                 entry = self.config.language(code)
-                langs.append(f"{entry.get('zh_label', code)} {n}")
+                langs.append(f"{lang_display_name(entry, code)} {n}")
         detail = "，".join(langs) if langs else "还没有生词"
         self.stats.configure(text=f"共 {total} 个生词（{detail}）\nAnki 状态检测中… · 数据目录 {self.config.data_dir}")
 

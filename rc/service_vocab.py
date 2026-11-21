@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from . import i18n
+
 from .service_base import ServiceBase
 
 
@@ -41,7 +43,6 @@ class VocabMixin(ServiceBase):
                 "dict_example": dict_example,
                 "dict_example_cn": dict_example_cn,
                 "audio_key": audio_key,
-                "book_name": f"{self.lang_label(lang)}词本",
             }
         )
         return {"id": word_id, "total": self.store.word_count(lang), "lang": lang}
@@ -57,7 +58,7 @@ class VocabMixin(ServiceBase):
         return words, books
 
     def set_language(self, code: str, data: dict) -> None:
-        """新增或修改语言；默认词本的名字跟着中文名走。"""
+        """新增或修改语言；默认词本的名字跟着当前界面语言的显示名走。"""
         code = (code or "").strip().lower()
         if not code:
             raise ValueError("语言代码不能为空")
@@ -66,10 +67,19 @@ class VocabMixin(ServiceBase):
         merged = {**old, **data, "code": code}
         table[code] = merged
         self.config.save()
-        old_name = (old.get("zh_label") or code) + "词本"
-        new_name = (merged.get("zh_label") or code) + "词本"
+        suffix = i18n.wordbook_suffix()
+        old_zh = old.get("zh_label") or code
+        old_label = old.get("label") or old_zh
+        new_name = i18n.lang_display_name(merged, code) + suffix
+        # 老词本可能叫「英语词本」，也可能已经是「English wordbook」，两种都认
+        candidates = {
+            f"{old_zh}词本",
+            f"{old_label}词本",
+            f"{old_zh}{suffix}",
+            f"{old_label}{suffix}",
+        }
         book = self.store.default_wordbook(code)
-        if book and old_name and book.get("name") == old_name and old_name != new_name:
+        if book and book.get("name") in candidates and book.get("name") != new_name:
             self.store.rename_default_wordbook(code, new_name)
 
     def remove_language(self, code: str) -> None:

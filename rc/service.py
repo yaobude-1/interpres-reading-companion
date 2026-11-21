@@ -12,6 +12,7 @@ import threading
 import time
 from pathlib import Path
 
+from . import i18n
 from .anki import Anki
 from .config import Config
 from .dictmanager import DictionaryManager
@@ -316,7 +317,7 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
 
     def lang_label(self, code: str) -> str:
         entry = self.config.language(code)
-        return entry.get("zh_label") or entry.get("label") or code
+        return i18n.lang_display_name(entry, code)
 
     def target_label(self) -> str:
         return _lang_name(self.config.data.get("target_lang"))

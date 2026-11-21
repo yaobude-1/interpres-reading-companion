@@ -11,6 +11,7 @@ from pathlib import Path
 from tkinter import filedialog
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+from .i18n import lang_display_name
 
 
 class DictionarySettings:
@@ -85,7 +86,7 @@ class DictionarySettings:
         dictionaries = self.config.data.get("dictionaries") or {}
         row = 1
         for code, entry in languages.items():
-            label = f"{entry.get('zh_label', code)}  {code}"
+            label = f"{lang_display_name(entry, code)}  {code}"
             tk.Label(
                 table, text=label, bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 9), anchor="w"
             ).grid(row=row, column=0, sticky="w", padx=12, pady=6)

@@ -7,6 +7,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 
+from . import i18n
 from .i18n import tr
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, PANEL, TEXT
 
@@ -25,6 +26,7 @@ class LanguageDialog:
     ) -> None:
         self.result: dict | None = None
         self.edit = edit
+        self._code = code
         self.edge_provider = edge_provider
         self._edge_choices: list[dict] | None = None
         self._edge_loading = False
@@ -58,7 +60,7 @@ class LanguageDialog:
         if edit:
             self.entry_code.configure(state="disabled")
 
-        self.entry_zh = row("中文名")
+        self.entry_zh = row("中文名（可留空）")
         self.entry_zh.insert(0, str(entry.get("zh_label") or ""))
         self.entry_label = row("本地名")
         self.entry_label.insert(0, str(entry.get("label") or ""))
@@ -172,55 +174,19 @@ class LanguageDialog:
         self.entry_deck.insert(0, str(entry.get("deck") or ""))
         tk.Label(
             outer,
-            text="牌组留空会自动用 Reading::<中文名>；音色留空则按语言自动匹配",
+            text="牌组留空会自动用 Reading::<名称>；音色留空则按语言自动匹配",
             bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
         ).pack(fill="x", pady=(0, 6))
 
         btns = tk.Frame(outer, bg=BG)
         btns.pack(fill="x", pady=(6, 0))
 
-        def save() -> None:
-            code_value = code if edit else self.entry_code.get().strip().lower()
-            zh = self.entry_zh.get().strip()
-            label_value = self.entry_label.get().strip() or zh or code_value
-            engine = self.engine_var.get().strip() or "system"
-            if engine == "edge":
-                voice = self.edge_var.get().strip()
-            elif engine == "command":
-                voice = ""
-            else:
-                voice = self.voice_var.get().strip()
-                if voice in ("（自动匹配）", tr("（自动匹配）")):
-                    voice = ""
-            command = self.cmd_var.get().strip() if engine == "command" else ""
-            deck = self.entry_deck.get().strip() or f"Reading::{zh or code_value}"
-            if not re.fullmatch(r"[a-z]{2,8}(-[a-z]{2,8})?", code_value or ""):
-                messagebox.showinfo(
-                    "语言代码", "代码用 2~8 位小写字母，例如 it、ja、ru、pt-BR。",
-                    parent=self.win,
-                )
-                return
-            if not zh:
-                messagebox.showinfo("中文名", "中文名不能为空。", parent=self.win)
-                return
-            self.result = {
-                "code": code_value,
-                "label": label_value,
-                "zh_label": zh,
-                "target": "zh-CN",
-                "tts_voice": voice,
-                "tts_engine": engine,
-                "tts_command": command,
-                "deck": deck,
-            }
-            self.win.destroy()
-
         save_btn = tk.Label(
             btns, text="保存", bg=ACCENT, fg="#10131a", font=(FONT_FAMILY, 9),
             padx=16, pady=5, cursor="hand2",
         )
         save_btn.pack(side="right")
-        save_btn.bind("<Button-1>", lambda _e: save())
+        save_btn.bind("<Button-1>", lambda _e: self._save())
         cancel_btn = tk.Label(
             btns, text="取消", bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 9),
             padx=16, pady=5, cursor="hand2",
@@ -228,7 +194,7 @@ class LanguageDialog:
         cancel_btn.pack(side="right", padx=(0, 8))
         cancel_btn.bind("<Button-1>", lambda _e: self.win.destroy())
         self.win.bind("<Escape>", lambda _e: self.win.destroy())
-        self.win.bind("<Return>", lambda _e: save())
+        self.win.bind("<Return>", lambda _e: self._save())
         if edit:
             self.entry_zh.focus_set()
         else:
@@ -240,6 +206,46 @@ class LanguageDialog:
         height = max(self.win.winfo_reqheight(), 340)
         self.win.geometry(f"{width}x{height}+{parent_x + 120}+{parent_y + 100}")
 
+
+    def _save(self) -> None:
+        """收集表单并写进 self.result；英文界面允许中文名留空。"""
+        code_value = self._code if self.edit else self.entry_code.get().strip().lower()
+        zh = self.entry_zh.get().strip()
+        label_value = self.entry_label.get().strip() or zh or code_value
+        engine = self.engine_var.get().strip() or "system"
+        if engine == "edge":
+            voice = self.edge_var.get().strip()
+        elif engine == "command":
+            voice = ""
+        else:
+            voice = self.voice_var.get().strip()
+            if voice in ("（自动匹配）", tr("（自动匹配）")):
+                voice = ""
+        command = self.cmd_var.get().strip() if engine == "command" else ""
+        deck = self.entry_deck.get().strip() or f"Reading::{label_value or code_value}"
+        if not re.fullmatch(r"[a-z]{2,8}(-[a-z]{2,8})?", code_value or ""):
+            messagebox.showinfo(
+                "语言代码", "代码用 2~8 位小写字母，例如 it、ja、ru、pt-BR。",
+                parent=self.win,
+            )
+            return
+        if not zh:
+            if i18n.LANGUAGE != "en":
+                messagebox.showinfo("中文名", "中文名不能为空。", parent=self.win)
+                return
+            # 英文界面允许只填本地名；中文名兜底成同一个显示名
+            zh = label_value
+        self.result = {
+            "code": code_value,
+            "label": label_value,
+            "zh_label": zh,
+            "target": "zh-CN",
+            "tts_voice": voice,
+            "tts_engine": engine,
+            "tts_command": command,
+            "deck": deck,
+        }
+        self.win.destroy()
 
     def _pick_edge_voice(self) -> None:
         if self.edge_provider is None:
