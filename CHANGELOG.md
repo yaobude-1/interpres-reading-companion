@@ -3,15 +3,37 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
-## Unreleased
+## 1.0.6 — 2026-11-22
 
-Internal only, no behaviour change:
-- The settings window was split into modules (`settings_pages`, `settings_actions`,
-  `settings_common`); the 560-line `_build` is now a small dispatcher plus one
-  builder per page section.
-- `tests/test_ux_scenarios.py` had a check helper that recorded every boolean
-  assertion as a pass; it now fails on `False`, and the chat-empty case exercises
-  the real `Service.ask` path.
+### Added
+- `uninstall.ps1`: stops running instances, removes shortcuts/icon copies, asks
+  whether to delete the data folder, and deletes the program folder.
+- Double-click a saved word in the vocabulary tab to open its dictionary card
+  (or the saved fields when no dictionary is configured).
+- Sort the word table by clicking a column header; the choice is remembered.
+- Chat reads the paragraph around the selection automatically in Edge/Chrome
+  (HTML and the built-in PDF viewer). Other readers fall back to a
+  "补充上下文" dialog; the feature can be turned off in settings.
+- "对话原文上限" now defaults to 4000 characters and stays user-adjustable.
+
+### Changed
+- Language names follow the UI language; new default wordbooks are named
+  "英语词本" or "English wordbook" accordingly. Existing wordbooks are unchanged.
+- Dictionary cards show the dictionary's own name (MDX `Title`) instead of a
+  translated short alias with a language prefix.
+- Column widths can be dragged one divider at a time with min-width cascading;
+  the proportions are saved and restored across window sizes.
+
+### Fixed
+- `Ctrl+Alt+S` is described as opening the panel (it never opened settings);
+  the missing-API-key hint and the custom-endpoint notice are worded correctly.
+- `install.ps1` and `build_exe.ps1` now carry a UTF-8 BOM so PowerShell 5.1
+  does not decode their Chinese text as ANSI.
+
+### Internal
+- Settings window and vocabulary panel split into focused modules.
+- The UX scenario helper no longer records `False` assertions as passes.
+- Added an opt-in live UIA test (`tests/test_uia_live.py`).
 
 ## 1.0.5 — 2026-11-21
 

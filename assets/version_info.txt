@@ -17,11 +17,11 @@ VSVersionInfo(
           [
             StringStruct('CompanyName', 'Interpres'),
             StringStruct('FileDescription', 'Interpres - 选中即译 / 查词 / 生词本'),
-            StringStruct('FileVersion', '1.0.5'),
+            StringStruct('FileVersion', '1.0.6'),
             StringStruct('InternalName', 'reading-companion'),
             StringStruct('OriginalFilename', 'Interpres.exe'),
             StringStruct('ProductName', 'Interpres'),
-            StringStruct('ProductVersion', '1.0.5')
+            StringStruct('ProductVersion', '1.0.6')
           ]
         )
       ]
