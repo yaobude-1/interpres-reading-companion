@@ -107,7 +107,7 @@ class VocabTableMixin:
                 )
             else:
                 self._xscroll.pack_forget()
-        if need_y != bool(self._vscroll.winfo_ismapped()):
+        if need_y != mapped_y:
             if need_y:
                 self._vscroll.pack(
                     side="right", fill="y", pady=(6, 0), before=self.word_tree
