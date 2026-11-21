@@ -19,7 +19,9 @@ English | [中文说明](docs/README.zh-CN.md)
 - **History** — translation and conversation history per book, searchable and
   exportable to Markdown, TSV or CSV.
 - **Vocabulary cards** — double-click a saved word to open its dictionary card
-  (or the fields saved with it when no dictionary is configured).
+  (or the fields saved with it when no dictionary is configured). The word table
+  can be searched by word or meaning and sorted by any column; the choice is
+  remembered.
 - **Local HTTP API** — a token-protected, loopback-only endpoint for your own
   scripts (translate, vocabulary, glossary, TTS, Anki push).
 - **Tray icon, Chinese/English UI (language switch restarts automatically), dark theme.**

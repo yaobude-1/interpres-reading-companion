@@ -29,6 +29,19 @@ class VocabPanel:
         self.book_id: int | None = None
         self._sync_result = None
         self._sync_ready = False
+        self._col_labels = {
+            "word": "单词",
+            "reading": "音标",
+            "meaning": "释义",
+            "book": "来源",
+            "time": "添加时间",
+            "synced": "同步",
+        }
+        self._sort_key = str(config.get("vocab_sort_key") or "time")
+        if self._sort_key not in self._col_labels:
+            self._sort_key = "time"
+        # 时间列默认新→旧，其余列默认正序
+        self._sort_desc = bool(config.get("vocab_sort_desc", self._sort_key == "time"))
         self._build()
         self.refresh()
 
@@ -92,7 +105,7 @@ class VocabPanel:
         right.pack(side="left", fill="both", expand=True, padx=(10, 0))
         bar = tk.Frame(right, bg=BG)
         bar.pack(fill="x")
-        tk.Label(bar, text="搜索", bg=BG, fg=DIM, font=(FONT_FAMILY, 8)).pack(side="left")
+        tk.Label(bar, text="搜索单词/释义", bg=BG, fg=DIM, font=(FONT_FAMILY, 8)).pack(side="left")
         self.search_var = tk.StringVar()
         entry = tk.Entry(
             bar, textvariable=self.search_var, bg=PANEL, fg=TEXT,
@@ -100,6 +113,7 @@ class VocabPanel:
         )
         entry.pack(side="left", padx=(6, 6), ipady=3)
         entry.bind("<KeyRelease>", lambda _e: self._debounced_load())
+        entry.bind("<Escape>", lambda _e: (self.search_var.set(""), self.load_words()))
         self._small_button(bar, "刷新", self.load_words).pack(side="left")
         self.count_label = tk.Label(bar, text="", bg=BG, fg=DIM, font=(FONT_FAMILY, 8))
         self.count_label.pack(side="right")
@@ -115,7 +129,7 @@ class VocabPanel:
             ("time", "添加时间", 65),
             ("synced", "同步", 40),
         ):
-            self.word_tree.heading(key, text=tr(label))
+            self.word_tree.heading(key, text=tr(label), command=lambda c=key: self._sort_by(c))
             self.word_tree.column(key, width=width, anchor="w", stretch=(key == "meaning"))
         scroll = tk.Scrollbar(right, orient="vertical", command=self.word_tree.yview)
         xscroll = tk.Scrollbar(right, orient="horizontal", command=self.word_tree.xview)
@@ -241,10 +255,10 @@ class VocabPanel:
 
     def load_words(self) -> None:
         self._search_job = None
-        self.word_tree.delete(*self.word_tree.get_children())
         if self.book_id is None:
             self.words = []
             self.count_label.configure(text="")
+            self._render_words()
             return
         self.words = self.service.words_in_book(
             self.book_id, self.search_var.get().strip(), 3000
@@ -253,7 +267,35 @@ class VocabPanel:
         self.book_title.configure(
             text=f"{book.get('name', '')} · {tr('牌组')} {book.get('deck') or tr('（按语言默认）')}"
         )
-        for word in self.words:
+        self.count_label.configure(text=f"{len(self.words)} 个")
+        self._render_words()
+
+    def _sort_by(self, column: str) -> None:
+        """点列头排序：同列切换升降序，换列用该列的默认方向。"""
+        if column not in self._col_labels:
+            return
+        if column == self._sort_key:
+            self._sort_desc = not self._sort_desc
+        else:
+            self._sort_key = column
+            self._sort_desc = column == "time"
+        self.config.data["vocab_sort_key"] = self._sort_key
+        self.config.data["vocab_sort_desc"] = self._sort_desc
+        self.config.save()
+        self._render_words()
+
+    def _sort_value(self, word: dict):
+        key = self._sort_key
+        if key == "time":
+            return str(word.get("updated") or "")
+        if key == "synced":
+            return 1 if word.get("synced") else 0
+        return str(word.get(key) or "").casefold()
+
+    def _render_words(self) -> None:
+        selected = set(self.word_tree.selection())
+        self.word_tree.delete(*self.word_tree.get_children())
+        for word in sorted(self.words, key=self._sort_value, reverse=self._sort_desc):
             self.word_tree.insert(
                 "",
                 "end",
@@ -267,7 +309,17 @@ class VocabPanel:
                     "已同步" if word.get("synced") else "未同步",
                 ),
             )
-        self.count_label.configure(text=f"{len(self.words)} 个")
+        keep = [iid for iid in selected if self.word_tree.exists(iid)]
+        if keep:
+            self.word_tree.selection_set(keep)
+        self._update_headings()
+
+    def _update_headings(self) -> None:
+        for key, label in self._col_labels.items():
+            arrow = ""
+            if key == self._sort_key:
+                arrow = " ▼" if self._sort_desc else " ▲"
+            self.word_tree.heading(key, text=tr(label) + arrow)
 
     def _selected_words(self) -> list[int]:
         return [int(i) for i in self.word_tree.selection() if i.isdigit()]
