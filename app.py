@@ -316,7 +316,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                     gen, text, book, pos, hwnd = payload
                     if gen == self._sel_gen:
                         self._pending_selection = (text, book, pos, hwnd)
-                        self.popup.hide()
+                        # 旧浮窗保持打开，等用户点「译/聊」再替换内容
                         self.bubble.hide()
                         self.quick.show(pos)
                 elif kind == "bubble_result":

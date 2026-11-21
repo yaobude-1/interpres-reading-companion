@@ -5,6 +5,9 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
+- A new selection no longer closes the open translation popup; the “译/聊”
+  quick button is raised above it, and the popup is replaced when a new result
+  arrives.
 - New Appearance settings page: dark/light theme, accent colour presets, popup
   width/height/opacity and panel opacity. Theme and accent apply after a restart
   (the save dialog offers to restart); sizes and opacity apply when the windows

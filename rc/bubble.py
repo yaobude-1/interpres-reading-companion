@@ -88,6 +88,7 @@ class QuickButton:
         self._anchor = anchor
         self._hover = False
         self.win.deiconify()
+        self.win.lift()
         self.win.update_idletasks()
         w = self.win.winfo_reqwidth()
         h = self.win.winfo_reqheight()
