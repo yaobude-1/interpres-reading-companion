@@ -165,13 +165,13 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         bottom_left = tk.Frame(bottom, bg=SIDEBAR, width=190)
         bottom_left.pack(side="left", fill="y")
         bottom_left.pack_propagate(False)
-        self._button(bottom_left, "退出程序", self._quit).pack(
-            side="left", padx=16, pady=6
-        )
         bottom_right = tk.Frame(bottom, bg=BG)
         bottom_right.pack(side="left", fill="both", expand=True)
-        self._button(bottom_right, "保存", self.save, primary=True).pack(
+        self._button(bottom_right, "退出程序", self._quit).pack(
             side="right", padx=(0, 16), pady=6
+        )
+        self._button(bottom_right, "保存", self.save, primary=True).pack(
+            side="right", padx=(0, 8), pady=6
         )
         self._button(bottom_right, "关闭", self.close).pack(
             side="right", padx=(0, 8), pady=6
