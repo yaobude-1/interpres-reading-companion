@@ -31,3 +31,6 @@ jobs:
           python tests/test_p1_regressions.py
           python tests/test_panel_geometry.py
           python tests/test_translation_ui.py
+          python tests/test_panel.py
+          python tests/test_ux_popup.py
+          python tests/test_popup_long.py
