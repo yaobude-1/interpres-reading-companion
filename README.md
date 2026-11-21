@@ -182,15 +182,20 @@ Some tests use a mock OpenAI/AnkiConnect server; Anki integration tests skip aut
 ## Architecture
 
 ```
-app.py              entry point, hotkeys, tray, local HTTP API
-rc/service.py       translation pipeline, dictionaries, vocabulary, Anki
-rc/llm.py           chat/translation client (streaming, JSON parsing)
-rc/rich.py          dictionary HTML → structured senses/examples
-rc/mdx.py           pure-stdlib MDX/MDD reader
-rc/panel.py         main window (translate / dictionary / chat / words)
-rc/popup.py         selection popup and bubble
-rc/store.py         SQLite storage
-rc/i18n.py          zh/en display-layer translation
+app.py                    entry point, hotkeys, tray, local HTTP API
+rc/service.py             Service façade (composition) + chat, history, status
+rc/service_translate.py   translation pipeline: chunking, cache, streaming
+rc/service_dict.py        dictionary lookup, morphology, entry HTML
+rc/service_vocab.py       vocabulary, languages, glossary
+rc/service_anki.py        Anki fields, templates, push
+rc/service_common.py      chunking/cache helpers shared by the mixins
+rc/llm.py                 chat/translation client (streaming, JSON parsing)
+rc/rich.py                dictionary HTML → structured senses/examples
+rc/mdx.py                 pure-stdlib MDX/MDD reader
+rc/panel.py               main window (translate / dictionary / chat / words)
+rc/popup.py               selection popup and bubble
+rc/store.py               SQLite storage
+rc/i18n.py                zh/en display-layer translation
 ```
 
 ## Known limitations and rough edges
