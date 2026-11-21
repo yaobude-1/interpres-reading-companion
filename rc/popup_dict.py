@@ -335,6 +335,86 @@ class DictViewMixin:
                             "<Button-1>", lambda _e, w=form: self._dict_jump(w)
                         )
 
+    def show_saved_word(self, row: dict, anchor) -> None:
+        """生词本里双击的词：本地词典查不到时，用保存下来的信息拼一张卡片。"""
+        self._reset_to_translate(chat_button=False)
+        self._mode = "dict"
+        self._dict = None
+        self._dict_word = (row.get("word") or row.get("lemma") or "").strip()
+        self._lang = row.get("lang") or self._lang or "en"
+        if anchor != self._anchor:
+            self._user_moved = False
+        self._anchor = anchor
+        self.current = None
+        self._clear()
+        self._dict_editing = False
+        self._dict_entry = None
+        self.title.configure(text="生词")
+
+        head = tk.Frame(self.body, bg=BG)
+        head.pack(fill="x", pady=(2, 4))
+        self._label(
+            head, self._dict_word, fg=TEXT, font=(FONT_FAMILY, 17, "bold")
+        ).pack(side="left")
+        reading = (row.get("reading") or "").strip()
+        if reading:
+            if not reading.startswith("/"):
+                reading = f"/{reading}/"
+            self._label(head, reading, fg=MUTED, font=(FONT_FAMILY, 9)).pack(
+                side="left", padx=(8, 0)
+            )
+        speak = self._label(head, "🔊", fg=ACCENT, font=(FONT_FAMILY, 12))
+        speak.pack(side="left", padx=(8, 0))
+        speak.configure(cursor="hand2")
+        speak.bind("<Button-1>", lambda _e: self._speak())
+        self._label(head, "★", fg="#f5c542", font=(FONT_FAMILY, 13)).pack(
+            side="left", padx=(8, 0)
+        )
+
+        meta = [str(v) for v in (row.get("pos"), row.get("book"), row.get("lang")) if v]
+        if meta:
+            self._label(
+                self.body, " · ".join(meta), fg=DIM, font=(FONT_FAMILY, 8)
+            ).pack(fill="x")
+
+        meaning = (row.get("meaning") or row.get("dict_meaning") or "").strip()
+        if meaning:
+            self._label(self.body, meaning, fg=TEXT, font=(FONT_FAMILY, 10)).pack(
+                fill="x", pady=(6, 4)
+            )
+
+        sentence = (row.get("sentence") or "").strip()
+        example = (row.get("dict_example") or "").strip()
+        if sentence or example:
+            self._label(self.body, "例句", fg=MUTED, font=(FONT_FAMILY, 8)).pack(
+                fill="x", pady=(4, 0)
+            )
+            if sentence:
+                self._label(self.body, sentence, fg=TEXT, font=(FONT_FAMILY, 9)).pack(fill="x")
+            if example and example != sentence:
+                self._label(self.body, example, fg=MUTED, font=(FONT_FAMILY, 9)).pack(fill="x")
+
+        source = (row.get("dict_source") or "").strip()
+        if source:
+            self._label(
+                self.body, _short_source(source), fg=GREEN, font=(FONT_FAMILY, 8)
+            ).pack(fill="x", pady=(4, 0))
+
+        actions = tk.Frame(self.body, bg=BG)
+        actions.pack(fill="x", pady=(8, 4))
+        self._dict_action(actions, "用 AI 译", self._translate_dict_word).pack(side="left")
+        if meaning:
+            self._dict_action(
+                actions, "复制释义", lambda: self._copy_saved(meaning)
+            ).pack(side="left", padx=(8, 0))
+        self.footer.configure(text="Esc 关闭")
+        self._reveal()
+
+    def _copy_saved(self, text: str) -> None:
+        self.win.clipboard_clear()
+        self.win.clipboard_append(text)
+        self.cb.get("toast", lambda _m: None)("释义已复制")
+
     def show_dict_missing(self, word: str, anchor, configured: bool = True) -> None:
         """词典里没有：提示 + 给「用 AI 译」按钮。"""
         self._reset_to_translate(chat_button=False)

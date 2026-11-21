@@ -18,6 +18,8 @@ English | [中文说明](docs/README.zh-CN.md)
 - **Streaming UI** — translation and chat stream at a configurable character speed.
 - **History** — translation and conversation history per book, searchable and
   exportable to Markdown, TSV or CSV.
+- **Vocabulary cards** — double-click a saved word to open its dictionary card
+  (or the fields saved with it when no dictionary is configured).
 - **Local HTTP API** — a token-protected, loopback-only endpoint for your own
   scripts (translate, vocabulary, glossary, TTS, Anki push).
 - **Tray icon, Chinese/English UI (language switch restarts automatically), dark theme.**

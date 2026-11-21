@@ -149,6 +149,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 "remove_word": self.service.remove_vocab,
                 "speak": self.speak,
                 "show_entry": self.show_entry_html,
+                "word_card": self.show_word_card,
                 "close": self._close_panel,
             },
         )

@@ -171,4 +171,27 @@ class PanelMixin:
         self.service.remember(recent_key, clean)
         return payload
 
+    # ------------------------------------------------------------ 生词本卡片
+    def show_word_card(self, row: dict, anchor: tuple[int, int]) -> None:
+        """生词本里双击一个词：优先打开本地词典卡片，查不到就用保存的信息拼一张。"""
+        word = str(row.get("word") or row.get("lemma") or "").strip()
+        lang = str(row.get("lang") or "").strip()
+        if not word:
+            return
+        hits: list[dict] = []
+        for candidate in (word, str(row.get("lemma") or "").strip()):
+            if not candidate:
+                continue
+            try:
+                hits = self.service.lookup_all(candidate, lang_hint=lang or None)
+            except Exception:
+                log.exception("查生词失败：%s", candidate)
+                hits = []
+            if hits:
+                break
+        if hits:
+            self.popup.show_dictionary(hits[0]["entry"], anchor, word, hits)
+        else:
+            self.popup.show_saved_word(row, anchor)
+
     # -------------------------------------------------------------- 划词小按钮

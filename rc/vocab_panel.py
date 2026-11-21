@@ -11,11 +11,19 @@ from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PA
 
 
 class VocabPanel:
-    def __init__(self, parent: tk.Frame, service, config, on_change=None) -> None:
+    def __init__(
+        self,
+        parent: tk.Frame,
+        service,
+        config,
+        on_change=None,
+        on_word_open=None,
+    ) -> None:
         self.parent = parent
         self.service = service
         self.config = config
         self.on_change = on_change
+        self.on_word_open = on_word_open
         self.books: list[dict] = []
         self.words: list[dict] = []
         self.book_id: int | None = None
@@ -116,6 +124,7 @@ class VocabPanel:
         scroll.pack(side="right", fill="y", pady=(6, 0))
         self.word_tree.pack(side="left", fill="both", expand=True, pady=(6, 0))
         self.word_tree.bind("<Delete>", lambda _e: self.delete_selected())
+        self.word_tree.bind("<Double-1>", self._open_word)
 
         self._style_trees()
 
@@ -217,6 +226,18 @@ class VocabPanel:
             except Exception:
                 pass
         self._search_job = self.parent.after(200, self.load_words)
+
+    def _open_word(self, event) -> None:
+        """双击单词行：交给上层弹一张词典/生词卡片。"""
+        if not self.on_word_open:
+            return
+        row_id = self.word_tree.identify_row(event.y)
+        if not row_id:
+            return
+        row = next((w for w in self.words if str(w.get("id")) == row_id), None)
+        if row is None:
+            return
+        self.on_word_open(row, (event.x_root, event.y_root))
 
     def load_words(self) -> None:
         self._search_job = None

@@ -553,7 +553,10 @@ class MainPanel(
             outer = self.chat_frame.master
             self.vocab_frame = tk.Frame(outer, bg=BG)
             self.vocab_panel = VocabPanel(
-                self.vocab_frame, self.service, self.service.config
+                self.vocab_frame,
+                self.service,
+                self.service.config,
+                on_word_open=self.cb.get("word_card"),
             )
         return self.vocab_panel
 
