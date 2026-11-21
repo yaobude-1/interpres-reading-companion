@@ -18,6 +18,8 @@ English | [中文说明](docs/README.zh-CN.md)
 - **Languages are data, not code** — add any language (Italian, Japanese, Russian, …): code, display name, voice, deck. Dictionaries attach per language.
 - **TTS** — Windows SAPI/OneCore voices, Edge online neural voices, or a custom command (Piper, eSpeak, your own script).
 - **Streaming UI** — translation and chat stream at a configurable character speed.
+- **Appearance** — dark/light theme with accent presets, popup width/height/opacity
+  and panel opacity; theme changes apply after a restart.
 - **History** — translation and conversation history per book, searchable and
   exportable to Markdown, TSV or CSV.
 - **Vocabulary cards** — double-click a saved word to open its dictionary card

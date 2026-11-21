@@ -5,6 +5,10 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
+- New Appearance settings page: dark/light theme, accent colour presets, popup
+  width/height/opacity and panel opacity. Theme and accent apply after a restart
+  (the save dialog offers to restart); sizes and opacity apply when the windows
+  next open.
 - Dictionary entries reached through an MDX `@@@LINK` redirect are labelled:
   inflections show "按原形 X 查到"; lexical redirects (e.g. decomposition →
   composition) show a notice with "查看目标词条" and "用 AI 译" actions instead of

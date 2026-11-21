@@ -12,6 +12,14 @@ from .settings_actions import SettingsActionsMixin
 from .settings_pages import SettingsPagesMixin
 from .uiutil import bind_defocus
 from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+from .theme import (
+    FIELD_BG,
+    FIELD_BORDER,
+    ON_ACCENT,
+    SCROLL_THUMB,
+    SCROLL_TRACK,
+    SIDEBAR,
+)
 
 
 VOICE_SAMPLES = {
@@ -120,7 +128,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         for name, btn in self._nav_buttons.items():
             active = name == key
             btn.configure(
-                bg=PANEL if active else "#10131a",
+                bg=PANEL if active else SIDEBAR,
                 fg=TEXT if active else DIM,
             )
 
@@ -157,7 +165,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         self._button(bottom, "关闭", self.close).pack(side="right", padx=(0, 8))
         self._button(bottom, "退出程序", self._quit).pack(side="left")
 
-        side = tk.Frame(main, bg="#10131a", width=190)
+        side = tk.Frame(main, bg=SIDEBAR, width=190)
         side.pack(side="left", fill="y")
         side.pack_propagate(False)
         content = tk.Frame(main, bg=BG)
@@ -185,13 +193,14 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         pages = (
             ("ai", "连接与 AI"),
             ("general", "通用"),
+            ("appearance", "外观"),
             ("langdict", "语言、词典与发音"),
             ("anki", "Anki"),
             ("about", "关于"),
         )
         for key, label in pages:
             btn = tk.Label(
-                side, text=label, bg="#10131a", fg=DIM,
+                side, text=label, bg=SIDEBAR, fg=DIM,
                 font=(FONT_FAMILY, 10), anchor="w", padx=16, pady=9,
                 cursor="hand2",
             )
@@ -206,6 +215,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         self._build_ai_section()
         self._build_hotkey_section()
         self._build_ui_section()
+        self._build_appearance_section()
         self._build_dict_section()
         self._build_language_section()
         self._build_records_section()
@@ -316,7 +326,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             deck_pick.pack(side="right")
             deck_menu = tk.Menu(
                 self.win, tearoff=0, bg=PANEL, fg=TEXT,
-                activebackground=ACCENT, activeforeground="#10131a",
+                activebackground=ACCENT, activeforeground=ON_ACCENT,
                 font=(FONT_FAMILY, 9),
             )
             deck_pick.bind(
@@ -589,7 +599,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
     def _show_voice_menu(self, var, label) -> None:
         menu = tk.Menu(
             self.win, tearoff=0, bg=PANEL, fg=TEXT,
-            activebackground=ACCENT, activeforeground="#10131a",
+            activebackground=ACCENT, activeforeground=ON_ACCENT,
             font=(FONT_FAMILY, 9),
         )
 
@@ -637,10 +647,27 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             darkcolor=PANEL,
             insertcolor=TEXT,
         )
+        style.configure(
+            "TScrollbar",
+            background=SCROLL_THUMB,
+            troughcolor=SCROLL_TRACK,
+            bordercolor=BORDER,
+            arrowcolor=MUTED,
+        )
+        style.map("TScrollbar", background=[("active", ACCENT)])
+        for _bar in ("Vertical.TScrollbar", "Horizontal.TScrollbar"):
+            style.configure(
+                _bar,
+                background=SCROLL_THUMB,
+                troughcolor=SCROLL_TRACK,
+                bordercolor=BORDER,
+                arrowcolor=MUTED,
+            )
+            style.map(_bar, background=[("active", ACCENT)])
         self.win.option_add("*TCombobox*Listbox.background", PANEL)
         self.win.option_add("*TCombobox*Listbox.foreground", TEXT)
         self.win.option_add("*TCombobox*Listbox.selectBackground", ACCENT)
-        self.win.option_add("*TCombobox*Listbox.selectForeground", "#10131a")
+        self.win.option_add("*TCombobox*Listbox.selectForeground", ON_ACCENT)
 
     def _show_deck_menu(self, menu, var, widget) -> None:
         menu.delete(0, "end")
@@ -705,12 +732,12 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         entry = tk.Entry(
             parent,
             textvariable=var,
-            bg="#1b1e26",
+            bg=FIELD_BG,
             fg=TEXT,
             insertbackground=TEXT,
             relief="flat",
             highlightthickness=1,
-            highlightbackground="#2c313c",
+            highlightbackground=FIELD_BORDER,
             highlightcolor=ACCENT,
             font=(FONT_FAMILY, 9),
             show=show,
@@ -719,7 +746,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
 
     def _button(self, parent, text: str, command, primary: bool = False) -> tk.Label:
         bg = ACCENT if primary else PANEL
-        fg = "#10131a" if primary else TEXT
+        fg = ON_ACCENT if primary else TEXT
         label = tk.Label(
             parent,
             text=text,
@@ -741,4 +768,4 @@ def _style_menu(widget: tk.OptionMenu) -> None:
         bg=PANEL, fg=TEXT, activebackground=PANEL, activeforeground=TEXT, relief="flat",
         highlightthickness=0, font=(FONT_FAMILY, 9), anchor="w",
     )
-    widget["menu"].configure(bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a")
+    widget["menu"].configure(bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT)

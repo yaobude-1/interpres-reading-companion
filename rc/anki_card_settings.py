@@ -15,6 +15,7 @@ from .anki import (
     MODEL_NAME,
 )
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+from .theme import BORDER_SOFT, ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
 
 
 class AnkiCardSettings:
@@ -42,7 +43,10 @@ class AnkiCardSettings:
         main.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(main, bg=BG, highlightthickness=0, bd=0)
-        scrollbar = tk.Scrollbar(main, orient="vertical", command=canvas.yview)
+        scrollbar = tk.Scrollbar(
+            main, orient="vertical", command=canvas.yview,
+            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+        )
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y", padx=(0, 6))
@@ -87,7 +91,7 @@ class AnkiCardSettings:
         self.var_enabled = tk.BooleanVar(value=bool(saved.get("enabled")))
         tk.Checkbutton(
             head, text="启用自定义卡片", variable=self.var_enabled,
-            bg=BG, fg=TEXT, selectcolor="#2f3440", activebackground=BG,
+            bg=BG, fg=TEXT, selectcolor=BORDER_SOFT, activebackground=BG,
             activeforeground=TEXT, font=(FONT_FAMILY, 9), anchor="w",
         ).pack(side="left")
 
@@ -102,7 +106,7 @@ class AnkiCardSettings:
             anchor="w",
         )
         self.model_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.model_box.pack(side="left")
         self.var_model.trace_add("write", lambda *_: self._on_model_change())
@@ -132,7 +136,7 @@ class AnkiCardSettings:
         self.var_sync = tk.BooleanVar(value=bool(saved.get("sync_templates", True)))
         tk.Checkbutton(
             outer, text="保存/同步时把模板与 CSS 推到 Anki（已有卡片会重新渲染）",
-            variable=self.var_sync, bg=BG, fg=TEXT, selectcolor="#2f3440",
+            variable=self.var_sync, bg=BG, fg=TEXT, selectcolor=BORDER_SOFT,
             activebackground=BG, activeforeground=TEXT, font=(FONT_FAMILY, 9),
             anchor="w",
         ).pack(fill="x", pady=(4, 0))
@@ -162,7 +166,7 @@ class AnkiCardSettings:
     def _button(self, parent, text, command, primary=False):
         label = tk.Label(
             parent, text=text, bg=ACCENT if primary else PANEL,
-            fg="#10131a" if primary else TEXT, font=(FONT_FAMILY, 9),
+            fg=ON_ACCENT if primary else TEXT, font=(FONT_FAMILY, 9),
             padx=14, pady=5, cursor="hand2",
         )
         label.bind("<Button-1>", lambda _e: command())
@@ -283,7 +287,7 @@ class AnkiCardSettings:
                 width=18, anchor="w",
             )
             box["menu"].configure(
-                bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+                bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
             )
             box.grid(row=index, column=1, sticky="w", pady=2)
             self.mapping_vars[field] = var

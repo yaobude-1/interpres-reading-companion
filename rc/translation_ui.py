@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ON_ACCENT
 
 
 class TranslationWindow:
@@ -68,7 +69,7 @@ class TranslationWindow:
             relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), width=20, anchor="w",
         )
         self.book_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.book_box.pack(side="left", padx=(6, 12))
         self._button(bar, "搜索", self.refresh).pack(side="left")
@@ -90,7 +91,7 @@ class TranslationWindow:
         )
         style.map(
             "Tr.Treeview", background=[("selected", ACCENT)],
-            foreground=[("selected", "#10131a")],
+            foreground=[("selected", ON_ACCENT)],
         )
         self.tree = ttk.Treeview(
             wrap, columns=("time", "book", "text"), show="headings", style="Tr.Treeview"

@@ -543,6 +543,18 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
 
     def on_settings_saved(self) -> None:
         self.popup.width = int(self.config.get("popup_width", 560))
+        self.popup.max_ratio = float(self.config.get("popup_max_height_ratio", 0.72))
+        appearance = self.config.get("appearance") or {}
+        opacity = appearance.get("popup_opacity", 1.0)
+        try:
+            self.popup.win.attributes("-alpha", float(opacity))
+        except (tk.TclError, TypeError, ValueError):
+            pass
+        panel_opacity = appearance.get("panel_opacity", 1.0)
+        try:
+            self.panel.win.attributes("-alpha", float(panel_opacity))
+        except (tk.TclError, TypeError, ValueError):
+            pass
         self.restart_hotkeys()
         self._start_selection_watch()
 

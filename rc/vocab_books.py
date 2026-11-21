@@ -7,6 +7,7 @@ from tkinter import messagebox
 
 from .i18n import tr
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, PANEL, TEXT
+from .theme import ON_ACCENT
 
 
 class VocabBooksMixin:
@@ -180,7 +181,7 @@ class BookDialog:
             self.win.destroy()
 
         tk.Label(
-            btns, text="保存", bg=ACCENT, fg="#10131a", font=(FONT_FAMILY, 9),
+            btns, text="保存", bg=ACCENT, fg=ON_ACCENT, font=(FONT_FAMILY, 9),
             padx=14, pady=5, cursor="hand2",
         ).pack(side="right")
         btns.winfo_children()[-1].bind("<Button-1>", lambda _e: save())

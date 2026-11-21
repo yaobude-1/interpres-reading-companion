@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ON_ACCENT
 
 
 class ChatHistoryWindow:
@@ -55,7 +56,7 @@ class ChatHistoryWindow:
             relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), width=22, anchor="w",
         )
         self.book_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.book_box.pack(side="left", padx=(8, 0))
 
@@ -77,7 +78,7 @@ class ChatHistoryWindow:
         )
         style.map(
             "Chat.Treeview", background=[("selected", ACCENT)],
-            foreground=[("selected", "#10131a")],
+            foreground=[("selected", ON_ACCENT)],
         )
 
         columns = ("book", "time", "preview", "count")

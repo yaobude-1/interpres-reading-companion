@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import tkinter as tk
 
-THUMB = "#4b5263"
-THUMB_ACTIVE = "#7aa2f7"
-TRACK = "#15171d"
+from .theme import ACCENT, SCROLL_THUMB, SCROLL_TRACK
+
+THUMB = SCROLL_THUMB
+THUMB_ACTIVE = ACCENT
+TRACK = SCROLL_TRACK
 
 
 class SlimScrollbar(tk.Canvas):

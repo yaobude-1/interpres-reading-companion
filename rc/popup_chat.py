@@ -15,6 +15,7 @@ from .theme import (
     PANEL_ALT,
     TEXT,
 )
+from .theme import ON_ACCENT
 
 
 class ChatViewMixin:
@@ -126,7 +127,7 @@ class ChatViewMixin:
             self.input_bar,
             text="发送",
             bg=ACCENT,
-            fg="#10131a",
+            fg=ON_ACCENT,
             font=(FONT_FAMILY, 9),
             padx=12,
             pady=8,
@@ -205,7 +206,7 @@ class ChatViewMixin:
         btns = tk.Frame(win, bg=BG)
         btns.pack(fill="x", padx=12, pady=8)
         tk.Button(
-            btns, text="保存", command=save, bg=ACCENT, fg="#10131a",
+            btns, text="保存", command=save, bg=ACCENT, fg=ON_ACCENT,
             relief="flat", font=(FONT_FAMILY, 9), padx=12, pady=3,
         ).pack(side="right")
         tk.Button(

@@ -6,10 +6,12 @@ import tkinter as tk
 from tkinter import ttk
 
 from .i18n import tr
+from .theme import SCROLL_THUMB, SCROLL_TRACK
 from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, PANEL, PANEL_ALT, TEXT
 from .vocab_actions import VocabActionsMixin
 from .vocab_books import VocabBooksMixin
 from .vocab_table import VocabTableMixin
+from .theme import ON_ACCENT
 
 
 class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
@@ -181,8 +183,14 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
                 anchor="w",
                 stretch=False,
             )
-        scroll = tk.Scrollbar(right, orient="vertical", command=self.word_tree.yview)
-        xscroll = tk.Scrollbar(right, orient="horizontal", command=self.word_tree.xview)
+        scroll = tk.Scrollbar(
+            right, orient="vertical", command=self.word_tree.yview,
+            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+        )
+        xscroll = tk.Scrollbar(
+            right, orient="horizontal", command=self.word_tree.xview,
+            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+        )
         self.word_tree.configure(yscrollcommand=scroll.set, xscrollcommand=xscroll.set)
         xscroll.pack(side="bottom", fill="x", pady=(2, 0))
         scroll.pack(side="right", fill="y", pady=(6, 0))
@@ -204,6 +212,23 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         except tk.TclError:
             pass
         style.configure(
+            "TScrollbar",
+            background=SCROLL_THUMB,
+            troughcolor=SCROLL_TRACK,
+            bordercolor=BORDER,
+            arrowcolor=MUTED,
+        )
+        style.map("TScrollbar", background=[("active", ACCENT)])
+        for _bar in ("Vertical.TScrollbar", "Horizontal.TScrollbar"):
+            style.configure(
+                _bar,
+                background=SCROLL_THUMB,
+                troughcolor=SCROLL_TRACK,
+                bordercolor=BORDER,
+                arrowcolor=MUTED,
+            )
+            style.map(_bar, background=[("active", ACCENT)])
+        style.configure(
             "Vocab.Treeview",
             background=PANEL,
             fieldbackground=PANEL,
@@ -222,14 +247,14 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         style.map(
             "Vocab.Treeview",
             background=[("selected", ACCENT)],
-            foreground=[("selected", "#10131a")],
+            foreground=[("selected", ON_ACCENT)],
         )
         self.word_tree.configure(style="Vocab.Treeview")
         self.book_tree.configure(style="Vocab.Treeview")
 
     def _small_button(self, parent, text, command, primary=False, danger=False):
         bg = ACCENT if primary else (BORDER if danger else PANEL)
-        fg = "#10131a" if primary else (TEXT if not danger else "#ffb3b3")
+        fg = ON_ACCENT if primary else (TEXT if not danger else "#ffb3b3")
         label = tk.Label(
             parent, text=text, bg=bg, fg=fg, font=(FONT_FAMILY, 8),
             padx=10, pady=4, cursor="hand2",

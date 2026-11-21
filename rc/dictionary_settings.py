@@ -12,6 +12,7 @@ from tkinter import filedialog
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
 from .i18n import lang_display_name
+from .theme import BORDER_SOFT, ON_ACCENT
 
 
 class DictionarySettings:
@@ -64,7 +65,7 @@ class DictionarySettings:
             variable=self.var_enabled,
             bg=BG,
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=BG,
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -122,7 +123,7 @@ class DictionarySettings:
 
     def _button(self, parent, text, command, primary=False):
         bg = ACCENT if primary else PANEL
-        fg = "#10131a" if primary else TEXT
+        fg = ON_ACCENT if primary else TEXT
         label = tk.Label(
             parent, text=text, bg=bg, fg=fg, font=(FONT_FAMILY, 9), padx=12, pady=5, cursor="hand2"
         )

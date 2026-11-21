@@ -39,7 +39,7 @@ def main() -> int:
     root.update()
 
     print("\n[页面构建]")
-    for key in ("ai", "general", "langdict", "anki", "about"):
+    for key in ("ai", "general", "appearance", "langdict", "anki", "about"):
         child_count = 0
         error = ""
         try:
@@ -50,6 +50,23 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             error = f"{type(exc).__name__}: {exc}"
         check(f"{key} 页可切换且有内容", child_count > 0, error or f"children={child_count}")
+
+    print("\n[外观保存]")
+    win.var_theme.set("light")
+    win.var_accent_label.set("紫")
+    win.var_popup_opacity.set(0.8)
+    win.var_panel_opacity.set(0.9)
+    win.var_popup_width.set("620")
+    win.var_popup_max.set("80")
+    win._apply_to_config(save=True)
+    cfg2 = Config(data)
+    appearance = cfg2.get("appearance") or {}
+    check("主题写入", appearance.get("theme") == "light", str(appearance))
+    check("强调色写入", appearance.get("accent") == "purple", str(appearance))
+    check("浮窗透明度", float(appearance.get("popup_opacity", 0)) == 0.8, str(appearance))
+    check("主界面透明度", float(appearance.get("panel_opacity", 0)) == 0.9, str(appearance))
+    check("浮窗宽度", int(cfg2.get("popup_width", 0)) == 620, str(cfg2.get("popup_width")))
+    check("最大高度", abs(float(cfg2.get("popup_max_height_ratio", 0)) - 0.8) < 0.01, str(cfg2.get("popup_max_height_ratio")))
 
     print("\n[关闭]")
     try:

@@ -42,6 +42,7 @@ class SettingsActionsMixin:
         threading.Thread(target=run, daemon=True).start()
 
     def save(self) -> None:
+        before = dict(self.config.get("appearance") or {})
         try:
             self._apply_to_config(save=True)
         except ValueError as exc:
@@ -49,7 +50,30 @@ class SettingsActionsMixin:
             return
         self.on_saved()
         self._refresh_stats()
+        after = dict(self.config.get("appearance") or {})
+        theme_changed = (
+            before.get("theme") != after.get("theme")
+            or before.get("accent") != after.get("accent")
+        )
+        if theme_changed and self.on_restart:
+            if messagebox.askyesno(
+                "重启生效",
+                "主题/强调色已保存，需要重启才能应用。现在重启吗？",
+                parent=self.win,
+            ):
+                self.on_restart()
         self.test_label.configure(text="已保存", fg=GREEN)
+
+    def _appearance_save_restart(self) -> None:
+        """外观页的按钮：保存后直接重启，不再弹一次确认。"""
+        try:
+            self._apply_to_config(save=True)
+        except ValueError as exc:
+            self.test_label.configure(text=str(exc), fg=RED)
+            return
+        self.on_saved()
+        if self.on_restart:
+            self.on_restart()
 
     def _apply_to_config(self, save: bool) -> None:
         api = self.config.api
@@ -121,6 +145,34 @@ class SettingsActionsMixin:
                     if engine == "system":
                         languages[code]["tts_voice"] = voice_var.get()
                     languages[code]["deck"] = deck_var.get()
+            appearance = self.config.data.setdefault("appearance", {})
+            if hasattr(self, "var_theme"):
+                appearance["theme"] = self.var_theme.get()
+                if hasattr(self, "var_accent_label"):
+                    appearance["accent"] = self._accent_keys.get(
+                        self.var_accent_label.get(), "blue"
+                    )
+            if hasattr(self, "var_popup_opacity"):
+                appearance["popup_opacity"] = round(
+                    float(self.var_popup_opacity.get()), 2
+                )
+                appearance["panel_opacity"] = round(
+                    float(self.var_panel_opacity.get()), 2
+                )
+            if hasattr(self, "var_popup_width"):
+                try:
+                    width = int(self.var_popup_width.get().strip() or 560)
+                except ValueError:
+                    width = 560
+                self.config.data["popup_width"] = max(420, min(900, width))
+            if hasattr(self, "var_popup_max"):
+                try:
+                    percent = int(self.var_popup_max.get().strip() or 72)
+                except ValueError:
+                    percent = 72
+                self.config.data["popup_max_height_ratio"] = max(
+                    0.5, min(0.95, percent / 100)
+                )
             self.config.save()
         self._snapshot = self._form_snapshot()
 

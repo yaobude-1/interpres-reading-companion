@@ -22,6 +22,7 @@ from .theme import (
     RED,
     TEXT,
 )
+from .theme import BORDER_SOFT, ON_ACCENT
 
 
 class SettingsPagesMixin:
@@ -109,7 +110,7 @@ class SettingsPagesMixin:
             anchor="w",
         )
         ui_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         ui_box.pack(side="left", padx=(8, 0))
         tk.Label(
@@ -128,7 +129,7 @@ class SettingsPagesMixin:
             variable=self.var_follow_book,
             bg=PANEL,
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=PANEL,
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -144,7 +145,7 @@ class SettingsPagesMixin:
             variable=self.var_quit_on_close,
             bg=PANEL,
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=PANEL,
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -206,7 +207,7 @@ class SettingsPagesMixin:
             relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), width=26, anchor="w",
         )
         audio_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         audio_box.pack(side="left", padx=(8, 0))
 
@@ -255,7 +256,7 @@ class SettingsPagesMixin:
             lock_row,
             text="删除语言前的保险：有生词或书籍时禁止删除（关掉则只弹提示）",
             variable=self.var_lang_delete_lock,
-            bg=BG, fg=TEXT, selectcolor="#2f3440",
+            bg=BG, fg=TEXT, selectcolor=BORDER_SOFT,
             activebackground=BG, activeforeground=TEXT,
             font=(FONT_FAMILY, 9), anchor="w",
         ).pack(side="left")
@@ -290,7 +291,7 @@ class SettingsPagesMixin:
             variable=self.var_skip_anki,
             bg=BG,
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=BG,
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -308,7 +309,7 @@ class SettingsPagesMixin:
             variable=self.var_dict2anki,
             bg=BG,
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=BG,
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -387,6 +388,129 @@ class SettingsPagesMixin:
             about, text="MIT License · 第三方组件许可见 THIRD_PARTY_NOTICES.md",
             bg=PANEL, fg=DIM, font=(FONT_FAMILY, 8), anchor="w",
         ).pack(fill="x", padx=12, pady=(0, 12))
+
+    def _build_appearance_section(self) -> None:
+        outer = self._page_bodies["appearance"]
+        appearance = self.config.get("appearance") or {}
+        theme = str(appearance.get("theme") or "dark")
+        accent = str(appearance.get("accent") or "blue")
+        self._section(outer, "主题")
+        tk.Label(
+            outer,
+            text="主题和强调色保存后需要重启才会生效；尺寸和透明度在下次打开窗口时生效。",
+            bg=BG, fg=DIM, font=(FONT_FAMILY, 8), anchor="w", justify="left",
+        ).pack(fill="x", pady=(0, 6))
+
+        theme_row = tk.Frame(outer, bg=PANEL)
+        theme_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            theme_row, text="主题", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=10, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        self.var_theme = tk.StringVar(value=theme)
+        for text, value in (("深色", "dark"), ("浅色", "light")):
+            tk.Radiobutton(
+                theme_row, text=text, variable=self.var_theme, value=value,
+                bg=PANEL, fg=TEXT, selectcolor=PANEL, activebackground=PANEL,
+                activeforeground=TEXT, font=(FONT_FAMILY, 9),
+                highlightthickness=0, bd=0,
+            ).pack(side="left", padx=(0, 10))
+
+        accent_row = tk.Frame(outer, bg=PANEL)
+        accent_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            accent_row, text="强调色", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=10, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        self._accent_labels = {"blue": "蓝", "green": "绿", "purple": "紫", "orange": "橙"}
+        self._accent_keys = {v: k for k, v in self._accent_labels.items()}
+        self.var_accent_label = tk.StringVar(
+            value=self._accent_labels.get(accent, "蓝")
+        )
+        accent_box = tk.OptionMenu(
+            accent_row, self.var_accent_label, *self._accent_labels.values()
+        )
+        accent_box.configure(
+            bg=BG, fg=TEXT, activebackground=PANEL, activeforeground=TEXT,
+            relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9),
+            width=6, anchor="w",
+        )
+        accent_box["menu"].configure(
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
+        )
+        accent_box.pack(side="left", padx=(0, 8))
+
+        self._section(outer, "浮窗")
+        self.var_popup_width = tk.StringVar(
+            value=str(self.config.get("popup_width", 560))
+        )
+        self.var_popup_max = tk.StringVar(
+            value=str(round(float(self.config.get("popup_max_height_ratio", 0.72)) * 100))
+        )
+        width_row = tk.Frame(outer, bg=PANEL)
+        width_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            width_row, text="宽度（px）", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=12, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        tk.Entry(
+            width_row, textvariable=self.var_popup_width, width=8, bg=BG, fg=TEXT,
+            insertbackground=TEXT, relief="flat", font=(FONT_FAMILY, 9),
+        ).pack(side="left", ipady=3)
+        tk.Label(
+            width_row, text="420–900", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 8)
+        ).pack(side="left", padx=(8, 0))
+
+        height_row = tk.Frame(outer, bg=PANEL)
+        height_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            height_row, text="最大高度（%）", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=12, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        tk.Entry(
+            height_row, textvariable=self.var_popup_max, width=8, bg=BG, fg=TEXT,
+            insertbackground=TEXT, relief="flat", font=(FONT_FAMILY, 9),
+        ).pack(side="left", ipady=3)
+        tk.Label(
+            height_row, text="50–95", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 8)
+        ).pack(side="left", padx=(8, 0))
+
+        self.var_popup_opacity = tk.DoubleVar(
+            value=float(appearance.get("popup_opacity", 1.0))
+        )
+        opacity_row = tk.Frame(outer, bg=PANEL)
+        opacity_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            opacity_row, text="不透明度", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=12, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        tk.Scale(
+            opacity_row, from_=0.6, to=1.0, resolution=0.05, orient="horizontal",
+            variable=self.var_popup_opacity, showvalue=True, length=220,
+            bg=BG, fg=TEXT, troughcolor=BORDER_SOFT, highlightthickness=0,
+            activebackground=ACCENT,
+        ).pack(side="left")
+
+        self._section(outer, "主界面")
+        self.var_panel_opacity = tk.DoubleVar(
+            value=float(appearance.get("panel_opacity", 1.0))
+        )
+        panel_row = tk.Frame(outer, bg=PANEL)
+        panel_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            panel_row, text="不透明度", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
+            width=12, anchor="w",
+        ).pack(side="left", padx=(12, 4), pady=8)
+        tk.Scale(
+            panel_row, from_=0.7, to=1.0, resolution=0.05, orient="horizontal",
+            variable=self.var_panel_opacity, showvalue=True, length=220,
+            bg=BG, fg=TEXT, troughcolor=BORDER_SOFT, highlightthickness=0,
+            activebackground=ACCENT,
+        ).pack(side="left")
+
+        btns = tk.Frame(outer, bg=BG)
+        btns.pack(fill="x", pady=(8, 4))
+        self._button(btns, "保存并重启", self._appearance_save_restart).pack(side="left")
 
     def _build_prompts_section(self) -> None:
         outer = self._page_bodies["ai"]

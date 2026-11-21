@@ -10,6 +10,7 @@ import tkinter as tk
 
 from .entryhtml import DEFAULT_COLORS
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ON_ACCENT
 
 COLOR_ROWS = [
     ("sense", "义项号"),
@@ -173,7 +174,7 @@ class EntryColorSettings:
             parent,
             text=text,
             bg=ACCENT if primary else PANEL,
-            fg="#ffffff" if primary else TEXT,
+            fg=ON_ACCENT if primary else TEXT,
             font=(FONT_FAMILY, 9),
             padx=12,
             pady=5,

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import tkinter as tk
+from tkinter import ttk
 
 from . import textutil
 from .panel_chat import PanelChatMixin
@@ -16,7 +17,8 @@ from .panel_dict import PanelDictMixin
 from .panel_suggest import PanelSuggestMixin
 from .panel_translate import PanelTranslateMixin
 from .slimscroll import SlimScrollbar
-from .theme import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
 
 
 class MainPanel(
@@ -47,9 +49,40 @@ class MainPanel(
         self.win.title(f"Interpres {_ver}")
         self.win.configure(bg=BG)
         self.win.geometry("640x880")
+        style = ttk.Style(self.win)
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+        style.configure(
+            "TScrollbar",
+            background=SCROLL_THUMB,
+            troughcolor=SCROLL_TRACK,
+            bordercolor=BORDER,
+            arrowcolor=MUTED,
+        )
+        style.map("TScrollbar", background=[("active", ACCENT)])
+        for _bar in ("Vertical.TScrollbar", "Horizontal.TScrollbar"):
+            style.configure(
+                _bar,
+                background=SCROLL_THUMB,
+                troughcolor=SCROLL_TRACK,
+                bordercolor=BORDER,
+                arrowcolor=MUTED,
+            )
+            style.map(_bar, background=[("active", ACCENT)])
         self.win.minsize(520, 700)
         self.win.protocol("WM_DELETE_WINDOW", self._on_close)
         self.win.bind("<Escape>", lambda _e: self._on_close())
+        appearance = service.config.get("appearance") or {}
+        try:
+            opacity = float(appearance.get("panel_opacity", 1.0))
+        except (TypeError, ValueError):
+            opacity = 1.0
+        try:
+            self.win.attributes("-alpha", max(0.3, min(1.0, opacity)))
+        except tk.TclError:
+            pass
         self._build()
 
     # ------------------------------------------------------------------ 构建
@@ -321,7 +354,7 @@ class MainPanel(
             input_bar,
             text="发送",
             bg=ACCENT,
-            fg="#10131a",
+            fg=ON_ACCENT,
             font=(FONT_FAMILY, 9),
             padx=12,
             pady=8,
@@ -349,7 +382,7 @@ class MainPanel(
 
     def _button(self, parent, text, command, primary=False):
         bg = ACCENT if primary else PANEL
-        fg = "#10131a" if primary else TEXT
+        fg = ON_ACCENT if primary else TEXT
         label = tk.Label(
             parent, text=text, bg=bg, fg=fg, font=(FONT_FAMILY, 9), padx=12, pady=5, cursor="hand2"
         )
@@ -464,7 +497,7 @@ class MainPanel(
             bg=PANEL,
             fg=TEXT,
             activebackground=ACCENT,
-            activeforeground="#10131a",
+            activeforeground=ON_ACCENT,
             font=(FONT_FAMILY, 9),
         )
         books = self.service.store.books()
@@ -492,7 +525,7 @@ class MainPanel(
             bg=PANEL,
             fg=TEXT,
             activebackground=ACCENT,
-            activeforeground="#10131a",
+            activeforeground=ON_ACCENT,
             font=(FONT_FAMILY, 9),
         )
         rows = self.service.translations(book=self.book or None, limit=8)

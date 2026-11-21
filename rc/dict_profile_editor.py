@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .dict_profiles import TEMPLATE
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
+from .theme import ON_ACCENT
 
 
 class DictProfileEditor:
@@ -54,7 +55,7 @@ class DictProfileEditor:
             anchor="w",
         )
         self.existing["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.existing.pack(side="left", padx=(8, 0))
         self.var_existing.trace_add("write", lambda *_: self._load_selected())
@@ -81,7 +82,7 @@ class DictProfileEditor:
     def _button(self, parent, text, command, primary=False):
         label = tk.Label(
             parent, text=text, bg=ACCENT if primary else PANEL,
-            fg="#10131a" if primary else TEXT, font=(FONT_FAMILY, 9),
+            fg=ON_ACCENT if primary else TEXT, font=(FONT_FAMILY, 9),
             padx=12, pady=4, cursor="hand2",
         )
         label.bind("<Button-1>", lambda _e: command())

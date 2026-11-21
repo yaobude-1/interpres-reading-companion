@@ -11,6 +11,7 @@ from tkinter import colorchooser
 
 from .selection import foreground_exe
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, TEXT
+from .theme import BORDER_SOFT, ON_ACCENT
 
 
 class SelectionSettings:
@@ -85,7 +86,7 @@ class SelectionSettings:
                 variable=self.var_hide,
                 bg=PANEL,
                 fg=TEXT,
-                selectcolor="#2f3440",
+                selectcolor=BORDER_SOFT,
                 activebackground=PANEL,
                 activeforeground=TEXT,
                 font=(FONT_FAMILY, 9),
@@ -154,7 +155,7 @@ class SelectionSettings:
             bg=PANEL,
             fg=TEXT,
             selectbackground=ACCENT,
-            selectforeground="#10131a",
+            selectforeground=ON_ACCENT,
             font=(FONT_FAMILY, 9),
             relief="flat",
             highlightthickness=0,
@@ -189,7 +190,7 @@ class SelectionSettings:
             variable=var,
             bg=parent.cget("bg"),
             fg=TEXT,
-            selectcolor="#2f3440",
+            selectcolor=BORDER_SOFT,
             activebackground=parent.cget("bg"),
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
@@ -203,7 +204,7 @@ class SelectionSettings:
 
     def _button(self, parent, text, command, primary=False):
         bg = ACCENT if primary else PANEL
-        fg = "#10131a" if primary else TEXT
+        fg = ON_ACCENT if primary else TEXT
         label = tk.Label(
             parent, text=text, bg=bg, fg=fg, font=(FONT_FAMILY, 9), padx=12, pady=5, cursor="hand2"
         )
@@ -240,7 +241,7 @@ class SelectionSettings:
             variable=var,
             bg=PANEL,
             fg=MUTED,
-            troughcolor="#2f3440",
+            troughcolor=BORDER_SOFT,
             highlightthickness=0,
             length=180,
             showvalue=True,

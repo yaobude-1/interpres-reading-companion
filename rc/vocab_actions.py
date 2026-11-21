@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from .popup import ACCENT, FONT_FAMILY, GREEN, PANEL, TEXT
+from .theme import ON_ACCENT
 
 
 class VocabActionsMixin:
@@ -26,7 +27,7 @@ class VocabActionsMixin:
             )
             return
         menu = tk.Menu(self.parent, tearoff=0, bg=PANEL, fg=TEXT,
-                       activebackground=ACCENT, activeforeground="#10131a",
+                       activebackground=ACCENT, activeforeground=ON_ACCENT,
                        font=(FONT_FAMILY, 9))
         for book in targets:
             menu.add_command(

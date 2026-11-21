@@ -9,6 +9,7 @@ from .uiutil import bind_defocus
 import tkinter as tk
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
+from .theme import ON_ACCENT
 
 
 class BookFilterSettings:
@@ -84,7 +85,7 @@ class BookFilterSettings:
             parent,
             text=text,
             bg=ACCENT if primary else PANEL,
-            fg="#ffffff" if primary else TEXT,
+            fg=ON_ACCENT if primary else TEXT,
             font=(FONT_FAMILY, 9),
             padx=12,
             pady=5,

@@ -10,6 +10,7 @@ from tkinter import messagebox
 from . import i18n
 from .i18n import tr
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, PANEL, TEXT
+from .theme import BORDER_SOFT, ON_ACCENT
 
 
 class LanguageDialog:
@@ -80,7 +81,7 @@ class LanguageDialog:
             relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), anchor="w",
         )
         self.engine_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.engine_box.pack(side="left")
         tk.Label(
@@ -106,7 +107,7 @@ class LanguageDialog:
             relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), anchor="w",
         )
         self.voice_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.voice_box.pack(side="left", fill="x", expand=True)
 
@@ -182,7 +183,7 @@ class LanguageDialog:
         btns.pack(fill="x", pady=(6, 0))
 
         save_btn = tk.Label(
-            btns, text="保存", bg=ACCENT, fg="#10131a", font=(FONT_FAMILY, 9),
+            btns, text="保存", bg=ACCENT, fg=ON_ACCENT, font=(FONT_FAMILY, 9),
             padx=16, pady=5, cursor="hand2",
         )
         save_btn.pack(side="right")
@@ -286,7 +287,7 @@ class LanguageDialog:
     def _show_edge_menu(self) -> None:
         menu = tk.Menu(
             self.win, tearoff=0, bg=PANEL, fg=TEXT,
-            activebackground=ACCENT, activeforeground="#10131a",
+            activebackground=ACCENT, activeforeground=ON_ACCENT,
             font=(FONT_FAMILY, 9),
         )
 
@@ -331,7 +332,7 @@ class ConfirmDeleteDialog:
         if show_check:
             tk.Checkbutton(
                 outer, text="以后不再提示", variable=self.var_suppress,
-                bg=BG, fg=DIM, selectcolor="#2f3440", activebackground=BG,
+                bg=BG, fg=DIM, selectcolor=BORDER_SOFT, activebackground=BG,
                 activeforeground=TEXT, font=(FONT_FAMILY, 9), anchor="w",
             ).pack(fill="x", pady=(10, 0))
         btns = tk.Frame(outer, bg=BG)

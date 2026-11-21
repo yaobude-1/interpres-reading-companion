@@ -25,6 +25,7 @@ from .theme import (
     RED as RED,
     TEXT as TEXT,
 )
+from .theme import BORDER_SOFT, ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
 
 
 class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
@@ -67,6 +68,15 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
         self.win.overrideredirect(True)
         self.win.attributes("-topmost", True)
         self.win.configure(bg=BORDER)
+        appearance = config.get("appearance") or {}
+        try:
+            opacity = float(appearance.get("popup_opacity", 1.0))
+        except (TypeError, ValueError):
+            opacity = 1.0
+        try:
+            self.win.attributes("-alpha", max(0.3, min(1.0, opacity)))
+        except tk.TclError:
+            pass
 
         self.shell = tk.Frame(self.win, bg=BG)
         self.shell.pack(fill="both", expand=True, padx=1, pady=1)
@@ -137,8 +147,8 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             self.shell,
             orient="vertical",
             command=self.canvas.yview,
-            bg="#4b5263",
-            troughcolor=PANEL,
+            bg=SCROLL_THUMB,
+            troughcolor=SCROLL_TRACK,
             activebackground=ACCENT,
             width=9,
             relief="flat",
@@ -222,7 +232,7 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
         return label
 
     def _divider(self, pady: int = 8) -> None:
-        line = tk.Frame(self.body, bg="#2f3440", height=1)
+        line = tk.Frame(self.body, bg=BORDER_SOFT, height=1)
         line.pack(fill="x", pady=(pady, pady))
 
     def _bind_wheel(self, widget) -> None:
@@ -357,7 +367,7 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             row,
             text="翻译（Ctrl+Enter）",
             bg=ACCENT,
-            fg="#10131a",
+            fg=ON_ACCENT,
             font=(FONT_FAMILY, 9),
             padx=12,
             pady=5,

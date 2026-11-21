@@ -15,6 +15,7 @@ from .anki import (
     MODEL_NAME,
 )
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, TEXT
+from .theme import BORDER_SOFT, ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
 
 
 class WordbookAnkiSettings:
@@ -45,7 +46,10 @@ class WordbookAnkiSettings:
         main.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(main, bg=BG, highlightthickness=0, bd=0)
-        scroll = tk.Scrollbar(main, orient="vertical", command=canvas.yview)
+        scroll = tk.Scrollbar(
+            main, orient="vertical", command=canvas.yview,
+            bg=SCROLL_THUMB, troughcolor=SCROLL_TRACK, activebackground=ACCENT,
+        )
         canvas.configure(yscrollcommand=scroll.set)
         canvas.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y", padx=(0, 6))
@@ -87,7 +91,7 @@ class WordbookAnkiSettings:
         ):
             tk.Radiobutton(
                 mode_box, text=label, value=value, variable=self.mode,
-                bg=PANEL, fg=TEXT, selectcolor="#2f3440", activebackground=PANEL,
+                bg=PANEL, fg=TEXT, selectcolor=BORDER_SOFT, activebackground=PANEL,
                 activeforeground=TEXT, font=(FONT_FAMILY, 9), anchor="w",
                 command=self._on_mode_change,
             ).pack(fill="x")
@@ -107,7 +111,7 @@ class WordbookAnkiSettings:
             anchor="w",
         )
         self.model_box["menu"].configure(
-            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         self.model_var_trace = self.model.trace_add(
             "write", lambda *_: self._on_model_change()
@@ -128,7 +132,7 @@ class WordbookAnkiSettings:
         self.var_sync = tk.BooleanVar(value=bool(saved.get("sync_templates", True)))
         self.sync_check = tk.Checkbutton(
             outer, text="同步模板/CSS 到 Anki（已有卡片会重新渲染）",
-            variable=self.var_sync, bg=BG, fg=TEXT, selectcolor="#2f3440",
+            variable=self.var_sync, bg=BG, fg=TEXT, selectcolor=BORDER_SOFT,
             activebackground=BG, activeforeground=TEXT, font=(FONT_FAMILY, 9),
             anchor="w",
         )
@@ -163,7 +167,7 @@ class WordbookAnkiSettings:
     def _button(self, parent, text, command, primary=False):
         label = tk.Label(
             parent, text=text, bg=ACCENT if primary else PANEL,
-            fg="#10131a" if primary else TEXT, font=(FONT_FAMILY, 9),
+            fg=ON_ACCENT if primary else TEXT, font=(FONT_FAMILY, 9),
             padx=14, pady=5, cursor="hand2",
         )
         label.bind("<Button-1>", lambda _e: command())
@@ -304,7 +308,7 @@ class WordbookAnkiSettings:
                 width=18, anchor="w",
             )
             box["menu"].configure(
-                bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground="#10131a"
+                bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
             )
             box.grid(row=index, column=1, sticky="w", pady=2)
             self.mapping_vars[field] = var
