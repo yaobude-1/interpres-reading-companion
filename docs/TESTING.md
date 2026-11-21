@@ -27,6 +27,8 @@ This is the command used by `.github/workflows/checks.yml`, after the
   URLs, and an ASCII-only portable build script (PS 5.1 decodes BOM-less
   scripts as ANSI, which silently dropped the Chinese quick-start file)
 - panel geometry restore, so a saved window size is actually applied
+- the translation-history window and the panel playback path (this one does
+  open Tk windows, and it passes on `windows-latest`)
 
 The gate must pass before a release. It does not require a visible desktop,
 though some pronunciation checks are skipped when the machine has no matching
@@ -89,5 +91,6 @@ Before replacing a release asset, verify on Windows:
 ## CI limitations
 
 CI runs on GitHub's `windows-latest` image (Windows Server), not desktop
-Windows 10/11. GUI-heavy checks therefore stay manual. A true 10/11 matrix
+Windows 10/11. `tests/test_translation_ui.py` does create Tk windows and still
+passes there, but heavier GUI probes stay manual. A true 10/11 matrix
 would need self-hosted runners.
