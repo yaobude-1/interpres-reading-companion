@@ -63,6 +63,14 @@
 | `Ctrl+Alt+S` | 打开面板 |
 | `Esc` | 关闭面板（行为可配置） |
 
+## 卸载
+
+程序是绿色版，没有安装器。运行解压目录里的 `uninstall.ps1` 即可：它会退出正在运行的实例、
+删除桌面/开机自启快捷方式，并在询问后决定是否删除 `%USERPROFILE%\.reading-companion`
+（生词本、翻译记录、设置）。加 `-KeepData` 直接保留数据，加 `-DryRun` 只打印不执行。
+
+也可以直接删掉程序文件夹——数据目录会保留，需要自己再删。
+
 ## Anki 卡片
 
 ![Anki 卡片设置](screenshots/anki-cards-zh.png)

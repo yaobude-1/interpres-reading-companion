@@ -65,6 +65,15 @@ Hotkeys:
 | `Ctrl+Alt+S` | Open panel |
 | `Esc` | Close panel (behaviour configurable) |
 
+## Uninstall
+
+The app is portable: there is no installer to remove. Run `uninstall.ps1` from
+the extracted folder to stop any running instance, remove the desktop/startup
+shortcuts and, after asking, delete `%USERPROFILE%\.reading-companion`
+(vocabulary, history, settings). Pass `-KeepData` to keep that folder without
+being asked; `-DryRun` prints what would be removed. You can also simply delete
+the program folder — the data folder stays unless you delete it yourself.
+
 ## Anki cards
 
 ![Anki card settings](docs/screenshots/anki-cards.png)

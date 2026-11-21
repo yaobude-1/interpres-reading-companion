@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$AppDir = $PSScriptRoot,
     [switch]$Startup,
     [switch]$Uninstall
@@ -14,6 +14,11 @@ $StartupDir = [Environment]::GetFolderPath('Startup')
 $StartupLink = Join-Path $StartupDir 'Interpres.lnk'
 
 if ($Uninstall) {
+    $uninstaller = Join-Path $AppDir 'uninstall.ps1'
+    if (Test-Path -LiteralPath $uninstaller) {
+        & $uninstaller -AppDir $AppDir -KeepData
+        return
+    }
     foreach ($p in @($Link, $StartupLink)) {
         if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force }
     }

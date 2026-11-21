@@ -85,6 +85,15 @@ def main() -> int:
     # PS 5.1 把无 BOM 脚本按 ANSI 解码，脚本里出现中文就会静默匹配不到文件
     check("build_portable.ps1 保持纯 ASCII", all(byte < 128 for byte in build_src))
     check('按 *.txt 收集说明文件', b'-Filter "*.txt"' in build_src)
+    check("打包时带上卸载脚本", b"uninstall.ps1" in build_src)
+
+    print("\n[PowerShell 脚本编码]")
+    # 含中文的 .ps1 必须带 UTF-8 BOM，否则 PS 5.1 会按 ANSI 解码（字符串会被截断）。
+    for name in ("install.ps1", "stop.ps1", "uninstall.ps1", "build_exe.ps1"):
+        raw = (ROOT / name).read_bytes()
+        has_bom = raw.startswith(b"\xef\xbb\xbf")
+        pure_ascii = all(byte < 128 for byte in raw)
+        check(f"{name} 可被 PS 5.1 正确读取", has_bom or pure_ascii, "缺少 BOM")
 
     shutil.rmtree(data, ignore_errors=True)
     print("\n" + "=" * 50)

@@ -74,6 +74,7 @@ Copy-Item (Join-Path $built "*") $stage -Recurse
 Copy-Item (Join-Path $root "THIRD_PARTY_NOTICES.md") $stage
 Copy-Item (Join-Path $root "README.md") $stage
 Copy-Item (Join-Path $root "LICENSE") $stage
+if (Test-Path (Join-Path $root "uninstall.ps1")) { Copy-Item (Join-Path $root "uninstall.ps1") $stage }
 # Copy the Chinese quick-start without naming it literally: PS 5.1 decodes
 # BOM-less scripts as ANSI, so a CJK literal here silently matches nothing.
 Get-ChildItem -LiteralPath $root -File -Filter "*.txt" |

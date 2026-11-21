@@ -1,4 +1,4 @@
-# Build the distributable single-file exe.
+﻿# Build the distributable single-file exe.
 # Usage:  powershell -ExecutionPolicy Bypass -File .\build_exe.ps1
 # Version: bump rc\__init__.py __version__ and assets\version_info.txt
 
