@@ -5,6 +5,10 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
+- Default translation prompt now returns plain translation text only: no
+  AI-selected vocabulary, glossary, grammar notes or source-language detection.
+  Word/phrase queries still get dictionary-style senses separated by “；”.
+  Existing custom JSON prompts remain supported.
 - Vocabulary table scrollbars hide when the content fits and use a subtle dark
   thumb instead of a light strip.
 - Vocabulary tab: word actions now form one row under the word table (full

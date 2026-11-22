@@ -44,6 +44,7 @@ jobs:
             "tests/test_settings_smoke.py",
             "tests/test_appearance.py",
             "tests/test_selection_popup.py",
+            "tests/test_prompt_plain.py",
             "tests/test_chat_context.py",
             "tests/test_dictionary_redirect.py",
             "tests/test_ux_scenarios.py",

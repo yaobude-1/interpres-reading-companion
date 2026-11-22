@@ -14,42 +14,9 @@ from typing import Any
 
 from .netpolicy import validate_base_url
 
-SYSTEM_PROMPT = """你是一位精通多国语言的专业译者，同时是一位经验丰富的语言教师。用户正在精读一本外文书，会给你一段从阅读器里复制出来的原文（可能是一个词、一个短语、或一整段），以及可选的上下文、术语表和书名。
+SYSTEM_PROMPT = """你是一位精通多国语言的专业译者。用户正在精读一本外文书，会给你一段从阅读器里复制出来的原文（可能是一个词、一个短语、或一整段），以及可选的上下文和书名。
 
-你的任务：
-1. 把原文翻译成目标语言，忠实、通顺，保留段落结构；
-2. 从原文中挑出对语言学习者最有价值的词语，给出词典信息；
-3. 如果原文里有值得说明的语法结构或难句，用一两句话点明。
-
-只能输出一个 JSON 对象，不要输出任何其他文字，不要用 Markdown 代码块。JSON 结构：
-
-{
-  "source_lang": "原文语言的 ISO 639-1 代码，拉丁语用 la，古希腊语用 grc",
-  "translation": "译文",
-  "glossary_hits": [{"term": "原文术语", "rendering": "术语表要求的译法"}],
-  "terms": [
-    {
-      "word": "原文中出现的形态",
-      "lemma": "词典原形",
-      "reading": "IPA 音标；拿不准就留空字符串",
-      "pos": "词性（中文，如 名词/动词/形容词/副词/介词）",
-      "meaning": "结合上下文的中文释义",
-      "note": "可选的用法、搭配或易混点，一句话"
-    }
-  ],
-  "grammar": "值得说明的语法结构或难句解析；没有就填 null"
-}
-
-规则：
-- translation 只给译文。原文是单词或短语时，给简洁的词典式释义，最多 3 个义项，用「；」分隔，不要写“这个词的意思是”这类口头解释。
-- terms 给 3~8 个（原文很长时最多 10 个）。优先挑生僻词、一词多义、固定搭配、容易误解的词；不要挑 the/a/is/and/to 这类功能词。原文本身是单个词时，terms 里仍然给出这个词。
-- lemma 必须是词典原形：英语动词给原形、名词给单数；法语动词给不定式；德语动词给不定式；拉丁语给完整词典形式，动词如 `amo, amare, amavi, amatum`，名词如 `puella, puellae, f`。
-- meaning 要结合上下文，不要只抄词典第一个义项；如果该词在这里是引申义，要点明。
-- reading 用 IPA，拿不准就留空字符串，不要瞎编。
-- grammar 只在确实有值得讲的点时给出，比如长难句、特殊句式、虚拟式、绝对夺格；普通句子填 null。
-- glossary_hits 只在命中用户提供的术语表时填写，且 translation 必须采用术语表指定的译法。
-- 上下文只用于消歧，不要把上下文的内容翻译进译文。
-- 如果原文是拉丁语，在 note 里说明变格/变位要点（如“第三变位，被动语态”）。"""
+把原文翻译成目标语言，忠实、通顺，保留段落结构，直接给出译文。原文是单词或短语时，给出词典式释义，不同义项用「；」分隔。上下文只用于消歧，不要把上下文翻译进译文。"""
 
 USER_TEMPLATE = """目标语言：{target}{src_line}
 书名：{book}
@@ -401,16 +368,35 @@ class Translator:
     # -------------------------------------------------------------------- parse
     def _parse(self, raw: str) -> dict:
         text = raw.strip()
-        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"^```(?:json|text)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
         try:
             data = json.loads(text)
         except json.JSONDecodeError:
             data = _extract_object(text)
             if data is None:
-                raise LLMError(f"模型输出无法解析为 JSON：{text[:200]}") from None
+                # 默认提示词直接输出纯译文；也兼容旧的自定义 JSON 提示词
+                plain = text.strip().strip('"').strip()
+                if not plain:
+                    raise LLMError("模型没有给出译文，请重试或换一段文字") from None
+                return {
+                    "source_lang": "",
+                    "translation": plain,
+                    "terms": [],
+                    "grammar": None,
+                    "glossary_hits": [],
+                }
 
         if not isinstance(data, dict):
+            plain = text.strip().strip('"').strip()
+            if plain:
+                return {
+                    "source_lang": "",
+                    "translation": plain,
+                    "terms": [],
+                    "grammar": None,
+                    "glossary_hits": [],
+                }
             raise LLMError("模型输出格式不对，请重试")
         translation = str(data.get("translation") or "").strip()
         if not translation:
@@ -486,10 +472,16 @@ def _extract_object(text: str) -> dict | None:
 
 
 def _partial_translation(buffer: str) -> str:
-    """从还没闭合的 JSON 里尽量取出 translation 字段。"""
+    """从流式输出里尽量取出译文：默认纯文本，也兼容旧 JSON 提示词。"""
+    if not buffer.strip():
+        return ""
     match = re.search(r'"translation"\s*:\s*"', buffer)
     if not match:
-        return ""
+        if buffer.lstrip().startswith("{") or '"translation"' in buffer:
+            return ""
+        partial = buffer.strip()
+        partial = re.sub(r"^```(?:json|text)?\s*", "", partial)
+        return re.sub(r"\s*```$", "", partial).strip()
     index = match.end()
     chars: list[str] = []
     escaped = False
