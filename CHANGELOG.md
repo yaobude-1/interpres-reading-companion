@@ -3,6 +3,12 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
+## Unreleased
+
+- Original dictionary entries: internal `entry://` links such as Longman's
+  “您是否要查找：know” now open the target entry in the same viewer instead of
+  doing nothing.
+
 ## 1.0.7 — 2026-11-22
 
 - Settings prompt editors now have vertical scrollbars and mouse-wheel scrolling;

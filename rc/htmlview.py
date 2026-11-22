@@ -16,6 +16,7 @@ from ctypes import wintypes
 from pathlib import Path
 
 import tkinter as tk
+from urllib.parse import unquote
 
 log = logging.getLogger("rc")
 
@@ -28,6 +29,10 @@ user32 = ctypes.windll.user32
 user32.SetParent.argtypes = [wintypes.HWND, wintypes.HWND]
 user32.SetWindowLongW.restype = wintypes.LONG
 user32.SetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int, wintypes.LONG]
+user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+user32.GetWindowTextLengthW.restype = ctypes.c_int
+user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+user32.GetWindowTextW.restype = ctypes.c_int
 user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
 user32.PostMessageW.restype = wintypes.BOOL
 user32.IsWindow.argtypes = [wintypes.HWND]
@@ -51,6 +56,19 @@ WM_CLOSE = 0x0010
 
 
 PROFILE_DIR = Path(tempfile.gettempdir()) / "interpres-edge-profile"
+LOOKUP_PREFIX = "rc-lookup:"
+
+
+def parse_lookup_title(title: str) -> str:
+    """从 JS 设置的窗口标题里取出目标词；非查找标题返回空串。"""
+    if not title.startswith(LOOKUP_PREFIX):
+        return ""
+    payload = title[len(LOOKUP_PREFIX):]
+    word = payload.rsplit(":", 1)[0]
+    try:
+        return unquote(word).strip()
+    except Exception:  # noqa: BLE001 - 词典链接里的异常编码按无效处理
+        return ""
 
 
 def _profile_args() -> list[str]:
@@ -95,15 +113,19 @@ def _find_window_by_title(needle: str) -> int:
 class EntryViewer:
     """一个 Toplevel，里面嵌着 Edge 渲染的词典原版条目。"""
 
-    def __init__(self, root: tk.Tk, on_close=None) -> None:
+    def __init__(self, root: tk.Tk, on_close=None, on_link=None) -> None:
         self.root = root
         self.on_close = on_close
+        self.on_link = on_link
         self.proc: subprocess.Popen | None = None
         self.hwnd = 0
         self._title_h = 0
         self._marker = ""
         self._html_path: Path | None = None
         self._attach_job = None
+        self._link_job = None
+        self._last_link = ""
+        self._lang = ""
         self._attach_tries = 0
 
         self.win: tk.Toplevel | None = None
@@ -137,8 +159,10 @@ class EntryViewer:
         self._build_window()
 
     # ------------------------------------------------------------------ 显示
-    def show(self, html: str, title: str = "词典条目") -> bool:
+    def show(self, html: str, title: str = "词典条目", lang: str = "") -> bool:
         self._ensure_window()
+        self._lang = lang or "en"
+        self._last_link = ""
         edge = find_edge()
         if not edge:
             self._fallback(html)
@@ -210,12 +234,44 @@ class EntryViewer:
             scale = 1.0
         self._title_h = max(1, int(round(32 * scale)))
         self._resize()
+        if self.on_link is not None:
+            self._start_link_poll()
         if getattr(self, "loading", None) is not None:
             try:
                 self.loading.destroy()
             except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self.loading = None
+
+    def _start_link_poll(self) -> None:
+        if self._link_job is not None:
+            return
+        self._link_job = self.root.after(120, self._poll_links)
+
+    def _poll_links(self) -> None:
+        """轮询 Edge 窗口标题：词典页里的内部链接会写成 rc-lookup:词:时间戳。"""
+        self._link_job = None
+        if not self.hwnd or self.on_link is None:
+            return
+        try:
+            if not user32.IsWindow(self.hwnd):
+                return
+            length = user32.GetWindowTextLengthW(self.hwnd)
+            if length <= 0:
+                self._link_job = self.root.after(120, self._poll_links)
+                return
+            buf = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(self.hwnd, buf, length + 1)
+        except (OSError, AttributeError, tk.TclError):
+            return
+        word = parse_lookup_title(buf.value)
+        if word and word != self._last_link:
+            self._last_link = word
+            html = self.on_link(word, self._lang)
+            if html:
+                self.show(html, word, self._lang)
+                return
+        self._link_job = self.root.after(120, self._poll_links)
 
     def _frame_height(self, hwnd: int) -> int:
         rect = wintypes.RECT()
@@ -287,6 +343,12 @@ class EntryViewer:
 
     # ------------------------------------------------------------------ 清理
     def close_process(self) -> None:
+        if self._link_job is not None:
+            try:
+                self.root.after_cancel(self._link_job)
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
+                pass
+            self._link_job = None
         if self._attach_job is not None:
             try:
                 self.root.after_cancel(self._attach_job)

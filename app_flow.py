@@ -93,15 +93,28 @@ class FlowMixin:
 
     def show_entry_html(self, word: str, lang: str = "") -> None:
         """打开词典原版条目（Chromium 渲染）。"""
-        html = self.service.entry_html(word, lang or "en")
+        lang = lang or "en"
+        html = self.service.entry_html(word, lang)
         if not html:
             self.toast("这本词典没有原版条目")
             return
         if self._entry_viewer is None or not self._entry_viewer.win or not self._entry_viewer.win.winfo_exists():
             self._entry_viewer = EntryViewer(
-                self.root, on_close=lambda: setattr(self, "_entry_viewer", None)
+                self.root,
+                on_close=lambda: setattr(self, "_entry_viewer", None),
+                on_link=self._entry_link,
             )
-        self._entry_viewer.show(html, word)
+        self._entry_viewer.show(html, word, lang)
+
+    def _entry_link(self, word: str, lang: str = "") -> str:
+        """原版条目里点了词典内部链接：返回目标词条的 HTML。"""
+        word = (word or "").strip()
+        if not word:
+            return ""
+        html = self.service.entry_html(word, lang or "en")
+        if not html:
+            self.toast("这本词典没有这个词条")
+        return html
 
     def _show_details(self, payload: dict, anchor) -> None:
         self.popup.show_result(payload, anchor)

@@ -335,6 +335,18 @@ document.addEventListener('click', function (event) {
       var p = window.__rcAudio.play();
       if (p && p.catch) { p.catch(function () {}); }
     } catch (err) {}
+    return;
+  }
+  var entry = event.target.closest ? event.target.closest('[data-entry]') : null;
+  if (entry) {
+    event.preventDefault();
+    var word = entry.getAttribute('data-entry') || '';
+    word = word.split('#')[0].split('?')[0];
+    try { word = decodeURIComponent(word); } catch (err) {}
+    if (word) {
+      // 标题变化由 Tk 侧轮询，点击后再由程序查目标词条
+      document.title = 'rc-lookup:' + encodeURIComponent(word) + ':' + Date.now();
+    }
   }
 });
 """
@@ -406,6 +418,11 @@ def _sanitize_untrusted(html: str) -> str:
         return '<pre class="rc-raw">' + escape(html) + "</pre>"
 
 
+def rewrite_entry_links(html: str) -> str:
+    """把词典内部 entry:// 链接改成可被注入脚本拦截的 data-entry。"""
+    return html.replace('href="entry://', 'data-entry="')
+
+
 def build_entry_html(
     dictionary: Dictionary,
     word: str,
@@ -434,7 +451,7 @@ def build_entry_html(
     # 结构化、去重、折叠只用于主界面的释义视图。
 
 
-    html = html.replace('href="entry://', 'data-entry="')
+    html = rewrite_entry_links(html)
     heading = title or word
     base_css = _BASE_CSS
     if profile == "ohd":
