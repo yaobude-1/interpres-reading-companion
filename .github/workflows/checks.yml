@@ -46,6 +46,7 @@ jobs:
             "tests/test_selection_popup.py",
             "tests/test_prompt_plain.py",
             "tests/test_chat_context.py",
+            "tests/test_uia_script.py",
             "tests/test_dictionary_redirect.py",
             "tests/test_ux_scenarios.py",
             "tests/test_voice_preview.py",

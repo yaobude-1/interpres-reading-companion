@@ -3,7 +3,7 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
-## Unreleased
+## 1.0.7 — 2026-11-22
 
 - Settings prompt editors now have vertical scrollbars and mouse-wheel scrolling;
   the outdated “must keep JSON” hint was replaced with “plain text or JSON”.
