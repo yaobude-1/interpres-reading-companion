@@ -73,7 +73,7 @@ class VocabTableMixin:
                     (word.get("meaning") or "")[:80],
                     word.get("book") or "",
                     (word.get("updated") or "")[:10],
-                    "已同步" if word.get("synced") else "未同步",
+                    tr("已同步") if word.get("synced") else tr("未同步"),
                 ),
             )
         keep = [iid for iid in selected if self.word_tree.exists(iid)]

@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 import time
@@ -21,6 +22,7 @@ from PIL import ImageGrab  # noqa: E402
 
 OUT = ROOT / "docs" / "screenshots"
 DATA = HERE / ".docshots"
+os.environ["RC_DATA_DIR"] = str(DATA)
 
 
 def grab(widget, name: str) -> None:
@@ -70,6 +72,13 @@ def main() -> int:
         }
     )
     cfg.data["stream_cps"] = 60
+    cfg.data["server_port"] = 18783 if mode == "en" else 18782
+    cfg.data["appearance"] = {
+        "theme": "dark",
+        "accent": "blue",
+        "popup_opacity": 1.0,
+        "panel_opacity": 1.0,
+    }
     for code, name, zh_name, deck in (
         ("en", "English", "英语", "Reading::English"),
         ("fr", "French", "法语", "Reading::French"),
@@ -90,7 +99,7 @@ def main() -> int:
 
     app = Application(cfg, enable_hotkeys=False, silent=True)
     svc = app.service
-    svc.store.touch_book("Demo Book", "en")
+    svc.store.touch_book("Demo", "en")
     svc.add_vocab(
         lang="en",
         word="ephemeral",
@@ -99,7 +108,7 @@ def main() -> int:
         pos="adj.",
         meaning="lasting for a very short time",
         sentence="Fashion is by nature ephemeral.",
-        book="Demo Book",
+        book="Demo",
     )
     svc.add_vocab(
         lang="en",
@@ -108,7 +117,7 @@ def main() -> int:
         reading="/ˌserənˈdɪpəti/",
         pos="n.",
         meaning="a fortunate discovery by chance",
-        book="Demo Book",
+        book="Demo",
     )
     svc.add_vocab(
         lang="fr",
@@ -117,7 +126,7 @@ def main() -> int:
         reading="/flane/",
         pos="v.",
         meaning="to stroll; to wander aimlessly",
-        book="Demo Book",
+        book="Demo",
     )
     svc.store.rename_default_wordbook("en", "English")
     svc.store.rename_default_wordbook("fr", "French")
@@ -176,12 +185,26 @@ def main() -> int:
             elif step == 1:
                 grab(app.panel.win, f"panel-{mode}.png")
                 app.panel._show_tab("vocab")
+                app.panel.win.geometry("820x880")
                 app.root.after(700, next_step)
             elif step == 2:
                 grab(app.panel.win, f"vocabulary{suffix}.png")
                 app.open_settings()
                 if app._settings:
-                    app._settings.win.geometry("+60+30")
+                    app._settings.win.geometry("980x900+40+20")
+                    from rc.settings_common import (
+                        default_chat_persona,
+                        default_chat_rules,
+                        default_translate_prompt,
+                    )
+
+                    for widget, getter in (
+                        (app._settings.prompt_translate, default_translate_prompt),
+                        (app._settings.prompt_persona, default_chat_persona),
+                        (app._settings.prompt_rules, default_chat_rules),
+                    ):
+                        widget.delete("1.0", "end")
+                        widget.insert("1.0", getter())
                 app.root.after(900, next_step)
             elif step == 3:
                 if app._settings:
