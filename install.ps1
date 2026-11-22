@@ -40,7 +40,7 @@ $candidates = @(
 )
 $PythonW = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
 if (-not $PythonW) {
-    throw '找不到 pythonw.exe。请安装 Python 3.10+ 并勾选 “Add to PATH”，或先运行一次 DeepSeek Harness。'
+    throw '找不到 pythonw.exe。请安装 Python 3.12+ 并勾选 “Add to PATH”，或先运行一次 DeepSeek Harness。'
 }
 
 # ---- 生成静默启动器 ----

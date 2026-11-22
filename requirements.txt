@@ -4,5 +4,5 @@ pystray==0.19.5
 edge-tts==7.3.1
 aiohttp==3.14.5
 
-# build only
-# pyinstaller>=6.22
+# build only（与构建机一致）
+pyinstaller==6.22.3

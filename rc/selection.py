@@ -13,11 +13,14 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.wintypes as wt
+import logging
 import threading
 import time
 from pathlib import Path
 
 from . import capture
+
+log = logging.getLogger("rc")
 
 user32 = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
@@ -131,8 +134,8 @@ def capture_selected_text(timeout: float = 1.2) -> str | None:
     if text and had_text and original is not None and text != original:
         try:
             set_clipboard_text(original)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 还原剪贴板失败不影响取词结果
+            log.debug("还原剪贴板失败: %s", exc)
     return text
 
 
@@ -185,8 +188,8 @@ class MouseWatcher(threading.Thread):
                     last_fire = now
                     try:
                         self._maybe_fire(pos)
-                    except Exception:
-                        pass
+                    except Exception as exc:  # noqa: BLE001 - 触发回调失败不能让轮询线程退出
+                        log.debug("划词触发失败: %s", exc)
             time.sleep(0.02)
 
     def _notify_press(self, pos: tuple[int, int]) -> None:
@@ -197,8 +200,8 @@ class MouseWatcher(threading.Thread):
             if pid_at_point(*pos) == self._own_pid:
                 return
             self.on_press(pos)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能让轮询线程退出
+            log.debug("按下回调失败: %s", exc)
 
     def _maybe_fire(self, pos: tuple[int, int]) -> None:
         cfg = self.config.get("selection") or {}

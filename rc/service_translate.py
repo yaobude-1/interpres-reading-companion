@@ -56,8 +56,8 @@ class TranslateMixin(ServiceBase):
             if on_progress is not None:
                 try:
                     on_progress(1, 1)
-                except Exception:
-                    pass
+                except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断翻译
+                    log.debug("on_progress 回调失败: %s", exc)
             if on_partial is not None and hasattr(self.translator, "translate_stream"):
                 results[0] = self._translate_chunk_stream(
                     chunks[0],
@@ -119,8 +119,8 @@ class TranslateMixin(ServiceBase):
                             if on_progress is not None:
                                 try:
                                     on_progress(done, total)
-                                except Exception:
-                                    pass
+                                except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断翻译
+                                    log.debug("on_progress 回调失败: %s", exc)
                         if on_partial is not None:
                             joined = "\n\n".join(
                                 str(item.get("translation") or "")
@@ -129,8 +129,8 @@ class TranslateMixin(ServiceBase):
                             )
                             try:
                                 on_partial(joined)
-                            except Exception:
-                                pass
+                            except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断翻译
+                                log.debug("on_partial 回调失败: %s", exc)
                 except Exception:
                     for future in futures:
                         future.cancel()
@@ -310,8 +310,8 @@ class TranslateMixin(ServiceBase):
                 if on_partial is not None:
                     try:
                         on_partial(str(cached.get("translation") or ""))
-                    except Exception:
-                        pass
+                    except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能影响缓存命中
+                        log.debug("on_partial 回调失败: %s", exc)
                 return cached
 
         started = time.time()

@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+import logging
 from html.parser import HTMLParser
+
+log = logging.getLogger("rc")
 
 VOID_TAGS = {
     "br",
@@ -126,6 +129,6 @@ def parse(html: str) -> Node:
     try:
         builder.feed(html)
         builder.close()
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001 - HTML 容错解析，保留已经构建的部分
+        log.debug("HTML 解析异常（保留已解析部分）: %s", exc)
     return builder.root

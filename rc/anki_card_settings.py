@@ -66,7 +66,7 @@ class AnkiCardSettings:
         def _wheel(event):
             try:
                 canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
 
         self.win.bind("<MouseWheel>", _wheel, add="+")
@@ -175,7 +175,7 @@ class AnkiCardSettings:
     def _set_status(self, text: str, color=MUTED) -> None:
         try:
             self.status.configure(text=text, fg=color)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     # ------------------------------------------------------------------ 数据

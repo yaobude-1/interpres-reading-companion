@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from html import unescape
@@ -22,6 +23,8 @@ from pathlib import Path
 
 from .htmldom import parse
 from .mdx import MDD, MDX, MDXError, html_to_text
+
+log = logging.getLogger("rc")
 
 
 @dataclass
@@ -142,8 +145,8 @@ class Dictionary:
                     if parsed is not None and parsed.senses:
                         parsed.source = self.name
                         return parsed
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - profile 解析失败时回退到内置解析
+                log.debug("词典 profile 解析失败: %s", exc)
         entry = DictEntry(word=word, source=self.name)
         try:
             if "ohd-entry" in html:
@@ -152,8 +155,8 @@ class Dictionary:
                 self._parse_ldoce(entry, html)
             else:
                 self._parse_generic(entry, html)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 解析失败时回退到纯文本
+            log.debug("内置词条解析失败: %s", exc)
         if not entry.senses:
             text = html_to_text(html)
             if text:

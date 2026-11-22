@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import logging
 import tkinter as tk
 
 from . import screens, textutil
@@ -26,6 +27,8 @@ from .theme import (
     TEXT as TEXT,
 )
 from .theme import BORDER_SOFT, ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
+
+log = logging.getLogger("rc")
 
 
 class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
@@ -75,7 +78,7 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             opacity = 1.0
         try:
             self.win.attributes("-alpha", max(0.3, min(1.0, opacity)))
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
         self.shell = tk.Frame(self.win, bg=BG)
@@ -199,8 +202,8 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
                 event.widget, event.widget.winfo_class(), event.x, event.y,
                 event.widget.cget("text") if event.widget.winfo_class() == "Label" else "",
             )
-        except Exception:
-            pass
+        except (tk.TclError, ValueError) as exc:  # noqa: BLE001 - 调试日志失败不处理
+            log.debug("记录浮窗点击失败: %s", exc)
 
     def _start_drag(self, event) -> None:
         self._drag = (event.x_root, event.y_root, self.win.winfo_x(), self.win.winfo_y())
@@ -325,7 +328,7 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
         try:
             if label is not None and label.winfo_exists() and self._mode == "translate":
                 label.configure(text=text)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def show_input(self, anchor: tuple[int, int], clipboard_text: str = "") -> None:

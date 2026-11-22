@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -54,11 +54,11 @@ def main() -> int:
 
     print("\n[失败路径]")
     check("hwnd=0 返回 unsupported", uia_context.read_context(0).get("reason") == "unsupported")
-    with tempfile.TemporaryDirectory() as tmp:
-        missing = Path(tmp) / "missing.ps1"
-        with mock.patch.object(uia_context, "script_path", return_value=missing):
-            result = uia_context.read_context(1234)
-        check("脚本缺失返回 script-missing", result.get("reason") == "script-missing")
+    missing = HERE / ".uidata" / f"missing-{os.getpid()}.ps1"
+    missing.parent.mkdir(parents=True, exist_ok=True)
+    with mock.patch.object(uia_context, "script_path", return_value=missing):
+        result = uia_context.read_context(1234)
+    check("脚本缺失返回 script-missing", result.get("reason") == "script-missing")
 
     print("\n失败项：", fails if fails else "无")
     return 1 if fails else 0

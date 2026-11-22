@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from pathlib import Path
 
 from .dictionary import Dictionary, DictEntry
+
+log = logging.getLogger("rc")
 
 
 class DictionaryManager:
@@ -46,8 +49,8 @@ class DictionaryManager:
                 if dictionary:
                     try:
                         dictionary.close()
-                    except Exception:
-                        pass
+                    except Exception as exc:  # noqa: BLE001 - 单个词典关闭失败不影响重新加载
+                        log.warning("关闭词典失败: %s", exc)
             self._dicts.clear()
             self._cache.clear()
 

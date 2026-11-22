@@ -91,7 +91,7 @@ class DictProfileEditor:
     def _set_status(self, text: str, color=MUTED) -> None:
         try:
             self.status.configure(text=text, fg=color)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _paths(self) -> list[Path]:

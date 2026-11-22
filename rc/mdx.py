@@ -21,11 +21,14 @@ from __future__ import annotations
 
 import bisect
 import html as html_lib
+import logging
 import re
 import struct
 import threading
 import zlib
 from pathlib import Path
+
+log = logging.getLogger("rc")
 
 
 class MDXError(RuntimeError):
@@ -288,8 +291,8 @@ class MDX:
     def close(self) -> None:
         try:
             self._fh.close()
-        except Exception:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 关闭失败不影响已读数据
+            log.debug("关闭词典文件失败: %s", exc)
 
 
 class MDD(MDX):

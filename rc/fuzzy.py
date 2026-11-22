@@ -133,8 +133,5 @@ def build_index(dictionary) -> FuzzyIndex | None:
     except Exception:
         return None
     index = FuzzyIndex(keys)
-    try:
-        dictionary._fuzzy_index = index
-    except Exception:
-        pass
+    dictionary._fuzzy_index = index
     return index

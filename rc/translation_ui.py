@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tkinter as tk
 from tkinter import messagebox, ttk
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 from .theme import ON_ACCENT
+
+log = logging.getLogger("rc")
 
 
 class TranslationWindow:
@@ -79,7 +82,7 @@ class TranslationWindow:
         style = ttk.Style(self.win)
         try:
             style.theme_use("clam")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         style.configure(
             "Tr.Treeview", background=PANEL, fieldbackground=PANEL, foreground=TEXT,
@@ -222,8 +225,8 @@ class TranslationWindow:
         if answer:
             try:
                 os.startfile(result["dir"])  # type: ignore[attr-defined]
-            except Exception:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 打不开目录时静默失败
+                log.debug("打开导出目录失败: %s", exc)
 
     def show(self) -> None:
         self.win.deiconify()
@@ -231,5 +234,5 @@ class TranslationWindow:
         self.refresh()
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass

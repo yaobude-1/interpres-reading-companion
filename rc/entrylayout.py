@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 try:
     from lxml import html as lxml_html
 except Exception:  # pragma: no cover
@@ -111,7 +113,7 @@ def reorder(fragment: str) -> str:
             if parent is not None:
                 parent.remove(main)
                 ordered = []
-                merged: dict[str, object] = {}
+                merged: dict[str, Any] = {}
                 for span in extras:
                     parent_span = span.getparent()
                     if parent_span is None:

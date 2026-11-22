@@ -34,10 +34,7 @@ class PanelChatMixin:
         book = (conv.get("book") or "").strip()
         self.book = book
         self._set_book_label(book)
-        try:
-            self.service.config.data["panel_book"] = book
-        except Exception:
-            pass
+        self.service.config.data["panel_book"] = book
         self._render_messages()
         self._sync_content_scroll()
         self.win.after(60, self._scroll_bottom)
@@ -162,7 +159,7 @@ class PanelChatMixin:
                     self._typing = None
                 self._bubble("assistant", reply)
             self._scroll_bottom()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _cancel_chat_stream(self) -> None:
@@ -171,7 +168,7 @@ class PanelChatMixin:
         if job:
             try:
                 self.win.after_cancel(job)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._chat_target = ""
         self._chat_shown = ""

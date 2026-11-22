@@ -9,8 +9,11 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
+
+log = logging.getLogger("rc")
 
 LANGUAGE = "zh"
 _TRANSLATIONS: dict[str, str] = {}
@@ -180,12 +183,12 @@ def install() -> None:
         _patch_init(cls)
     try:
         _patch_method(ttk.Treeview, "heading", "text")
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:  # noqa: BLE001 - 旧 Tk 可能没有该控件
+        log.debug("Treeview 标题本地化挂钩失败: %s", exc)
     try:
         _patch_method(ttk.Notebook, "add", "text")
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:  # noqa: BLE001 - 旧 Tk 可能没有该控件
+        log.debug("Notebook 标签本地化挂钩失败: %s", exc)
 
     # 窗口标题
     for cls in (tk.Tk, tk.Toplevel):
@@ -201,15 +204,15 @@ def install() -> None:
     # 动态 configure(text=...)
     try:
         _patch_configure(tk.Misc)
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:  # noqa: BLE001 - 旧 Tk 可能没有 configure
+        log.debug("configure 本地化挂钩失败: %s", exc)
 
     # 菜单
     try:
         for name in ("add_command", "add_cascade", "add_checkbutton", "add_radiobutton"):
             _patch_method(tk.Menu, name, "label")
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:  # noqa: BLE001 - 旧 Tk 菜单项可能不全
+        log.debug("菜单本地化挂钩失败: %s", exc)
 
     # messagebox
     for name in ("showinfo", "showwarning", "showerror", "askyesno", "askokcancel", "askquestion"):

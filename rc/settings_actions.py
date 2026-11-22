@@ -229,7 +229,7 @@ class SettingsActionsMixin:
     def _set_hint(self, text: str) -> None:
         try:
             self.test_label.configure(text=text, fg=MUTED)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _refresh_stats(self) -> None:
@@ -259,7 +259,7 @@ class SettingsActionsMixin:
         try:
             if self.stats.winfo_exists():
                 self.stats.configure(text=text)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _open_data(self) -> None:
@@ -372,7 +372,7 @@ class SettingsActionsMixin:
         label = getattr(self, "stats", None) or getattr(self, "data_label", None) or self.test_label
         try:
             label.configure(text=getattr(self, "_push_text", "")[:100], fg=MUTED)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _quit(self) -> None:
@@ -396,7 +396,7 @@ class SettingsActionsMixin:
                 self.save()
         try:
             self.win.destroy()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         return True
 
@@ -406,5 +406,5 @@ class SettingsActionsMixin:
         self._refresh_stats()
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass

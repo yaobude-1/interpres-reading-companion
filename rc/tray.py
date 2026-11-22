@@ -6,10 +6,13 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import threading
 from pathlib import Path
 from typing import Callable
+
+log = logging.getLogger("rc")
 
 
 def _ensure_vendor() -> None:
@@ -99,8 +102,8 @@ class TrayIcon:
         try:
             if self._icon is not None:
                 self._icon.notify(message, title)
-        except Exception:
-            pass
+        except (OSError, RuntimeError) as exc:  # noqa: BLE001 - 通知失败可忽略
+            log.debug("托盘通知失败: %s", exc)
 
     def stop(self) -> None:
         icon = self._icon
@@ -108,12 +111,12 @@ class TrayIcon:
         if icon is not None:
             try:
                 icon.stop()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as exc:  # noqa: BLE001 - 退出时尽力停止
+                log.debug("停止托盘图标失败: %s", exc)
         thread = self._thread
         self._thread = None
         if thread is not None and thread.is_alive():
             try:
                 thread.join(timeout=1.0)
-            except Exception:
-                pass
+            except RuntimeError as exc:  # noqa: BLE001 - 线程未启动时 join 会报错
+                log.debug("等待托盘线程退出失败: %s", exc)

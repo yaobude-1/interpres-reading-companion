@@ -366,5 +366,5 @@ class ResultViewMixin:
         self._visible = True
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass

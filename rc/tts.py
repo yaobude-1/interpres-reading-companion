@@ -81,8 +81,8 @@ class TTS:
                 if "|" in line:
                     name, culture = line.split("|", 1)
                     result.append({"name": name.strip(), "culture": culture.strip()})
-        except Exception:
-            pass
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:  # noqa: BLE001 - 列音色失败时用空列表
+            log.debug("枚举 SAPI 音色失败: %s", exc)
         for voice in self._onecore_voices():
             if all(v["name"] != voice["name"] for v in result):
                 result.append(voice)
@@ -254,8 +254,8 @@ class TTS:
         )
         try:
             text_file.unlink()
-        except OSError:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 临时文件删不掉无影响
+            log.debug("删除临时文本失败: %s", exc)
         if proc.returncode != 0 or not out.exists() or out.stat().st_size <= 1024:
             err = _decode(proc.stderr) or _decode(proc.stdout)
             raise RuntimeError(f"自定义发音命令失败：{err.strip()[:80] or proc.returncode}")
@@ -338,8 +338,8 @@ class TTS:
                 raise RuntimeError(f"OneCore 音色合成失败：{voice}")
             try:
                 text_file.unlink()
-            except OSError:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 临时文件删不掉无影响
+                log.debug("删除临时文本失败: %s", exc)
             return out
         proc = subprocess.run(
             [
@@ -369,14 +369,14 @@ class TTS:
                 raise RuntimeError(f"语音合成失败：{err.strip()[:80] or '未知原因'}")
         try:
             text_file.unlink()
-        except OSError:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 临时文件删不掉无影响
+            log.debug("删除临时文本失败: %s", exc)
         if not out.exists() or out.stat().st_size < 2048:
             if out.exists():
                 try:
                     out.unlink()
-                except OSError:
-                    pass
+                except OSError as exc:  # noqa: BLE001 - 删不掉无效音频无影响
+                    log.debug("删除无效音频失败: %s", exc)
             raise RuntimeError("语音合成失败：系统没有可用的语音")
         return out
 

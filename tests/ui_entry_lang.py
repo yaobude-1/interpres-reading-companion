@@ -31,13 +31,14 @@ def main() -> int:
     html = html.replace(f"<title>{word}</title>", f"<title>{marker}</title>", 1)
     path = HERE / "shots" / f"{marker}.html"
     path.write_text(html, encoding="utf-8")
-    subprocess.Popen(
+    proc = subprocess.Popen(
         [EDGE, "--app=file:///" + str(path).replace("\\", "/"),
          "--window-size=900,900", "--window-position=60,40", "--no-first-run"]
     )
     time.sleep(4.0)
     ImageGrab.grab().crop((60, 40, 960, 940)).save(HERE / "shots" / out)
-    subprocess.run(["taskkill", "/F", "/IM", "msedge.exe"], capture_output=True)
+    # 只杀自己拉起的这个 Edge 实例，不能 /IM 全局杀，否则会关掉用户正在用的浏览器。
+    subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True)
     path.unlink(missing_ok=True)
     print("saved", out)
     return 0

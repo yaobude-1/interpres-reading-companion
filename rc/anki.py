@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 import re
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+log = logging.getLogger("rc")
 
 MODEL_NAME = "Interpres"
 
@@ -157,8 +160,8 @@ class Anki:
                 },
             )
             self._invoke("updateModelStyling", model={"name": MODEL_NAME, "css": CSS})
-        except AnkiError:
-            pass
+        except AnkiError as exc:  # noqa: BLE001 - 样式更新失败不影响建卡
+            log.warning("更新模型样式失败: %s", exc)
 
     def existing_first_fields(self, deck: str, refresh: bool = False) -> set[str]:
         """目标牌组里现有笔记的首字段（小写），用于跨笔记类型判重。
@@ -294,8 +297,8 @@ class Anki:
             try:
                 if MODEL_NAME not in (self.model_names() or []):
                     self.ensure_model()
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - 建模型失败时后续 model_fields 会给出更明确的错误
+                log.warning("自动创建默认模型失败: %s", exc)
         else:
             # 独立模式：自动创建「Interpres · 词本名」这类模型
             try:
@@ -314,8 +317,8 @@ class Anki:
                             }
                         ],
                     )
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - 建模型失败时后续 model_fields 会给出更明确的错误
+                log.warning("自动创建独立模型 %s 失败: %s", model, exc)
         self._invoke("createDeck", deck=deck)
         order = self.model_fields(model)
         if not order:
@@ -332,8 +335,8 @@ class Anki:
                 self.update_custom_templates(
                     model, templates.get("front") or "", templates.get("back") or "", templates.get("css") or ""
                 )
-            except AnkiError:
-                pass
+            except AnkiError as exc:
+                log.warning("更新自定义卡片模板失败: %s", exc)
 
         word_field = next((t for t, src in mapping.items() if src == "Word"), order[0])
         existing = self.existing_field_values(deck, word_field) if skip_existing else set()
@@ -356,8 +359,8 @@ class Anki:
                         filename, data = media
                         if self.store_media(filename, data):
                             values["Audio"] = f"[sound:{filename}]"
-                except Exception:
-                    pass
+                except Exception as exc:  # noqa: BLE001 - 音频是附加项，失败不影响卡片入库
+                    log.warning("生成音频附件失败: %s", exc)
             fields = {target: values.get(source, "") for target, source in mapping.items()}
             note = {
                 "deckName": deck,

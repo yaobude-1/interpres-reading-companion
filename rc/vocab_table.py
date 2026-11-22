@@ -150,7 +150,7 @@ class VocabTableMixin:
         self._drag_start = [int(self.word_tree.column(c, "width")) for c in self._COLS]
         try:
             self.word_tree.grab_set()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         return "break"
 
@@ -169,7 +169,7 @@ class VocabTableMixin:
         self._dragging = False
         try:
             self.word_tree.grab_release()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         total = sum(self._col_widths) or 1
         self._col_ratios = [w / total for w in self._col_widths]

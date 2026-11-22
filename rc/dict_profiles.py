@@ -7,10 +7,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 
 from .dictionary import DictEntry, Sense
+
+log = logging.getLogger("rc")
 
 
 def _text(node) -> str:
@@ -104,8 +107,8 @@ def parse_profile(html: str, word: str, profile: dict) -> DictEntry | None:
                 value = node.get(attr) if hasattr(node, "get") else ""
                 if value and str(value).startswith("sound://"):
                     entry.audio_keys.append(str(value)[len("sound://"):])
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 表达式来自用户配置，坏了按无音频处理
+            log.debug("读取音频节点失败: %s", exc)
 
     sense_nodes = []
     try:

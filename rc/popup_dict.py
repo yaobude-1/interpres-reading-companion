@@ -489,7 +489,7 @@ class DictViewMixin:
                 if existing.winfo_exists():
                     existing.focus_set()
                     return
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self._dict_entry = None
             self._dict_editing = False
@@ -529,7 +529,7 @@ class DictViewMixin:
                 self._dict_entry = None
                 try:
                     entry.destroy()
-                except tk.TclError:
+                except tk.TclError:  # 控件可能已销毁，刻意忽略
                     pass
                 try:
                     remaining = [
@@ -540,7 +540,7 @@ class DictViewMixin:
                         label.pack(side="left", before=remaining[0])
                     else:
                         label.pack(side="left")
-                except tk.TclError:
+                except tk.TclError:  # 控件可能已销毁，刻意忽略
                     pass
 
             def commit(_event=None) -> None:
@@ -616,7 +616,7 @@ class DictViewMixin:
             if star is not None:
                 try:
                     star.configure(text="☆", fg=ACCENT)
-                except tk.TclError:
+                except tk.TclError:  # 控件可能已销毁，刻意忽略
                     pass
             self.footer.configure(text=f"已从生词本移除：{self._dict_word}")
             self.cb.get("toast", lambda _m: None)(f"已取消收藏 {self._dict_word}")
@@ -644,7 +644,7 @@ class DictViewMixin:
         if star is not None:
             try:
                 star.configure(text="★", fg="#f5c542")
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self.footer.configure(text=f"★ 已加入生词本：{self._dict_word}")
         self.cb.get("toast", lambda _m: None)(

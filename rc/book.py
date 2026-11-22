@@ -7,12 +7,15 @@
 
 from __future__ import annotations
 
+import logging
 import posixpath
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from .htmldom import Node, parse
+
+log = logging.getLogger("rc")
 
 BLOCK_TAGS = {
     "p",
@@ -102,8 +105,8 @@ def _find_opf(zf: zipfile.ZipFile, names: set[str]) -> str:
                     full = node.attrib.get("full-path") or ""
                     if full in names:
                         return full
-        except ET.ParseError:
-            pass
+        except ET.ParseError as exc:  # noqa: BLE001 - container.xml 损坏时按无 OPF 处理
+            log.debug("解析 container.xml 失败: %s", exc)
     for name in names:
         if name.lower().endswith(".opf"):
             return name

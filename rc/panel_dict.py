@@ -23,7 +23,7 @@ class PanelDictMixin:
         if self._dict_job is not None:
             try:
                 self.win.after_cancel(self._dict_job)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._dict_job = self.win.after(220, self._dict_typed)
 
@@ -32,7 +32,7 @@ class PanelDictMixin:
         if self._dict_job is not None:
             try:
                 self.win.after_cancel(self._dict_job)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._dict_job = None
         if not _keep_suggestions:
@@ -421,7 +421,7 @@ class PanelDictMixin:
             if job:
                 self.win.after_cancel(job)
             self._dict_status_job = self.win.after(4000, self._clear_dict_status)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _clear_dict_status(self) -> None:
@@ -429,7 +429,7 @@ class PanelDictMixin:
             label = getattr(self, "_dict_status_label", None)
             if label is not None and label.winfo_exists():
                 label.pack_forget()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _save_dict(self, entry: dict, word: str, star=None) -> None:
@@ -444,7 +444,7 @@ class PanelDictMixin:
             if star is not None:
                 try:
                     star.configure(text="☆", fg=ACCENT)
-                except tk.TclError:
+                except tk.TclError:  # 控件可能已销毁，刻意忽略
                     pass
             self._set_dict_status(f"已从生词本移除：{word}")
             return
@@ -468,7 +468,7 @@ class PanelDictMixin:
         if star is not None:
             try:
                 star.configure(text="★", fg="#f5c542")
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._set_dict_status(f"★ 已加入生词本：{word}（共 {result.get('total', 0)} 个）")
 

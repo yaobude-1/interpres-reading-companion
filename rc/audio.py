@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import ctypes
 import itertools
+import logging
 import tempfile
 import time
 import winsound
 from pathlib import Path
+
+log = logging.getLogger("rc")
 
 _ALIAS = "rc_dict_audio"
 _counter = itertools.count(1)
@@ -25,8 +28,8 @@ def stop() -> None:
     _mci(f"close {_ALIAS}")
     try:
         winsound.PlaySound(None, winsound.SND_PURGE)
-    except Exception:
-        pass
+    except RuntimeError as exc:  # noqa: BLE001 - 停止提示音失败无副作用
+        log.debug("停止系统提示音失败: %s", exc)
 
 
 def sniff_suffix(data: bytes) -> str:
@@ -48,10 +51,10 @@ def _cleanup_old() -> None:
             try:
                 if now - path.stat().st_mtime > 30:
                     path.unlink()
-            except OSError:
-                pass
-    except Exception:
-        pass
+            except OSError as exc:  # noqa: BLE001 - 正在播放的文件删不掉，跳过
+                log.debug("删除旧音频失败: %s", exc)
+    except OSError as exc:  # noqa: BLE001 - 清理临时目录失败不影响播放
+        log.debug("清理旧音频失败: %s", exc)
 
 
 def play_bytes(data: bytes | None) -> bool:

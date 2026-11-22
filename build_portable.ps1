@@ -13,10 +13,20 @@ if (-not $py) {
 if (-not $py) { $py = "python" }
 $appName = "Interpres"
 
+# Output dirs can be overridden (CI build job / local smoke tests) so a trial
+# build never overwrites a real release under dist/.
+$distPortable = if ($env:RC_DIST_PORTABLE_DIR) { $env:RC_DIST_PORTABLE_DIR } else { Join-Path $root "dist_portable" }
+$buildDir = if ($env:RC_BUILD_DIR) { $env:RC_BUILD_DIR } else { Join-Path $root "build_portable" }
+$distRoot = if ($env:RC_DIST_DIR) { $env:RC_DIST_DIR } else { Join-Path $root "dist" }
+
+# A plain checkout has no vendor/ (deps come from site-packages); --paths still
+# needs an existing directory, so create an empty one when missing.
+if (-not (Test-Path -LiteralPath $vendor)) { New-Item -ItemType Directory -Path $vendor | Out-Null }
+
 Set-Location $root
 
 Write-Host "Cleaning old portable output..."
-Remove-Item build_portable, dist_portable -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $buildDir, $distPortable -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "Building portable folder (about 1 minute)..."
 & $py -m PyInstaller `
@@ -49,8 +59,8 @@ Write-Host "Building portable folder (about 1 minute)..."
     --collect-data certifi `
     --exclude-module numpy `
     --exclude-module PIL._avif `
-    --distpath "$root\dist_portable" `
-    --workpath "$root\build_portable" `
+    --distpath "$distPortable" `
+    --workpath "$buildDir" `
     app.py
 
 if ($LASTEXITCODE -ne 0) {
@@ -58,14 +68,14 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-$built = Join-Path $root "dist_portable\$appName"
+$built = Join-Path $distPortable $appName
 $exe = Join-Path $built "$appName.exe"
 if (-not (Test-Path $exe)) {
     Write-Host "exe not found: $exe" -ForegroundColor Red
     exit 1
 }
 
-$dist = Join-Path $root "dist"
+$dist = $distRoot
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
 $stage = Join-Path $env:TEMP "rc_portable_package"

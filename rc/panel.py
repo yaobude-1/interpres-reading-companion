@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import tkinter as tk
 from tkinter import ttk
 
@@ -19,6 +20,8 @@ from .panel_translate import PanelTranslateMixin
 from .slimscroll import SlimScrollbar
 from .theme import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, PANEL, TEXT
 from .theme import ON_ACCENT, SCROLL_THUMB, SCROLL_TRACK
+
+log = logging.getLogger("rc")
 
 
 class MainPanel(
@@ -52,7 +55,7 @@ class MainPanel(
         style = ttk.Style(self.win)
         try:
             style.theme_use("clam")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         style.configure(
             "TScrollbar",
@@ -89,7 +92,7 @@ class MainPanel(
             opacity = 1.0
         try:
             self.win.attributes("-alpha", max(0.3, min(1.0, opacity)))
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self._build()
 
@@ -255,7 +258,7 @@ class MainPanel(
         self.suggest_win.configure(bg=PANEL)
         try:
             self.suggest_win.attributes("-alpha", 0.96)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         shell = tk.Frame(
             self.suggest_win, bg=PANEL, highlightthickness=1,
@@ -404,7 +407,7 @@ class MainPanel(
                 canvas.yview_moveto(0.0)
                 return
             canvas.yview_scroll(step, "units")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _sync_chat_scroll(self) -> None:
@@ -413,7 +416,7 @@ class MainPanel(
             view_h = self.canvas.winfo_height()
             if content_h <= view_h + 1:
                 self.canvas.yview_moveto(0.0)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _sync_content_scroll(self) -> None:
@@ -427,7 +430,7 @@ class MainPanel(
             view_h = self.content_canvas.winfo_height()
             if content_h <= view_h + 1:
                 self.content_canvas.yview_moveto(0.0)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _sync_scrollbar(self, bar, canvas, first, last) -> None:
@@ -470,7 +473,7 @@ class MainPanel(
         self.win.lift()
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self.input.focus_set()
         self._scroll_bottom()
@@ -478,14 +481,14 @@ class MainPanel(
     def hide(self) -> None:
         try:
             self._hide_suggestions()
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self.win.withdraw()
 
     def _on_close(self) -> None:
         try:
             self._hide_suggestions()
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         """Esc / ✕：按设置决定是退出程序还是只隐藏。"""
         handler = self.cb.get("close")
@@ -573,8 +576,8 @@ class MainPanel(
         try:
             self.service.config.data["panel_book"] = book
             self.service.config.save()
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 保存失败不影响当前面板使用
+            log.warning("保存 panel_book 失败: %s", exc)
 
     def on_book(self, book: str) -> None:
         """读到别的书了：只有开了「自动跟随」才切。"""
@@ -605,7 +608,7 @@ class MainPanel(
         self.current_tab = name
         try:
             self._hide_suggestions()
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         if name == "vocab":
             self.content_wrap.pack_forget()

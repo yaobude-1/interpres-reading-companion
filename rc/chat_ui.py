@@ -66,7 +66,7 @@ class ChatHistoryWindow:
         style = ttk.Style(self.win)
         try:
             style.theme_use("clam")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         style.configure(
             "Chat.Treeview", background=PANEL, fieldbackground=PANEL, foreground=TEXT,
@@ -168,7 +168,7 @@ class ChatHistoryWindow:
             self.on_open(int(conv["id"]))
             try:
                 self.win.withdraw()
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         else:
             self.view_selected()
@@ -250,5 +250,5 @@ class ChatHistoryWindow:
         self.refresh()
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass

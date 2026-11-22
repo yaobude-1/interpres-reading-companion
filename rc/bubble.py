@@ -67,7 +67,7 @@ class QuickButton:
         """选到单词时按钮显示「查」，选到句子时显示「译」。"""
         try:
             self.label.configure(text=text)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _apply_style(self) -> None:
@@ -141,7 +141,7 @@ class QuickButton:
         if self._job:
             try:
                 self.root.after_cancel(self._job)
-            except Exception:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self._job = None
         self.win.withdraw()
@@ -266,7 +266,7 @@ class Bubble:
         self.win.geometry(f"+{x}+{y}")
         try:
             self.win.focus_force()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _focus_lost(self, event=None) -> None:
@@ -280,7 +280,7 @@ class Bubble:
         try:
             if self.win.focus_get() is None:
                 self.hide()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _copy(self) -> None:

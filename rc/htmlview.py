@@ -6,6 +6,7 @@ Chromium 渲染，原版词典排版、图片、CSS 都能显示；进程退出�
 from __future__ import annotations
 
 import ctypes
+import logging
 import os
 import subprocess
 import tempfile
@@ -15,6 +16,8 @@ from ctypes import wintypes
 from pathlib import Path
 
 import tkinter as tk
+
+log = logging.getLogger("rc")
 
 EDGE_CANDIDATES = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -129,7 +132,7 @@ class EntryViewer:
             try:
                 if self.win.winfo_exists():
                     return
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._build_window()
 
@@ -144,7 +147,9 @@ class EntryViewer:
         self._marker = f"rc-entry-{uuid.uuid4().hex[:8]}"
         doc = html.replace("<title>", f"<title>{self._marker} ", 1)
         path = Path(tempfile.gettempdir()) / f"{self._marker}.html"
-        path.write_text(doc, encoding="utf-8")
+        # newline="" 保留 LF：CSP 的 script-src 哈希按脚本文本计算，
+        # 不能让它被 Windows 的 CRLF 转换改变。
+        path.write_text(doc, encoding="utf-8", newline="")
         self._html_path = path
         try:
             self.proc = subprocess.Popen(
@@ -208,7 +213,7 @@ class EntryViewer:
         if getattr(self, "loading", None) is not None:
             try:
                 self.loading.destroy()
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self.loading = None
 
@@ -235,7 +240,7 @@ class EntryViewer:
         if getattr(self, "loading", None) is not None:
             try:
                 self.loading.destroy()
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self.loading = None
         path = self._html_path
@@ -251,15 +256,19 @@ class EntryViewer:
         if path and path.exists():
             try:
                 os.startfile(str(path))
-            except OSError:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 打不开浏览器时界面已给出提示
+                log.debug("打开浏览器失败: %s", exc)
 
     def _fallback(self, html: str) -> None:
         """没有 Edge：写到临时文件，用默认浏览器打开。"""
         marker = f"rc-entry-{uuid.uuid4().hex[:8]}"
         path = Path(tempfile.gettempdir()) / f"{marker}.html"
         try:
-            path.write_text(html.replace("<title>", f"<title>{marker} ", 1), encoding="utf-8")
+            path.write_text(
+                html.replace("<title>", f"<title>{marker} ", 1),
+                encoding="utf-8",
+                newline="",
+            )
         except OSError:
             path = None
         text = tk.Text(self.frame, bg="#12141a", fg="#e8e6e3", wrap="word", relief="flat")
@@ -273,15 +282,15 @@ class EntryViewer:
         if path is not None:
             try:
                 os.startfile(str(path))
-            except OSError:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 打不开浏览器时界面已给出提示
+                log.debug("打开浏览器失败: %s", exc)
 
     # ------------------------------------------------------------------ 清理
     def close_process(self) -> None:
         if self._attach_job is not None:
             try:
                 self.root.after_cancel(self._attach_job)
-            except Exception:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self._attach_job = None
         # 只关我们嵌进来的那个窗口：给窗口发 WM_CLOSE。
@@ -289,8 +298,8 @@ class EntryViewer:
         if self.hwnd:
             try:
                 user32.PostMessageW(self.hwnd, WM_CLOSE, 0, 0)
-            except Exception:
-                pass
+            except (OSError, AttributeError) as exc:  # noqa: BLE001 - 窗口可能已关闭
+                log.debug("发送关闭窗口消息失败: %s", exc)
             # 不在这里阻塞等待：窗口关闭是异步的，等它反而卡住界面
         self.hwnd = 0
         if self.proc is not None:
@@ -308,12 +317,12 @@ class EntryViewer:
                         try:
                             p.terminate()
                             p.wait(timeout=3)
-                        except Exception:
-                            pass
+                        except (OSError, subprocess.SubprocessError) as exc:  # noqa: BLE001 - 进程可能已退出
+                            log.debug("结束浏览器进程失败: %s", exc)
 
                 threading.Thread(target=_reap, args=(proc,), daemon=True).start()
-            except Exception:
-                pass
+            except (OSError, RuntimeError) as exc:  # noqa: BLE001 - 线程起不来不影响界面
+                log.debug("启动进程回收线程失败: %s", exc)
         if self._html_path is not None:
             # Edge 可能还持有文件句柄，删不掉就留给系统清理，不报错
             for _ in range(3):
@@ -329,7 +338,7 @@ class EntryViewer:
         try:
             if self.win is not None:
                 self.win.destroy()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self.win = None
         self.frame = None

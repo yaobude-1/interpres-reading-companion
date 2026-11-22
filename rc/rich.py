@@ -6,7 +6,10 @@
 
 from __future__ import annotations
 
+import logging
 import re
+
+log = logging.getLogger("rc")
 
 _TAG = re.compile(r"<[^>]+>")
 _SPACE = re.compile(r"\s+")
@@ -419,6 +422,6 @@ def auto_extract(html: str, headword: str = "") -> list[dict]:
             return extract_english_rich(html, headword)
         if 'class="def"' in html or 'class="defcn"' in html:
             return extract_english_rich(html, headword)
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001 - 专用格式解析失败时回退到通用解析
+        log.debug("专用格式解析失败，回退通用解析: %s", exc)
     return extract_generic(html, headword)

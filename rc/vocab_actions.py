@@ -125,5 +125,5 @@ class VocabActionsMixin:
     def _set_status(self, text: str, error: bool = False) -> None:
         try:
             self.status.configure(text=text[:90], fg="#ff8080" if error else GREEN)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass

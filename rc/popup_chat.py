@@ -327,7 +327,7 @@ class ChatViewMixin:
                     self._typing = None
                 self._bubble("assistant", reply)
             self._scroll_bottom()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _cancel_chat_stream(self) -> None:
@@ -336,7 +336,7 @@ class ChatViewMixin:
         if job:
             try:
                 self.win.after_cancel(job)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._chat_target = ""
         self._chat_shown = ""

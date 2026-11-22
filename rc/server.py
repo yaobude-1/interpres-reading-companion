@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import logging
 import socket
 import sys
 import threading
@@ -18,6 +19,8 @@ from urllib.parse import parse_qs, urlparse
 from . import __version__
 from .netpolicy import validate_base_url
 from .service import Service
+
+log = logging.getLogger("rc")
 
 
 MAX_BODY = 1024 * 1024
@@ -33,8 +36,8 @@ class _LocalServer(ThreadingHTTPServer):
         if sys.platform == "win32":
             try:
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
-            except OSError:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 系统不支持时退回默认绑定行为
+                log.debug("设置 SO_EXCLUSIVEADDRUSE 失败: %s", exc)
         super().server_bind()
 
     def handle_error(self, request, client_address) -> None:

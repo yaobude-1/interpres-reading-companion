@@ -6,9 +6,12 @@
 from __future__ import annotations
 
 import ctypes
+import logging
 import threading
 import time
 from collections.abc import Callable
+
+log = logging.getLogger("rc")
 
 user32 = ctypes.windll.user32
 
@@ -76,8 +79,8 @@ class HotkeyWatcher(threading.Thread):
                     binds[idx] = (name, mods, vk, True)
                     try:
                         self._callback(name)
-                    except Exception:
-                        pass
+                    except Exception:  # noqa: BLE001 - 用户回调，异常不能带崩监听线程
+                        log.exception("热键回调失败: %s", name)
                 elif not active and was_down:
                     binds[idx] = (name, mods, vk, False)
             time.sleep(0.025)

@@ -115,7 +115,7 @@ class BookFilterSettings:
     def close(self) -> None:
         try:
             self.win.destroy()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def show(self) -> None:

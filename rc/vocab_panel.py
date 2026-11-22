@@ -234,7 +234,7 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         style = ttk.Style(self.parent)
         try:
             style.theme_use("clam")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         style.configure(
             "TScrollbar",
@@ -304,6 +304,6 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
         if job:
             try:
                 self.parent.after_cancel(job)
-            except Exception:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._search_job = self.parent.after(200, self.load_words)

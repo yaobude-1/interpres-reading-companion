@@ -7,9 +7,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import sys
 import threading
 from pathlib import Path
+
+log = logging.getLogger("rc")
 
 _DEFAULT_VOICES = {
     "en": "en-US-AriaNeural",
@@ -76,8 +79,8 @@ def list_voices(cache_file: Path | None = None) -> list[dict]:
                 if isinstance(data, list) and data:
                     _voice_cache = data
                     return data
-            except Exception:
-                pass
+            except (OSError, ValueError) as exc:  # noqa: BLE001 - 缓存坏了就重新拉取
+                log.debug("读取音色缓存失败: %s", exc)
         try:
             edge_tts = _import_edge()
             voices = asyncio.run(edge_tts.list_voices())
@@ -97,8 +100,8 @@ def list_voices(cache_file: Path | None = None) -> list[dict]:
                     cache_file.write_text(
                         json.dumps(items, ensure_ascii=False), encoding="utf-8"
                     )
-                except Exception:
-                    pass
+                except (OSError, TypeError, ValueError) as exc:  # noqa: BLE001 - 写缓存失败不影响本次使用
+                    log.debug("写入音色缓存失败: %s", exc)
             return items
         except Exception:
             _voice_cache = []

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import tkinter as tk
 
 from .theme import (
@@ -13,6 +14,8 @@ from .theme import (
     PANEL_ALT,
     TEXT,
 )
+
+log = logging.getLogger("rc")
 
 
 class PanelSuggestMixin:
@@ -48,7 +51,7 @@ class PanelSuggestMixin:
                 row.configure(bg=color)
                 for child in row.winfo_children():
                     child.configure(bg=color)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
 
     def _route_wheel(self, event) -> str:
@@ -80,7 +83,7 @@ class PanelSuggestMixin:
                 ):
                     self.suggest_canvas.yview_scroll(step, "units")
                     return "break"
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         if inside(self.canvas):
             self._scroll_pane(self.canvas, self.chat_body, step * 2)
@@ -97,8 +100,8 @@ class PanelSuggestMixin:
                 "panel click widget=%s class=%s xy=%s,%s",
                 event.widget, event.widget.winfo_class(), event.x, event.y,
             )
-        except Exception:
-            pass
+        except (tk.TclError, ValueError) as exc:  # noqa: BLE001 - 调试日志失败不处理
+            log.debug("记录面板点击失败: %s", exc)
 
     def _dismiss_on_click(self, event=None) -> None:
         widget = getattr(event, "widget", None)
@@ -128,8 +131,8 @@ class PanelSuggestMixin:
             user32.mouse_event(0x0002, 0, 0, 0, 0)
             _t.sleep(0.02)
             user32.mouse_event(0x0004, 0, 0, 0, 0)
-        except Exception:
-            pass
+        except (OSError, AttributeError) as exc:  # noqa: BLE001 - 点击穿透失败可忽略
+            log.debug("面板点击穿透失败: %s", exc)
 
     def _reshow_suggestions(self) -> None:
         """不用重新输入：点输入框 / 按 ↓ 就能把建议重新唤出来。"""
@@ -164,18 +167,18 @@ class PanelSuggestMixin:
         for row in self._suggest_rows:
             try:
                 row.destroy()
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._suggest_rows = []
         self._suggest_items = []
         self._suggest_index = -1
         try:
             self.suggest_win.attributes("-topmost", False)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         try:
             self.suggest_win.withdraw()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _suggest_geometry(self) -> tuple[int, int, int, int]:
@@ -220,7 +223,7 @@ class PanelSuggestMixin:
             self.dict_input.icursor("end")
             self.dict_input.focus_set()
             self._sync_content_scroll()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _update_suggestions(self) -> None:
@@ -238,7 +241,7 @@ class PanelSuggestMixin:
         for row in self._suggest_rows:
             try:
                 row.destroy()
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._suggest_rows = []
         self._suggest_index = -1
@@ -274,7 +277,7 @@ class PanelSuggestMixin:
         self.suggest_win.deiconify()
         try:
             self.suggest_win.attributes("-topmost", True)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self.suggest_win.lift()
         self.win.update_idletasks()

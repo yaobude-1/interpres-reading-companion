@@ -91,8 +91,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             icon = base_dir / "assets" / "reading-companion.ico"
             if icon.exists():
                 self.root.iconbitmap(default=str(icon))
-        except Exception:
-            pass
+        except (OSError, tk.TclError) as exc:  # noqa: BLE001 - 图标缺失时用默认图标
+            log.debug("加载窗口图标失败: %s", exc)
         self._setup_dpi()
 
         self.popup = PopupWindow(
@@ -210,14 +210,14 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         except Exception:
             try:
                 ctypes.windll.user32.SetProcessDPIAware()
-            except Exception:
-                pass
+            except (OSError, AttributeError) as exc:  # noqa: BLE001 - DPI API 不可用时忽略
+                log.debug("SetProcessDPIAware 失败: %s", exc)
         try:
             dpi = float(self.root.winfo_fpixels("1i"))
             if dpi > 0:
                 self.root.tk.call("tk", "scaling", dpi / 72.0)
-        except Exception:
-            pass
+        except (ValueError, tk.TclError) as exc:  # noqa: BLE001 - DPI 读取失败不阻塞启动
+            log.debug("设置 DPI 缩放失败: %s", exc)
 
     def _start_hotkeys(self) -> None:
         combos = {
@@ -379,7 +379,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 elif kind == "quit":
                     self.shutdown()
                     return
-        except queue.Empty:
+        except queue.Empty:  # 队列已空，正常结束本轮
             pass
 
     def _follow_active_book(self) -> None:
@@ -406,8 +406,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             if book and book != self.panel.book:
                 log.info("前台换书：%s → %s", self.panel.book, book)
                 self.panel.on_book(book)
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 前台换书只是锦上添花，失败不影响划词
+            log.debug("前台换书检测失败: %s", exc)
 
     def _on_show_settings_request(self) -> None:
         """另一个实例（用户又点了图标）请求把主面板打开。"""
@@ -435,8 +435,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                     title = capture.foreground_title()
                     if title and "Interpres" not in title:
                         book = capture.book_from_title(title)
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - 自动识别书名失败不阻塞打开面板
+                log.debug("自动识别书名失败: %s", exc)
         self.panel.show(book)
         # 只有语言切换触发的自动重启才恢复上次标签页；普通启动默认翻译页
         if bool(self.config.get("restore_panel_tab", False)):
@@ -446,7 +446,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             if tab:
                 try:
                     self.panel._show_tab(tab)
-                except Exception:
+                except tk.TclError:  # 控件可能已销毁，刻意忽略
                     pass
 
     def restart(self) -> None:
@@ -457,15 +457,15 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 self.config.data["panel_tab"] = getattr(self.panel, "current_tab", "translate")
                 self.config.data["restore_panel_tab"] = True
             self.config.save()
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 保存失败仍继续重启
+            log.warning("保存窗口状态失败: %s", exc)
         global _MUTEX_HANDLE
         try:
             if _MUTEX_HANDLE:
                 ctypes.windll.kernel32.CloseHandle(_MUTEX_HANDLE)
                 _MUTEX_HANDLE = None
-        except Exception:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 释放句柄失败不影响重启
+            log.debug("关闭单实例互斥句柄失败: %s", exc)
         self.shutdown()
         try:
             if getattr(sys, "frozen", False):
@@ -485,8 +485,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 close_fds=True,
                 creationflags=flags,
             )
-        except Exception:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 新进程启动失败时留在当前进程
+            log.debug("启动新进程失败: %s", exc)
 
     def _book_lang(self, book: str) -> str:
         if not book:
@@ -495,8 +495,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             for row in self.service.store.books():
                 if (row.get("name") or "") == book:
                     return (row.get("lang") or "").lower()
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 查书语言失败时按未知语言处理
+            log.debug("查询书名语言失败: %s", exc)
         return ""
 
     def _ask_lang_consent(self, lang: str) -> bool:
@@ -510,7 +510,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         try:
             if self.panel.win.winfo_exists():
                 parent = self.panel.win
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         allowed = messagebox.askyesno(
             "没有词典",
@@ -548,13 +548,13 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         opacity = appearance.get("popup_opacity", 1.0)
         try:
             self.popup.win.attributes("-alpha", float(opacity))
-        except (tk.TclError, TypeError, ValueError):
-            pass
+        except (tk.TclError, TypeError, ValueError) as exc:  # noqa: BLE001 - 透明度设置失败可忽略
+            log.debug("设置浮窗透明度失败: %s", exc)
         panel_opacity = appearance.get("panel_opacity", 1.0)
         try:
             self.panel.win.attributes("-alpha", float(panel_opacity))
-        except (tk.TclError, TypeError, ValueError):
-            pass
+        except (tk.TclError, TypeError, ValueError) as exc:  # noqa: BLE001 - 透明度设置失败可忽略
+            log.debug("设置主界面透明度失败: %s", exc)
         self.restart_hotkeys()
         self._start_selection_watch()
 
@@ -644,8 +644,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self.quitting = True
         try:
             self.service.tts.stop()
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 - 退出时尽力停止语音
+            log.debug("停止语音失败: %s", exc)
         if self.watcher:
             self.watcher.stop()
         if self._sel_watcher:
@@ -654,12 +654,12 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             self.tray.stop()
         try:
             self.api.stop()
-        except Exception:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 退出时端口可能已释放
+            log.debug("停止本地 API 失败: %s", exc)
         try:
             self.root.quit()
             self.root.destroy()
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
 
@@ -684,8 +684,8 @@ def _single_instance(config) -> bool:
                 return False
             _warn_already_running()
             return False
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001 - 单实例检查失败时按“没有实例”处理
+        log.warning("单实例检查失败: %s", exc)
     return True
 
 
@@ -869,8 +869,8 @@ def _warn_already_running() -> None:
     )
     try:
         ctypes.windll.user32.MessageBoxW(None, text, "Interpres", 0x40)
-    except Exception:
-        pass
+    except (OSError, AttributeError) as exc:  # noqa: BLE001 - 提示框失败不影响退出
+        log.debug("弹出启动提示失败: %s", exc)
 
 
 if __name__ == "__main__":

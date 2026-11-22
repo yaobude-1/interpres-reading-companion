@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 import urllib.error
@@ -13,6 +14,8 @@ import urllib.request
 from typing import Any
 
 from .netpolicy import validate_base_url
+
+log = logging.getLogger("rc")
 
 SYSTEM_PROMPT = """你是一位精通多国语言的专业译者。用户正在精读一本外文书，会给你一段从阅读器里复制出来的原文（可能是一个词、一个短语、或一整段），以及可选的上下文和书名。
 
@@ -128,8 +131,8 @@ class Translator:
                         shown = partial
                         try:
                             on_partial(partial)
-                        except Exception:
-                            pass
+                        except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断流式接收
+                            log.debug("on_partial 回调失败: %s", exc)
         except Exception:
             buffer = ""
         if not buffer.strip():
@@ -140,14 +143,14 @@ class Translator:
             if on_partial is not None:
                 try:
                     on_partial(self._parse(raw).get("translation") or "")
-                except Exception:
-                    pass
+                except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能影响翻译结果
+                    log.debug("on_partial 回调失败: %s", exc)
             return self._parse(raw)
         if on_partial is not None:
             try:
                 on_partial(_partial_translation(buffer))
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能影响翻译结果
+                log.debug("on_partial 回调失败: %s", exc)
         return self._parse(buffer)
 
     def chat(
@@ -332,8 +335,8 @@ class Translator:
         finally:
             try:
                 resp.close()
-            except Exception:
-                pass
+            except OSError as exc:  # noqa: BLE001 - 关闭失败无副作用
+                log.debug("关闭响应失败: %s", exc)
 
     def _post(self, url: str, payload: dict) -> str:
         api = self.config.api
@@ -357,8 +360,8 @@ class Translator:
             detail = ""
             try:
                 detail = exc.read().decode("utf-8", "replace")[:400]
-            except Exception:
-                pass
+            except (OSError, ValueError) as exc2:  # noqa: BLE001 - 读不到详情时用空字符串
+                log.debug("读取错误详情失败: %s", exc2)
             raise LLMError(_http_hint(exc.code, detail)) from exc
         except urllib.error.URLError as exc:
             raise LLMError(f"连不上模型服务：{exc.reason}") from exc

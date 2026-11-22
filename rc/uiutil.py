@@ -6,6 +6,8 @@ Tk 的默认行为：点 Label、Frame、按钮这类控件不会改变键盘焦
 
 from __future__ import annotations
 
+import tkinter as tk
+
 INPUT_CLASSES = {
     "Entry",
     "Text",
@@ -30,10 +32,10 @@ def bind_defocus(win) -> None:
             return
         try:
             win.focus_set()
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     try:
         win.bind("<Button-1>", handler, add="+")
-    except Exception:
+    except tk.TclError:  # 控件可能已销毁，刻意忽略
         pass

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import re
 from html import escape
 
@@ -352,9 +353,20 @@ def _prepare_plain(html: str) -> str:
     return html
 
 
+# CSP 只放行本程序注入的那一段脚本（SHA-256 哈希），不再用 'unsafe-inline'。
+# 词典自带的 <script> / on* / javascript: 已在 _sanitize_untrusted 里清掉。
+_SCRIPT = _TOGGLE_JS + _LONGMAN_JS
+_SCRIPT_HASH = base64.b64encode(hashlib.sha256(_SCRIPT.encode("utf-8")).digest()).decode("ascii")
+
+
+def _script_tag() -> str:
+    return f"<script>{_SCRIPT}</script>"
+
+
 _CSP = (
     "default-src 'none'; img-src data:; media-src data:; "
-    "style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
+    "style-src 'unsafe-inline'; "
+    f"script-src 'sha256-{_SCRIPT_HASH}'; "
     "font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'"
 )
 
@@ -430,5 +442,5 @@ def build_entry_html(
         f"<meta http-equiv=\"Content-Security-Policy\" content=\"{_CSP}\">"
         f"<title>{heading}</title>"
         f"<style>{base_css}</style></head><body>{html}"
-        f"<script>{_TOGGLE_JS}{_LONGMAN_JS}</script></body></html>"
+        f"{_script_tag()}</body></html>"
     )

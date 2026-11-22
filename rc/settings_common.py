@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import subprocess
 
@@ -16,6 +17,8 @@ from .service import (
     CHAT_PERSONA_DEFAULT as _ZH_CHAT_PERSONA,
     CHAT_RULES_DEFAULT as _ZH_CHAT_RULES,
 )
+
+log = logging.getLogger("rc")
 
 
 def default_translate_prompt() -> str:
@@ -36,5 +39,5 @@ def open_target(target: str) -> None:
     except Exception:
         try:
             subprocess.Popen(["explorer", target])
-        except Exception:
-            pass
+        except OSError as exc:  # noqa: BLE001 - 打不开目录时静默失败
+            log.debug("用资源管理器打开失败: %s", exc)

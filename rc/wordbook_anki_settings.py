@@ -176,7 +176,7 @@ class WordbookAnkiSettings:
     def _set_hint(self, text: str, color=MUTED):
         try:
             self.hint.configure(text=text, fg=color)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _fill_defaults(self) -> None:

@@ -160,8 +160,8 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
                 pieces.append(piece)
                 try:
                     on_delta("".join(pieces))
-                except Exception:
-                    pass
+                except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断流式聊天
+                    log.debug("on_delta 回调失败: %s", exc)
             reply = "".join(pieces).strip()
             if not reply:
                 raise ValueError("模型返回了空内容")
@@ -218,8 +218,8 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
         persona = str(self.config.get("prompt_chat_persona") or "").strip() or CHAT_PERSONA_DEFAULT
         try:
             persona = persona.format(book=book)
-        except Exception:
-            pass
+        except (KeyError, IndexError, ValueError) as exc:  # noqa: BLE001 - 占位符写错时用原文
+            log.debug("话术占位符替换失败，使用原文: %s", exc)
         parts = [persona]
         passage = (conv.get("passage") or "").strip()
         translation = (conv.get("translation") or "").strip()

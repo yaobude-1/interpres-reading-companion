@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -20,6 +21,8 @@ from .theme import (
     SCROLL_TRACK,
     SIDEBAR,
 )
+
+log = logging.getLogger("rc")
 
 
 VOICE_SAMPLES = {
@@ -123,8 +126,8 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
                         scrollregion=(0, 0, canvas.winfo_width(), body.winfo_reqheight())
                     )
                     canvas.yview_moveto(0)
-                except (tk.TclError, KeyError):
-                    pass
+                except (tk.TclError, KeyError) as exc:  # noqa: BLE001 - 切页时控件可能尚未就绪
+                    log.debug("切页重置滚动位置失败: %s", exc)
         for name, btn in self._nav_buttons.items():
             active = name == key
             btn.configure(
@@ -149,7 +152,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             first, _last = canvas.yview()
             if first < 0:
                 canvas.yview_moveto(0)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _build(self) -> None:
@@ -427,7 +430,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
             self.lang_status.configure(
                 text=text[:100], fg="#ff8080" if error else GREEN
             )
-        except Exception:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _restart_stream_preview(self) -> None:
@@ -436,7 +439,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         if job:
             try:
                 self.win.after_cancel(job)
-            except Exception:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._preview_job = None
         try:
@@ -526,7 +529,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         ok_text, err_text, color = self._preview_result
         try:
             self.test_label.configure(text=err_text or ok_text, fg=color)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _load_voices(self) -> None:
@@ -643,7 +646,7 @@ class SettingsWindow(SettingsPagesMixin, SettingsActionsMixin):
         style = ttk.Style(self.win)
         try:
             style.theme_use("clam")
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         style.configure(
             "TCombobox",

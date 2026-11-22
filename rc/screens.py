@@ -9,7 +9,10 @@
 from __future__ import annotations
 
 import ctypes
+import logging
 from ctypes import wintypes
+
+log = logging.getLogger("rc")
 
 user32 = ctypes.windll.user32
 
@@ -43,8 +46,8 @@ try:
     user32.MonitorFromPoint.restype = wintypes.HMONITOR
     user32.GetMonitorInfoW.argtypes = [wintypes.HMONITOR, ctypes.POINTER(_MONITORINFO)]
     user32.GetMonitorInfoW.restype = wintypes.BOOL
-except Exception:  # pragma: no cover - 非 Windows 或老系统
-    pass
+except (AttributeError, TypeError) as exc:  # pragma: no cover - 非 Windows 或老系统
+    log.debug("监视器 API 初始化失败，退回主屏: %s", exc)
 
 
 def work_area(x: int, y: int) -> tuple[int, int, int, int]:
@@ -59,8 +62,8 @@ def work_area(x: int, y: int) -> tuple[int, int, int, int]:
                 rect = info.rcWork
                 if rect.right > rect.left and rect.bottom > rect.top:
                     return rect.left, rect.top, rect.right, rect.bottom
-    except Exception:
-        pass
+    except (OSError, AttributeError) as exc:  # noqa: BLE001 - 读不到监视器信息时用主屏兜底
+        log.debug("读取监视器可用区域失败，退回主屏: %s", exc)
     # 兜底：主屏
     return 0, 0, int(user32.GetSystemMetrics(0)), int(user32.GetSystemMetrics(1))
 

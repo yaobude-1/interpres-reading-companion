@@ -93,7 +93,7 @@ class PanelTranslateMixin:
             self.output.insert("1.0", translation)
             self.output.configure(state="disabled")
             self._fit_output_height()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
         self._set_status(f"完成 · {payload.get('meta', {}).get('elapsed_ms', 0)} ms", GREEN)
         self._sync_content_scroll()
@@ -108,7 +108,7 @@ class PanelTranslateMixin:
         if job:
             try:
                 self.win.after_cancel(job)
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         self._stream_target = ""
         self._stream_shown = ""
@@ -136,7 +136,7 @@ class PanelTranslateMixin:
             if int(self.output.cget("height")) != lines:
                 self.output.configure(height=lines)
                 self._sync_content_scroll()
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def show_progress(self, index: int, total: int) -> None:
@@ -146,7 +146,7 @@ class PanelTranslateMixin:
                 self.output.configure(state="normal")
                 self.output.delete("1.0", "end")
                 self.output.configure(state="disabled")
-            except tk.TclError:
+            except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
         if total > 1:
             self._set_status(f"翻译中… {index}/{total}", MUTED)
@@ -157,7 +157,7 @@ class PanelTranslateMixin:
     def _set_status(self, text: str, color: str = MUTED) -> None:
         try:
             self.status.configure(text=text, fg=color)
-        except tk.TclError:
+        except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
     def _clear(self) -> None:
