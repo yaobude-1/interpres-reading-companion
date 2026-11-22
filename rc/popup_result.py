@@ -357,6 +357,8 @@ class ResultViewMixin:
 
     # ------------------------------------------------------------------ 显示
     def _reveal(self) -> None:
+        # 还在淡出但窗口仍可见时，从当前 alpha 续上，避免闪一下再淡入
+        was_visible = self.win.winfo_viewable() == 1
         self._bind_wheel(self.shell)
         self.win.deiconify()
         self.win.update_idletasks()
@@ -364,6 +366,7 @@ class ResultViewMixin:
         if not getattr(self, "_user_moved", False):
             self._place()
         self._visible = True
+        self._fade_to_visible(restart=not was_visible)
         try:
             self.win.focus_force()
         except tk.TclError:  # 控件可能已销毁，刻意忽略

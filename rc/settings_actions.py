@@ -159,6 +159,8 @@ class SettingsActionsMixin:
                 appearance["panel_opacity"] = round(
                     float(self.var_panel_opacity.get()), 2
                 )
+            if hasattr(self, "var_animations"):
+                appearance["animations"] = bool(self.var_animations.get())
             if hasattr(self, "var_popup_width"):
                 try:
                     width = int(self.var_popup_width.get().strip() or 560)

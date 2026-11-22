@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import tkinter as tk
 
-from . import screens, textutil
+from . import anim, screens, textutil
 from .popup_chat import ChatViewMixin
 from .popup_dict import DictViewMixin
 from .popup_result import ResultViewMixin
@@ -76,8 +76,10 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             opacity = float(appearance.get("popup_opacity", 1.0))
         except (TypeError, ValueError):
             opacity = 1.0
+        self._target_alpha = max(0.3, min(1.0, opacity))
+        self._fader = anim.Fader(self.win, self._target_alpha)
         try:
-            self.win.attributes("-alpha", max(0.3, min(1.0, opacity)))
+            self.win.attributes("-alpha", self._target_alpha)
         except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
 
@@ -448,11 +450,21 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
         self.canvas.yview_moveto(0)
 
     def hide(self) -> None:
-        self.win.withdraw()
         self._visible = False
         tts = self.cb.get("stop_speak")
         if tts:
             tts()
+        self._fader.fade_out(on_done=self._withdraw)
+
+    def _withdraw(self) -> None:
+        try:
+            self.win.withdraw()
+        except tk.TclError:
+            pass
+
+    def _fade_to_visible(self, restart: bool) -> None:
+        self._fader.target = self._target_alpha
+        self._fader.fade_in(restart=restart)
 
     @property
     def visible(self) -> bool:

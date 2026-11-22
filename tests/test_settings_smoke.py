@@ -68,6 +68,7 @@ def main() -> int:
     win.var_panel_opacity.set(0.9)
     win.var_popup_width.set("620")
     win.var_popup_max.set("80")
+    win.var_animations.set(False)
     win._apply_to_config(save=True)
     cfg2 = Config(data)
     appearance = cfg2.get("appearance") or {}
@@ -77,6 +78,7 @@ def main() -> int:
     check("主界面透明度", float(appearance.get("panel_opacity", 0)) == 0.9, str(appearance))
     check("浮窗宽度", int(cfg2.get("popup_width", 0)) == 620, str(cfg2.get("popup_width")))
     check("最大高度", abs(float(cfg2.get("popup_max_height_ratio", 0)) - 0.8) < 0.01, str(cfg2.get("popup_max_height_ratio")))
+    check("动画开关写入", appearance.get("animations") is False, str(appearance))
 
     print("\n[关闭]")
     try:

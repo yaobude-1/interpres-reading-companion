@@ -29,7 +29,7 @@ jobs:
       - name: Type check (incremental)
         run: |
           # Only the clean modules listed in mypy.ini's scope; add new files here.
-          python -m mypy rc/netpolicy.py rc/textutil.py rc/lemma.py rc/fuzzy.py rc/screens.py rc/capture.py rc/hotkey.py rc/instance.py rc/gloss.py rc/htmldom.py rc/entrylayout.py
+          python -m mypy rc/netpolicy.py rc/textutil.py rc/lemma.py rc/fuzzy.py rc/screens.py rc/capture.py rc/hotkey.py rc/instance.py rc/gloss.py rc/htmldom.py rc/entrylayout.py rc/anim.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Core checks
         run: |
@@ -61,7 +61,10 @@ jobs:
             "tests/test_vocab_columns.py",
             "tests/test_except_hygiene.py",
             "tests/test_uia_contract.py",
-            "tests/test_entryhtml_csp.py"
+            "tests/test_entryhtml_csp.py",
+            "tests/test_anim.py",
+            "tests/test_entry_anim.py",
+            "tests/test_anim_windows.py"
           )
           foreach ($test in $tests) {
             Write-Host "==> $test"

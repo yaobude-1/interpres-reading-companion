@@ -120,6 +120,15 @@ li { margin: 2px 0; }
 .colloc, .collocate-list, .colloc-list { display: block; margin: 8px 0; }
 .etymology, .etymsense { display: block; margin: 2px 0; }
 .hyphenation { display: inline; margin-left: 6px; }
+/* 动效：只淡入，不用 transform（避免影响词典自己的定位）；尊重系统“减少动态效果” */
+@keyframes rc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.rc-sec.open { animation: rc-fade-in .16s ease-out both; }
+.buttons .at-link.open { animation: rc-fade-in .16s ease-out both; }
+.rc-sec-title, .buttons .popup-button { transition: color .12s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .rc-sec.open, .buttons .at-link.open { animation: none; }
+  .rc-sec-title, .buttons .popup-button { transition: none; }
+}
 
 """)
 

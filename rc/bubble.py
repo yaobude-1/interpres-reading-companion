@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from . import screens
+from . import anim, screens
 from .popup import ACCENT, BG, BORDER, DIM, FONT_FAMILY, MUTED, TEXT
 
 
@@ -28,6 +28,9 @@ class QuickButton:
         self.win.withdraw()
         self.win.overrideredirect(True)
         self.win.attributes("-topmost", True)
+        self._visible = False
+        self._target_alpha = 0.95
+        self._fader = anim.Fader(self.win, self._target_alpha)
 
         self.frame = tk.Frame(self.win, bg=BORDER)
         self.frame.pack()
@@ -80,13 +83,17 @@ class QuickButton:
         self.row.configure(bg=bg)
         self.frame.configure(bg="#ffffff")
         self.win.configure(bg=bg)
-        self.win.attributes("-alpha", max(0.25, min(1.0, alpha)))
+        self._target_alpha = max(0.25, min(1.0, alpha))
+        self._fader.target = self._target_alpha
 
     # ------------------------------------------------------------------ 显示
     def show(self, anchor: tuple[int, int]) -> None:
+        restart = self.win.winfo_viewable() != 1
         self._apply_style()
         self._anchor = anchor
         self._hover = False
+        if restart:
+            anim.set_alpha(self.win, 0.0)
         self.win.deiconify()
         self.win.lift()
         self.win.update_idletasks()
@@ -94,6 +101,8 @@ class QuickButton:
         h = self.win.winfo_reqheight()
         x, y = screens.clamp(anchor, (w, h))
         self.win.geometry(f"+{x}+{y}")
+        self._visible = True
+        self._fader.fade_in(restart=restart)
 
         if self._job:
             self.root.after_cancel(self._job)
@@ -144,7 +153,18 @@ class QuickButton:
             except tk.TclError:  # 控件可能已销毁，刻意忽略
                 pass
             self._job = None
-        self.win.withdraw()
+        if self._visible:
+            self._visible = False
+            self._fader.fade_out(on_done=self._withdraw)
+        else:
+            self._fader.cancel()
+            self._withdraw()
+
+    def _withdraw(self) -> None:
+        try:
+            self.win.withdraw()
+        except tk.TclError:
+            pass
 
     @property
     def visible(self) -> bool:
@@ -165,6 +185,9 @@ class Bubble:
         self.win.attributes("-topmost", True)
         self.win.bind("<Escape>", lambda _e: self.hide())
         self.win.bind("<FocusOut>", lambda _e: self._focus_lost())
+        self._visible = False
+        self._target_alpha = 0.97
+        self._fader = anim.Fader(self.win, self._target_alpha)
 
         style = self._style()
         self.shell = tk.Frame(self.win, bg=BORDER)
@@ -255,15 +278,21 @@ class Bubble:
         self._reveal()
 
     def _reveal(self) -> None:
+        was_visible = self.win.winfo_viewable() == 1
         style = self._style()
+        self._target_alpha = max(0.3, min(1.0, style["alpha"]))
+        self._fader.target = self._target_alpha
         self.win.configure(bg=BORDER)
-        self.win.attributes("-alpha", max(0.3, min(1.0, style["alpha"])))
+        if not was_visible:
+            anim.set_alpha(self.win, 0.0)
         self.win.deiconify()
         self.win.update_idletasks()
         w = self.win.winfo_reqwidth()
         h = self.win.winfo_reqheight()
         x, y = screens.clamp(self._anchor, (w, h))
         self.win.geometry(f"+{x}+{y}")
+        self._visible = True
+        self._fader.fade_in(restart=not was_visible)
         try:
             self.win.focus_force()
         except tk.TclError:  # 控件可能已销毁，刻意忽略
@@ -305,4 +334,15 @@ class Bubble:
         self.cb.get("chat", lambda *_a: None)(payload, self._anchor)
 
     def hide(self) -> None:
-        self.win.withdraw()
+        if self._visible:
+            self._visible = False
+            self._fader.fade_out(on_done=self._withdraw)
+        else:
+            self._fader.cancel()
+            self._withdraw()
+
+    def _withdraw(self) -> None:
+        try:
+            self.win.withdraw()
+        except tk.TclError:
+            pass

@@ -509,6 +509,19 @@ class SettingsPagesMixin:
             activebackground=ACCENT,
         ).pack(side="left")
 
+        self._section(outer, "动画")
+        self.var_animations = tk.BooleanVar(
+            value=bool(appearance.get("animations", True))
+        )
+        anim_row = tk.Frame(outer, bg=PANEL)
+        anim_row.pack(fill="x", pady=(0, 6))
+        tk.Checkbutton(
+            anim_row, text="界面淡入淡出", variable=self.var_animations,
+            bg=PANEL, fg=TEXT, selectcolor=PANEL, activebackground=PANEL,
+            activeforeground=TEXT, font=(FONT_FAMILY, 9),
+            highlightthickness=0, bd=0,
+        ).pack(side="left", padx=(12, 4), pady=8)
+
         btns = tk.Frame(outer, bg=BG)
         btns.pack(fill="x", pady=(8, 4))
         self._button(btns, "保存并重启", self._appearance_save_restart).pack(side="left")

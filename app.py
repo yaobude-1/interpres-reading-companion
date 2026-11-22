@@ -23,6 +23,7 @@ from pathlib import Path
 from tkinter import messagebox
 
 from rc import __version__
+from rc import anim
 from rc import capture
 from rc.bubble import Bubble, QuickButton
 from rc.config import Config
@@ -60,6 +61,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
     def __init__(self, config: Config, *, enable_hotkeys: bool = True, silent: bool = False) -> None:
         self.config = config
         self.silent = silent
+        anim.configure(bool((config.get("appearance") or {}).get("animations", True)))
         self.service = Service(config)
         try:
             from .capture import set_user_blocklist as _set_blocklist
@@ -80,6 +82,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self._trans_win = None
         self._toast_win: tk.Toplevel | None = None
         self._toast_job = None
+        self._toast_fade = None
         self._busy = threading.Lock()
         self._capture_lock = threading.Lock()
 
@@ -560,11 +563,18 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
 
     # ------------------------------------------------------------------ 提示条
     def toast(self, message: str) -> None:
+        if self._toast_fade is not None:
+            self._toast_fade()
+            self._toast_fade = None
         if self._toast_win is not None and self._toast_win.winfo_exists():
             self._toast_win.destroy()
+        if self._toast_job:
+            self.root.after_cancel(self._toast_job)
+            self._toast_job = None
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
+        win.attributes("-alpha", 0.0)
         win.configure(bg="#23262f")
         tk.Label(
             win,
@@ -580,9 +590,20 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
         win.geometry(f"+{sw - w - 24}+{sh - h - 60}")
         self._toast_win = win
-        if self._toast_job:
-            self.root.after_cancel(self._toast_job)
-        self._toast_job = self.root.after(1800, win.destroy)
+        self._toast_fade = anim.fade(win, 0.0, 1.0, 120)
+        self._toast_job = self.root.after(1600, lambda w=win: self._toast_out(w))
+
+    def _toast_out(self, win: tk.Toplevel) -> None:
+        self._toast_job = None
+        if not win.winfo_exists():
+            return
+
+        def done() -> None:
+            self._toast_fade = None
+            if win.winfo_exists():
+                win.destroy()
+
+        self._toast_fade = anim.fade(win, 1.0, 0.0, 120, on_done=done)
 
     # ------------------------------------------------------------------ 生命周期
     def run(self) -> None:

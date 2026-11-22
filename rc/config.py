@@ -108,6 +108,7 @@ DEFAULT_CONFIG: dict = {
         "accent": "blue",
         "popup_opacity": 1.0,
         "panel_opacity": 1.0,
+        "animations": True,
     },
     "audio_source": "dict_first",
     "history_keep": 30,
