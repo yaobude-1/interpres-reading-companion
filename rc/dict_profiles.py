@@ -171,3 +171,21 @@ TEMPLATE = {
     "audio": "//a[starts-with(@href,'sound://')]",
     "audio_attr": "href",
 }
+
+TEMPLATE_EN = {
+    **TEMPLATE,
+    "_comment": (
+        "Replace match.contains with a snippet unique to this dictionary's entry HTML; "
+        "all XPaths are absolute against the whole entry HTML, except definition/example, "
+        "which are relative to each senses node. Save into dict_profiles and reload."
+    ),
+    "name": "My dictionary",
+    "match": {"contains": ["replace with a marker unique to the entry HTML"]},
+}
+
+
+def template() -> dict:
+    """新建映射时插入的模板；跟当前界面语言走。"""
+    from . import i18n
+
+    return TEMPLATE_EN if i18n.LANGUAGE == "en" else TEMPLATE

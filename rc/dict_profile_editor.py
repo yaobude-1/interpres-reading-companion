@@ -7,7 +7,7 @@ import re
 import tkinter as tk
 from pathlib import Path
 
-from .dict_profiles import TEMPLATE
+from .dict_profiles import template
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
 from .theme import ON_ACCENT
 
@@ -66,7 +66,7 @@ class DictProfileEditor:
             relief="flat", font=("Consolas", 9), wrap="none", padx=8, pady=6,
         )
         self.text.pack(fill="both", expand=True)
-        self.text.insert("1.0", json.dumps(TEMPLATE, ensure_ascii=False, indent=2))
+        self.text.insert("1.0", json.dumps(template(), ensure_ascii=False, indent=2))
 
         self.status = tk.Label(outer, text="", bg=BG, fg=MUTED, font=(FONT_FAMILY, 9), anchor="w")
         self.status.pack(fill="x", pady=(6, 0))
@@ -125,7 +125,7 @@ class DictProfileEditor:
 
     def _insert_template(self) -> None:
         self.text.delete("1.0", "end")
-        self.text.insert("1.0", json.dumps(TEMPLATE, ensure_ascii=False, indent=2))
+        self.text.insert("1.0", json.dumps(template(), ensure_ascii=False, indent=2))
         self._set_status("已插入模板，改完再保存")
 
     def _open_dir(self) -> None:

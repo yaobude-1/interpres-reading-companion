@@ -85,3 +85,15 @@ def clamp(
     x = min(max(left + margin, x), max_x)
     y = min(max(top + margin, y), max_y)
     return int(x), int(y)
+
+
+def clamp_point(pos: tuple[int, int], size: tuple[int, int], margin: int = 8) -> tuple[int, int]:
+    """把窗口左上角夹进它所在监视器的工作区（用于手动移动/缩放后的位置）。"""
+    x, y = int(pos[0]), int(pos[1])
+    width, height = max(1, int(size[0])), max(1, int(size[1]))
+    left, top, right, bottom = work_area(x, y)
+    max_x = max(left + margin, right - width - margin)
+    max_y = max(top + margin, bottom - height - margin)
+    x = min(max(left + margin, x), max_x)
+    y = min(max(top + margin, y), max_y)
+    return int(x), int(y)

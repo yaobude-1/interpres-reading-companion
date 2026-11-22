@@ -423,10 +423,15 @@ class SettingsPagesMixin:
             accent_row, text="强调色", bg=PANEL, fg=DIM, font=(FONT_FAMILY, 9),
             width=10, anchor="w",
         ).pack(side="left", padx=(12, 4), pady=8)
-        self._accent_labels = {"blue": "蓝", "green": "绿", "purple": "紫", "orange": "橙"}
+        self._accent_labels = {
+            "blue": tr("蓝"),
+            "green": tr("绿"),
+            "purple": tr("紫"),
+            "orange": tr("橙"),
+        }
         self._accent_keys = {v: k for k, v in self._accent_labels.items()}
         self.var_accent_label = tk.StringVar(
-            value=self._accent_labels.get(accent, "蓝")
+            value=self._accent_labels.get(accent, tr("蓝"))
         )
         accent_box = tk.OptionMenu(
             accent_row, self.var_accent_label, *self._accent_labels.values()

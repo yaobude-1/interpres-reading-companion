@@ -13,6 +13,11 @@ from .popup import ACCENT, BG, DIM, FONT_FAMILY, PANEL, TEXT
 from .theme import BORDER_SOFT, ON_ACCENT
 
 
+def _label_width() -> int:
+    """标签列宽：英文标签（如 Chinese name (optional)）比中文长，12 字符会被截断。"""
+    return 24 if i18n.LANGUAGE == "en" else 12
+
+
 class LanguageDialog:
     """添加或编辑一门语言。结果放在 result 里。"""
 
@@ -32,6 +37,7 @@ class LanguageDialog:
         self._edge_choices: list[dict] | None = None
         self._edge_loading = False
         entry = entry or {}
+        label_width = _label_width()
         self.win = tk.Toplevel(parent)
         self.win.title("编辑语言" if edit else "添加语言")
         self.win.configure(bg=BG)
@@ -47,7 +53,7 @@ class LanguageDialog:
             frame.pack(fill="x", pady=4)
             tk.Label(
                 frame, text=label, bg=BG, fg=DIM, font=(FONT_FAMILY, 9),
-                width=12, anchor="w",
+                width=label_width, anchor="w",
             ).pack(side="left")
             widget = tk.Entry(
                 frame, bg=PANEL, fg=TEXT, insertbackground=TEXT,
@@ -70,7 +76,7 @@ class LanguageDialog:
         engine_frame.pack(fill="x", pady=4)
         tk.Label(
             engine_frame, text="引擎", bg=BG, fg=DIM, font=(FONT_FAMILY, 9),
-            width=12, anchor="w",
+            width=label_width, anchor="w",
         ).pack(side="left")
         self.engine_var = tk.StringVar(value=str(entry.get("tts_engine") or "system"))
         self.engine_box = tk.OptionMenu(
@@ -96,7 +102,7 @@ class LanguageDialog:
         voice_frame.pack(fill="x", pady=4)
         self.voice_title = tk.Label(
             voice_frame, text="音色", bg=BG, fg=DIM, font=(FONT_FAMILY, 9),
-            width=12, anchor="w",
+            width=label_width, anchor="w",
         )
         self.voice_title.pack(side="left")
         self.voice_var = tk.StringVar(value=str(entry.get("tts_voice") or tr("（自动匹配）")))
@@ -114,7 +120,7 @@ class LanguageDialog:
         edge_frame = tk.Frame(engine_area, bg=BG)
         tk.Label(
             edge_frame, text="Edge 音色", bg=BG, fg=DIM, font=(FONT_FAMILY, 9),
-            width=12, anchor="w",
+            width=label_width, anchor="w",
         ).pack(side="left")
         self.edge_var = tk.StringVar(value=str(entry.get("tts_voice") or ""))
         self.edge_entry = tk.Entry(
@@ -134,7 +140,7 @@ class LanguageDialog:
         cmd_frame = tk.Frame(engine_area, bg=BG)
         tk.Label(
             cmd_frame, text="命令", bg=BG, fg=DIM, font=(FONT_FAMILY, 9),
-            width=12, anchor="w",
+            width=label_width, anchor="w",
         ).pack(side="left")
         self.cmd_var = tk.StringVar(value=str(entry.get("tts_command") or ""))
         self.cmd_entry = tk.Entry(

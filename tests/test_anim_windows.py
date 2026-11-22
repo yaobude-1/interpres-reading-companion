@@ -59,6 +59,7 @@ def main() -> int:
 
         print("\n[浮窗]")
         popup = PopupWindow(root, cfg, {})
+        check("低透明度启用 layered", popup._layered is True)
         popup.win.deiconify()
         popup.win.update_idletasks()
         popup._fade_to_visible(restart=True)

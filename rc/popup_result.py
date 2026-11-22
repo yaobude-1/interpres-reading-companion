@@ -363,8 +363,7 @@ class ResultViewMixin:
         self.win.deiconify()
         self.win.update_idletasks()
         self._fit_height()
-        if not getattr(self, "_user_moved", False):
-            self._place()
+        self._place()
         self._visible = True
         self._fade_to_visible(restart=not was_visible)
         try:

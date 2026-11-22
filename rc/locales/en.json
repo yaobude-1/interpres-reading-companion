@@ -8,6 +8,7 @@
   "与它聊聊": "Chat about it",
   "中文": "Chinese",
   "主界面": "Main window",
+  "浮窗": "Popup",
   "义项号": "Sense numbers",
   "书": "Book",
   "书名过滤": "Book filter",
@@ -62,6 +63,15 @@
   "宽度（px）": "Width (px)",
   "最大高度（%）": "Max height (%)",
   "不透明度": "Opacity",
+  "动画": "Animations",
+  "界面淡入淡出": "Fade animations",
+  "数据目录": "Data folder",
+  "Anki 已连接": "Anki connected",
+  "Anki 状态检测中…": "Checking Anki…",
+  "Anki 未运行（同步时会自动导出 CSV）": "Anki is not running (CSV is exported automatically on sync)",
+  "还没有生词": "No words yet",
+  "编辑语言": "Edit language",
+  "添加语言": "Add language",
   "保存并重启": "Save and restart",
   "主题和强调色保存后需要重启才会生效；尺寸和透明度在下次打开窗口时生效。": "Theme and accent colour take effect after a restart; size and opacity apply when the windows next open.",
   "字号": "Font size",
@@ -131,6 +141,7 @@
   "直接输入牌组名即可（不存在会自动新建）；点 ▾ 可从 Anki 现有牌组里选。": "Type a deck name directly (created if missing); click ▾ to pick an existing Anki deck.",
   "秒": "sec",
   "移动到…": "Move to…",
+  "移动…": "Move to…",
   "编辑": "Edit",
   "翻译": "Translate",
   "翻译与对话": "Translation & chat",
@@ -183,7 +194,112 @@
   "默认": "default",
   "鼠标移开就消失": "Disappear when the mouse leaves",
   "（自动匹配）": "(Auto)",
+  "词典映射（高级）": "Dictionary mapping (advanced)",
+  "词典映射": "Dictionary mapping",
+  "词典映射…": "Dictionary mapping…",
+  "已有映射": "Saved mappings",
+  "保存并重载": "Save and reload",
+  "打开配置目录": "Open config folder",
+  "插入模板": "Insert template",
+  "（新建模板）": "(New template)",
+  "本地词典设置": "Local dictionary settings",
+  "文件不存在": "File not found",
+  "MDX 词典": "MDX dictionary",
+  "所有文件": "All files",
+  "已插入模板，改完再保存": "Template inserted; save when done",
+  "JSON 顶层必须是对象": "JSON top level must be an object",
+  "id 只能包含小写字母、数字、- 和 _": "id can only contain lowercase letters, digits, - and _",
+  "Anki 卡片设置": "Anki card settings",
+  "覆盖模板": "Override template",
+  "正在翻译…": "Translating…",
+  "删除对话": "Delete conversation",
+  "用 JSON 里的 XPath 告诉程序：词头、音标、词性、义项、例句在 HTML 的哪里。\nmatch.contains 必须填词条 HTML 里独有的一段文字；保存后自动重载词典。\n留空或解析失败会自动回退到内置解析，不会把词典弄坏。": "Use JSON XPath to tell the app where the headword, phonetics, part of speech, senses and examples are in the HTML.\nmatch.contains must contain a snippet unique to the entry HTML; the dictionary reloads after saving.\nBlank or invalid mappings fall back to the built-in parser without damaging the dictionary.",
+  "选择颜色": "Choose colour",
+  "原版条目": "Original entry",
+  "正在载入原版条目…": "Loading original entry…",
+  "加载中…": "Loading…",
+  "语言代码": "Language code",
+  "代码用 2~8 位小写字母，例如 it、ja、ru、pt-BR。": "Use 2–8 lowercase letters, e.g. it, ja, ru, pt-BR.",
+  "没取到在线音色列表（可能没联网）。可以直接手动输入音色名。": "Couldn't fetch the online voice list (maybe offline). You can type a voice name manually.",
+  "Edge 在线音色：如 fr-FR-DeniseNeural；留空按语言自动选。需要联网。": "Edge online voice, e.g. fr-FR-DeniseNeural; leave blank to auto-pick by language. Requires internet.",
+  "命令模板，用 {text_file} {out_file} {lang} {voice} 占位；命令要把 wav 写到 {out_file}。": "Command template with {text_file} {out_file} {lang} {voice} placeholders; the command must write a wav to {out_file}.",
+  "以后不再提示": "Don't show again",
+  "全部记录…": "All history…",
+  "（还没有读过别的书）": "(No other books read yet)",
+  "原版": "Original",
+  "用 AI 译这个词": "Translate this word with AI",
+  "用 AI 译": "Translate with AI",
+  "按原形 ": "Base form ",
+  " 查到": " found",
+  "相近的词": "Similar words",
+  "Esc 关闭": "Esc close",
+  "手动翻译": "Translate manually",
+  "Ctrl+Enter 翻译 · Esc 关闭": "Ctrl+Enter translate · Esc close",
+  "↻ 重试": "↻ Retry",
+  "如果没有反应，说明当前程序没有提供可复制的选中文字。": "If nothing happens, the current app doesn't expose selectable text.",
+  "没有读到选中的文字。可以直接粘贴或输入要翻译的内容：": "No selected text found. Paste or type what you want to translate:",
+  "← 返回译文": "← Back to translation",
+  "Enter 发送 · Shift+Enter 换行 · Esc 返回译文": "Enter send · Shift+Enter newline · Esc back",
+  "补充上下文": "Add context",
+  "阅读伙伴": "Reading companion",
+  "粘贴选中文字前后的句子或段落；AI 下次回答会参考它。": "Paste sentences around the selection; the AI will use them next time.",
+  "正在读": "Reading",
+  "Enter 收藏 · 空格 发音 · Esc 关闭": "Enter save · Space speak · Esc close",
+  "（词典里这个词没有释义）": "(No definition in the dictionary)",
+  "语法": "Grammar",
+  "没识别到前台程序，先把阅读器切到最前面再点": "Couldn't detect the foreground app; bring the reader to the front and try again.",
+  "正在同步所有生词…": "Syncing all words…",
+  "重启生效": "Restart to apply",
+  "主题/强调色已保存，需要重启才能应用。现在重启吗？": "Theme/accent saved; restart to apply. Restart now?",
+  "没有可同步的生词": "No words to sync",
+  "删除语言": "Delete language",
+  "删除记录": "Delete record",
+  "移动到词本": "Move to wordbook",
+  "这个语言下没有别的词本，先新建一个。": "No other wordbook for this language; create one first.",
+  "删除生词": "Delete word",
+  "删除词本": "Delete wordbook",
+  "牌组留空 = 使用该语言的默认牌组": "Leave deck blank = use the language's default deck",
+  "（可按住 Ctrl / Shift 多选，或按 Delete 键）": "(Ctrl/Shift to multi-select, or press Delete)",
+  "字段映射": "Field mapping",
+  "模板共享": "Template sharing",
+  "牌组沿用词本设置里的牌组。模板属于笔记类型：\n• 跟随全局：与设置里的全局模板共用\n• 独立：自动创建「Interpres · 词本名」，模板只属于这本\n• 选已有类型：与其它使用该类型的词本共享模板": "The deck follows the wordbook setting. Templates belong to note types:\n• Follow global: share the global template from Settings\n• Independent: create “Interpres · wordbook” whose template belongs only to this book\n• Use existing: share the template with other wordbooks of that note type",
   "__patterns__": [
+    {
+      "zh": "^选择 (.*) 的 MDX 词典$",
+      "en": "Choose the MDX dictionary for {1}"
+    },
+    {
+      "zh": "^读取失败：(.*)$",
+      "en": "Read failed: {1}"
+    },
+    {
+      "zh": "^已载入 (.*)$",
+      "en": "Loaded {1}"
+    },
+    {
+      "zh": "^配置目录：(.*)$",
+      "en": "Config folder: {1}"
+    },
+    {
+      "zh": "^JSON 语法错误：第 (\\d+) 行 (.*)$",
+      "en": "JSON syntax error: line {1}: {2}"
+    },
+    {
+      "zh": "^缺少字段：(.*)$",
+      "en": "Missing field: {1}"
+    },
+    {
+      "zh": "^写入失败：(.*)$",
+      "en": "Write failed: {1}"
+    },
+    {
+      "zh": "^已保存，但重载失败：(.*)$",
+      "en": "Saved, but reload failed: {1}"
+    },
+    {
+      "zh": "^已保存并重载：(.*)（命中匹配规则才生效）$",
+      "en": "Saved and reloaded: {1} (takes effect when the match rule hits)"
+    },
     {
       "zh": "^Anki 设置 · (.*)$",
       "en": "Anki settings · {1}"
@@ -315,6 +431,10 @@
     {
       "zh": "^共 (\\d+) 个生词$",
       "en": "{1} words"
+    },
+    {
+      "zh": "^共 (\\d+) 个生词（(.*)）$",
+      "en": "{1} words ({2})"
     },
     {
       "zh": "^已导出 (\\d+) 条 → (.*)$",

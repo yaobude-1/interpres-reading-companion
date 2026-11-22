@@ -11,7 +11,7 @@ from pathlib import Path
 from tkinter import filedialog
 
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, RED, TEXT
-from .i18n import lang_display_name
+from .i18n import lang_display_name, tr
 from .theme import BORDER_SOFT, ON_ACCENT
 
 
@@ -70,6 +70,8 @@ class DictionarySettings:
             activeforeground=TEXT,
             font=(FONT_FAMILY, 9),
             anchor="w",
+            justify="left",
+            wraplength=660,
         ).pack(fill="x", pady=(0, 8))
 
         table = tk.Frame(outer, bg=PANEL)
@@ -133,8 +135,8 @@ class DictionarySettings:
     # ------------------------------------------------------------------ 动作
     def pick(self, code: str) -> None:
         path = filedialog.askopenfilename(
-            title=f"选择 {code} 的 MDX 词典",
-            filetypes=[("MDX 词典", "*.mdx"), ("所有文件", "*.*")],
+            title=tr(f"选择 {code} 的 MDX 词典"),
+            filetypes=[(tr("MDX 词典"), "*.mdx"), (tr("所有文件"), "*.*")],
             parent=self.win,
         )
         if not path:

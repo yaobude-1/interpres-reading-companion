@@ -5,7 +5,8 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox
 
-from .i18n import lang_display_name
+from . import i18n
+from .i18n import lang_display_name, tr
 from .netpolicy import validate_base_url
 from .settings_common import (
     default_chat_persona,
@@ -244,14 +245,24 @@ class SettingsActionsMixin:
             if n:
                 entry = self.config.language(code)
                 langs.append(f"{lang_display_name(entry, code)} {n}")
-        detail = "，".join(langs) if langs else "还没有生词"
-        self.stats.configure(text=f"共 {total} 个生词（{detail}）\nAnki 状态检测中… · 数据目录 {self.config.data_dir}")
+        sep = ", " if i18n.LANGUAGE == "en" else "，"
+        detail = sep.join(langs) if langs else tr("还没有生词")
+        head = tr(f"共 {total} 个生词（{detail}）")
+        data_label = tr("数据目录")
+        self.stats.configure(
+            text=f"{head}\n{tr('Anki 状态检测中…')} · {data_label} {self.config.data_dir}"
+        )
 
         # 连 Anki 端口可能要等一两秒，绝不能放在界面线程里
         def probe() -> None:
             ok = self.service.anki.ping()
-            text = "Anki 已连接" if ok else "Anki 未运行（同步时会自动导出 CSV）"
-            self.win.after(0, lambda: self._set_stats_text(f"共 {total} 个生词（{detail}）\n{text} · 数据目录 {self.config.data_dir}"))
+            text = tr("Anki 已连接") if ok else tr("Anki 未运行（同步时会自动导出 CSV）")
+            self.win.after(
+                0,
+                lambda: self._set_stats_text(
+                    f"{head}\n{text} · {data_label} {self.config.data_dir}"
+                ),
+            )
 
         import threading
 

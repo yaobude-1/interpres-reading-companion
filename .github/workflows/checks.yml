@@ -65,7 +65,8 @@ jobs:
             "tests/test_entryhtml_csp.py",
             "tests/test_anim.py",
             "tests/test_entry_anim.py",
-            "tests/test_anim_windows.py"
+            "tests/test_anim_windows.py",
+            "tests/test_popup_resize.py"
           )
           foreach ($test in $tests) {
             Write-Host "==> $test"

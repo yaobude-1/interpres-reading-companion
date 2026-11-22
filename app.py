@@ -89,6 +89,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self.root = tk.Tk()
         self.root.withdraw()
         self.root.title("Interpres")
+        self.root.report_callback_exception = self._report_tk_error
         try:
             base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
             icon = base_dir / "assets" / "reading-companion.ico"
@@ -97,7 +98,6 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         except (OSError, tk.TclError) as exc:  # noqa: BLE001 - 图标缺失时用默认图标
             log.debug("加载窗口图标失败: %s", exc)
         self._setup_dpi()
-
         self.popup = PopupWindow(
             self.root,
             config,
@@ -207,6 +207,10 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self.root.after(30, self._pump)
 
     # ------------------------------------------------------------------ 初始化
+    def _report_tk_error(self, exc, val, tb) -> None:
+        """把 Tk 回调里的异常写进 app.log（默认只打到 stderr）。"""
+        log.error("Tk 回调异常：%s", val, exc_info=(exc, val, tb))
+
     def _setup_dpi(self) -> None:
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -545,14 +549,10 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self._settings.show()
 
     def on_settings_saved(self) -> None:
-        self.popup.width = int(self.config.get("popup_width", 560))
-        self.popup.max_ratio = float(self.config.get("popup_max_height_ratio", 0.72))
+        self.popup.apply_config()
         appearance = self.config.get("appearance") or {}
         opacity = appearance.get("popup_opacity", 1.0)
-        try:
-            self.popup.win.attributes("-alpha", float(opacity))
-        except (tk.TclError, TypeError, ValueError) as exc:  # noqa: BLE001 - 透明度设置失败可忽略
-            log.debug("设置浮窗透明度失败: %s", exc)
+        self.popup.set_opacity(opacity)
         panel_opacity = appearance.get("panel_opacity", 1.0)
         try:
             self.panel.win.attributes("-alpha", float(panel_opacity))
