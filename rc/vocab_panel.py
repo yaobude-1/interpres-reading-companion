@@ -192,14 +192,7 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
             right, orient="vertical", command=self.word_tree.yview,
             style="Vertical.TScrollbar",
         )
-        self._xscroll = ttk.Scrollbar(
-            right, orient="horizontal", command=self.word_tree.xview,
-            style="Horizontal.TScrollbar",
-        )
-        self.word_tree.configure(
-            yscrollcommand=self._vscroll.set, xscrollcommand=self._xscroll.set
-        )
-        self._xscroll.pack(side="bottom", fill="x", pady=(2, 0))
+        self.word_tree.configure(yscrollcommand=self._vscroll.set)
         self._vscroll.pack(side="right", fill="y", pady=(6, 0))
         self.word_tree.pack(side="left", fill="both", expand=True, pady=(6, 0))
         self.word_tree.bind("<Delete>", lambda _e: self.delete_selected())

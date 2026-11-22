@@ -88,25 +88,15 @@ class VocabTableMixin:
         self.word_tree.after_idle(self._update_scrollbars)
 
     def _update_scrollbars(self) -> None:
-        """内容装得下时隐藏滚动条，避免横竖两条灰带。"""
+        """内容装得下时隐藏纵向滚动条，避免一条常驻灰带。"""
         try:
             if not self.word_tree.winfo_exists():
                 return
-            x1, x2 = self.word_tree.xview()
             y1, y2 = self.word_tree.yview()
-            mapped_x = bool(self._xscroll.winfo_ismapped())
             mapped_y = bool(self._vscroll.winfo_ismapped())
         except tk.TclError:
             return
-        need_x = not (x1 <= 0.001 and x2 >= 0.999)
         need_y = not (y1 <= 0.001 and y2 >= 0.999)
-        if need_x != mapped_x:
-            if need_x:
-                self._xscroll.pack(
-                    side="bottom", fill="x", pady=(2, 0), before=self.word_tree
-                )
-            else:
-                self._xscroll.pack_forget()
         if need_y != mapped_y:
             if need_y:
                 self._vscroll.pack(

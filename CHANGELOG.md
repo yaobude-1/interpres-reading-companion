@@ -11,7 +11,8 @@ so the repository history is not the only record of what changed.
   AI-selected vocabulary, glossary, grammar notes or source-language detection.
   Word/phrase queries still get dictionary-style senses separated by “；”.
   Existing custom JSON prompts remain supported.
-- Vocabulary table scrollbars hide when the content fits and use a subtle dark
+- Vocabulary table no longer shows a horizontal scrollbar (columns fit the
+  table width); the vertical bar hides when the rows fit and uses a subtle dark
   thumb instead of a light strip.
 - Vocabulary tab: word actions now form one row under the word table (full
   labels on wide windows; short labels and a gear for Anki settings when
