@@ -19,7 +19,9 @@ English | [中文说明](docs/README.zh-CN.md)
 - **TTS** — Windows SAPI/OneCore voices, Edge online neural voices, or a custom command (Piper, eSpeak, your own script).
 - **Streaming UI** — translation and chat stream at a configurable character speed.
 - **Appearance** — dark/light theme with accent presets, popup width/height/opacity
-  and panel opacity; theme changes apply after a restart.
+  and panel opacity; drag any popup edge or corner to resize it, and double-click
+  the top/bottom edge to restore automatic height. Theme changes apply after a
+  restart.
 - **History** — translation and conversation history per book, searchable and
   exportable to Markdown, TSV or CSV.
 - **Vocabulary cards** — double-click a saved word to open its dictionary card
@@ -133,7 +135,7 @@ correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
 
-If your dictionary uses an unusual HTML layout, map it without code via **Settings → Language & audio → Dictionary settings… → dictionary mapping (词典映射…)**, which still shows its Chinese title in the English UI. Schema and a working Longman example: [docs/DICT_PROFILES.md](docs/DICT_PROFILES.md).
+If your dictionary uses an unusual HTML layout, map it without code via **Settings → Language & audio → Dictionary settings… → Dictionary mapping…**. Schema and a working Longman example: [docs/DICT_PROFILES.md](docs/DICT_PROFILES.md).
 
 ## Data & privacy
 
@@ -242,7 +244,7 @@ rc/vocab_panel.py         vocabulary tab shell: layout, search, refresh
 rc/vocab_table.py         word table: sorting, column widths, word cards
 rc/vocab_books.py         word-book list and book dialogs
 rc/vocab_actions.py       move/delete/export words, Anki sync
-rc/popup.py               selection popup shell: lifecycle, placement, wheel
+rc/popup.py               selection popup shell: lifecycle, placement, wheel, resizing
 rc/popup_dict.py          dictionary card: senses, morphology, similar words
 rc/popup_chat.py          inline chat card: bubbles, input bar, streaming
 rc/popup_result.py        translation result card: terms, grammar, actions
@@ -280,7 +282,8 @@ rc/i18n.py                zh/en display-layer translation
 - Edge TTS is an unofficial Microsoft endpoint and may change without notice.
 - Anki sync depends on AnkiConnect and a running Anki instance; there is no offline queue or retry.
 - There is no automatic update, no cloud backup, and no telemetry. Back up `%USERPROFILE%\.reading-companion\` yourself.
-- The English UI is a translation layer over Chinese strings; some rarely used dialogs may still contain Chinese text.
+- The English UI is a translation layer over Chinese strings; most windows are
+  translated, but a rarely used label may still be Chinese—please report it.
 - No formal accessibility or localization review has been done.
 
 ## How this was built

@@ -11,8 +11,8 @@ without touching the code.
 ```
 
 Open the editor from **Settings → Dictionary & audio → Dictionary settings →
-词典映射…** (Dictionary mapping). Profiles are loaded when a dictionary is
-opened; saving from the editor reloads dictionaries immediately.
+Dictionary mapping…**. Profiles are loaded when a dictionary is opened; saving
+from the editor reloads dictionaries immediately.
 
 Matching order: files are loaded in filename order and the **first** profile
 whose `match` rule hits the entry HTML is used. If parsing yields no senses, the

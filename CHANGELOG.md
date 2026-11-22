@@ -3,13 +3,40 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
-## Unreleased
+## 1.0.8 — 2026-11-23
 
+### Added
+- The selection popup can be resized by dragging any edge or corner. Size and
+  position are remembered; a manually chosen height persists across openings
+  (double-click the top/bottom edge to restore automatic height). Sizes are
+  DPI-aware.
+- Fade-in/out animations for the popup, selection bubble and toast, plus a
+  reduced-motion-aware fade for the original-entry view. They can be disabled in
+  Appearance → Animations.
+- English UI: the language dialog, dictionary mapping editor and dictionary
+  settings are fully translated; long English labels wrap instead of being
+  clipped; the dictionary mapping template follows the UI language.
+
+### Fixed
+- Fast or top-edge resizing no longer leaves blank or ghosted frames: the popup
+  repaints immediately, the area it vacates is repainted, and DWM recomposes on
+  release.
+- Reflowing wrapped labels while resizing no longer crashes on Tcl objects, so
+  the new size and position always stick.
 - Original dictionary entries: internal `entry://` links such as Longman's
   “您是否要查找：know” now open the target entry in the same viewer instead of
   doing nothing.
 - Dictionary cards: the “按原形 X 查到” hint is now a link to the base form
   (previously only the separate 原形 line was clickable).
+- The narrow vocabulary toolbar keeps “Move to…” in English instead of falling
+  back to Chinese.
+
+### Internal
+- Tk callback exceptions are written to app.log instead of only stderr.
+- The entry view's CSP uses a SHA-256 script hash (no `unsafe-inline`).
+- Continued exception cleanup, UIA contract test, incremental mypy gate,
+  PyInstaller 6.22.3 pin, and a CI build job that checks the EXE FileVersion and
+  SHA256SUMS.
 
 ## 1.0.7 — 2026-11-22
 
