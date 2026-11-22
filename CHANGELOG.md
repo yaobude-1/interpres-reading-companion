@@ -5,6 +5,8 @@ so the repository history is not the only record of what changed.
 
 ## Unreleased
 
+- Settings prompt editors now have vertical scrollbars and mouse-wheel scrolling;
+  the outdated “must keep JSON” hint was replaced with “plain text or JSON”.
 - Default translation prompt now returns plain translation text only: no
   AI-selected vocabulary, glossary, grammar notes or source-language detection.
   Word/phrase queries still get dictionary-style senses separated by “；”.

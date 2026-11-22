@@ -6,6 +6,7 @@ import shutil
 import sys
 import tkinter as tk
 from pathlib import Path
+from tkinter import ttk
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -50,6 +51,15 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             error = f"{type(exc).__name__}: {exc}"
         check(f"{key} 页可切换且有内容", child_count > 0, error or f"children={child_count}")
+
+    print("\n[提示词输入框]")
+    check(
+        "翻译提示词有滚动条",
+        any(
+            isinstance(child, ttk.Scrollbar)
+            for child in win.prompt_translate.master.winfo_children()
+        ),
+    )
 
     print("\n[外观保存]")
     win.var_theme.set("light")

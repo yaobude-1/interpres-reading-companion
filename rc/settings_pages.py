@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import ttk
 
 from . import __version__
 from .i18n import tr
@@ -512,6 +513,26 @@ class SettingsPagesMixin:
         btns.pack(fill="x", pady=(8, 4))
         self._button(btns, "保存并重启", self._appearance_save_restart).pack(side="left")
 
+    def _prompt_text(self, parent, height: int) -> tk.Text:
+        """带竖向滚动条的提示词输入框。"""
+        wrap = tk.Frame(parent, bg=PANEL)
+        wrap.pack(fill="x")
+        text = tk.Text(
+            wrap, height=height, bg=PANEL, fg=TEXT, insertbackground=TEXT,
+            relief="flat", wrap="word", font=(FONT_FAMILY, 8), padx=8, pady=6,
+        )
+        scroll = ttk.Scrollbar(
+            wrap, orient="vertical", command=text.yview, style="Vertical.TScrollbar"
+        )
+        text.configure(yscrollcommand=scroll.set)
+        text.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
+        text.bind(
+            "<MouseWheel>",
+            lambda event: (text.yview_scroll(int(-event.delta / 120), "units"), "break")[1],
+        )
+        return text
+
     def _build_prompts_section(self) -> None:
         outer = self._page_bodies["ai"]
         self._section(outer, "翻译与对话")
@@ -591,11 +612,7 @@ class SettingsPagesMixin:
             outer, text="翻译提示词（系统提示）", bg=BG, fg=DIM,
             font=(FONT_FAMILY, 9), anchor="w",
         ).pack(fill="x", pady=(4, 2))
-        self.prompt_translate = tk.Text(
-            outer, height=9, bg=PANEL, fg=TEXT, insertbackground=TEXT,
-            relief="flat", wrap="word", font=(FONT_FAMILY, 8), padx=8, pady=6,
-        )
-        self.prompt_translate.pack(fill="x")
+        self.prompt_translate = self._prompt_text(outer, 9)
         self.prompt_translate.insert(
             "1.0", str(self.config.get("prompt_translate_system") or "")
         )
@@ -608,19 +625,15 @@ class SettingsPagesMixin:
             row1, "清空（用默认）", lambda: self._clear_prompt(self.prompt_translate)
         ).pack(side="left", padx=(6, 0))
         tk.Label(
-            row1, text="必须保留 JSON 结构说明，否则翻译结果无法解析", bg=BG,
-            fg=DIM, font=(FONT_FAMILY, 8),
+            row1, text="留空使用默认（纯译文或 JSON 均可）", bg=BG, fg=DIM,
+            font=(FONT_FAMILY, 8),
         ).pack(side="left", padx=(8, 0))
 
         tk.Label(
             outer, text="对话人设（可用 {book} 占位）", bg=BG, fg=DIM,
             font=(FONT_FAMILY, 9), anchor="w",
         ).pack(fill="x", pady=(4, 2))
-        self.prompt_persona = tk.Text(
-            outer, height=3, bg=PANEL, fg=TEXT, insertbackground=TEXT,
-            relief="flat", wrap="word", font=(FONT_FAMILY, 8), padx=8, pady=6,
-        )
-        self.prompt_persona.pack(fill="x")
+        self.prompt_persona = self._prompt_text(outer, 3)
         self.prompt_persona.insert(
             "1.0", str(self.config.get("prompt_chat_persona") or "")
         )
@@ -637,11 +650,7 @@ class SettingsPagesMixin:
             outer, text="对话回答要求", bg=BG, fg=DIM,
             font=(FONT_FAMILY, 9), anchor="w",
         ).pack(fill="x", pady=(4, 2))
-        self.prompt_rules = tk.Text(
-            outer, height=4, bg=PANEL, fg=TEXT, insertbackground=TEXT,
-            relief="flat", wrap="word", font=(FONT_FAMILY, 8), padx=8, pady=6,
-        )
-        self.prompt_rules.pack(fill="x")
+        self.prompt_rules = self._prompt_text(outer, 4)
         self.prompt_rules.insert("1.0", str(self.config.get("prompt_chat_rules") or ""))
         row3 = tk.Frame(outer, bg=BG)
         row3.pack(fill="x", pady=(2, 10))
