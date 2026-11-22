@@ -268,6 +268,10 @@ class VocabPanel(VocabTableMixin, VocabBooksMixin, VocabActionsMixin):
             foreground=TEXT,
             rowheight=24,
             borderwidth=0,
+            relief="flat",
+            bordercolor=PANEL,
+            lightcolor=PANEL,
+            darkcolor=PANEL,
             font=(FONT_FAMILY, 9),
         )
         style.configure(

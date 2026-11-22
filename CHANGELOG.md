@@ -11,6 +11,8 @@ so the repository history is not the only record of what changed.
   AI-selected vocabulary, glossary, grammar notes or source-language detection.
   Word/phrase queries still get dictionary-style senses separated by “；”.
   Existing custom JSON prompts remain supported.
+- Vocabulary tree borders now use the panel colour instead of a light ttk
+  outline.
 - Vocabulary table no longer shows a horizontal scrollbar (columns fit the
   table width); the vertical bar hides when the rows fit and uses a subtle dark
   thumb instead of a light strip.
