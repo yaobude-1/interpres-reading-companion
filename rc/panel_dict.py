@@ -275,10 +275,20 @@ class PanelDictMixin:
     def _panel_render_senses(self, parent, entry: dict, word: str) -> None:
         matched = entry.get("matched") or ""
         if matched and matched.lower() != word.lower():
+            hint_row = tk.Frame(parent, bg=BG)
+            hint_row.pack(fill="x", pady=(0, 4))
             tk.Label(
-                parent, text=f"按原形 {matched} 查到", bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
-                anchor="w",
-            ).pack(fill="x", pady=(0, 4))
+                hint_row, text="按原形 ", bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
+            ).pack(side="left")
+            lemma_link = tk.Label(
+                hint_row, text=matched, bg=BG, fg=ACCENT,
+                font=(FONT_FAMILY, 8, "underline"), cursor="hand2",
+            )
+            lemma_link.pack(side="left")
+            lemma_link.bind("<Button-1>", lambda _e, w=matched: self._dict_lookup_word(w))
+            tk.Label(
+                hint_row, text=" 查到", bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
+            ).pack(side="left")
         suggestions = entry.get("lemma_suggestions") or []
         if suggestions:
             hint = tk.Frame(parent, bg=BG)

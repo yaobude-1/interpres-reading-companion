@@ -230,9 +230,20 @@ class DictViewMixin:
     def _render_dict_senses(self, parent, entry: dict) -> None:
         matched = entry.get("matched") or ""
         if matched and matched.lower() != self._dict_word.lower():
+            hint_row = tk.Frame(parent, bg=BG)
+            hint_row.pack(fill="x", pady=(0, 6))
             self._label(
-                parent, f"按原形 {matched} 查到", fg=DIM, font=(FONT_FAMILY, 8)
-            ).pack(fill="x", pady=(0, 6))
+                hint_row, "按原形 ", fg=DIM, font=(FONT_FAMILY, 8)
+            ).pack(side="left")
+            lemma_link = self._label(
+                hint_row, matched, fg=ACCENT, font=(FONT_FAMILY, 8, "underline")
+            )
+            lemma_link.pack(side="left")
+            lemma_link.configure(cursor="hand2")
+            lemma_link.bind("<Button-1>", lambda _e, w=matched: self._dict_jump(w))
+            self._label(
+                hint_row, " 查到", fg=DIM, font=(FONT_FAMILY, 8)
+            ).pack(side="left")
         senses = entry.get("senses") or []
         groups: dict[str, list[dict]] = {}
         order: list[str] = []

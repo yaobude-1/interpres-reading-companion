@@ -8,6 +8,8 @@ so the repository history is not the only record of what changed.
 - Original dictionary entries: internal `entry://` links such as Longman's
   “您是否要查找：know” now open the target entry in the same viewer instead of
   doing nothing.
+- Dictionary cards: the “按原形 X 查到” hint is now a link to the base form
+  (previously only the separate 原形 line was clickable).
 
 ## 1.0.7 — 2026-11-22
 
