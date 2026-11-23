@@ -3,7 +3,7 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
-## Unreleased
+## 1.0.8 — 2026-11-24
 
 ### Added
 - Screenshot OCR: `Ctrl+Alt+T` opens a full-screen region picker and sends
@@ -11,7 +11,7 @@ so the repository history is not the only record of what changed.
   OCR locally; no screenshot or OCR text is uploaded.
 - Clipboard lookup: copying text in a reading app (`Ctrl+C` or right-click
   Copy) automatically opens a dictionary card or translation. The old
-  selection button and `Ctrl+Alt+T` translation hotkey were removed; the
+  selection button was removed; `Ctrl+Alt+T` is now screenshot OCR, and the
   clipboard trigger and reading-app whitelist can be disabled in Settings.
 - Dictionary lookup now returns every configured dictionary as a source bar above
   the definitions, ranked by match quality (exact → accent → lemma → redirect);
