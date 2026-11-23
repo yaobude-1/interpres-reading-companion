@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import json
 import tkinter as tk
 
 from .dict_view_controller import view_url
@@ -266,10 +267,7 @@ class DictViewMixin:
                 simple.pack(fill="x")
             except tk.TclError:
                 pass
-        try:
-            self.scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=(2, 4))
-        except tk.TclError:
-            pass
+        self._restore_outer_scrollbar()
         self._update_dict_view_buttons()
         try:
             self.win.update_idletasks()
@@ -306,10 +304,7 @@ class DictViewMixin:
                 pass
         frame.pack(fill="x", pady=(4, 0))
         host.show()
-        try:
-            self.scrollbar.pack_forget()
-        except tk.TclError:
-            pass
+        self._use_inline_scrollbar()
         try:
             self.win.update_idletasks()
         except tk.TclError:
@@ -345,6 +340,97 @@ class DictViewMixin:
         except tk.TclError:
             pass
 
+    def _use_inline_scrollbar(self) -> None:
+        try:
+            self.scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=(2, 4))
+            self.scrollbar.configure(command=self._scroll_inline_original)
+            self.canvas.configure(yscrollcommand="")
+        except tk.TclError:
+            return
+        self._inline_scroll_metrics = None
+        self._schedule_inline_scroll_sync()
+
+    def _restore_outer_scrollbar(self) -> None:
+        job = getattr(self, "_inline_scroll_job", None)
+        if job is not None:
+            try:
+                self.win.after_cancel(job)
+            except tk.TclError:
+                pass
+            self._inline_scroll_job = None
+        try:
+            self.scrollbar.configure(command=self.canvas.yview)
+            self.canvas.configure(yscrollcommand=self.scrollbar.set)
+            self.scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=(2, 4))
+        except tk.TclError:
+            pass
+
+    def _schedule_inline_scroll_sync(self) -> None:
+        if getattr(self, "_dict_view_mode", "simple") != "original":
+            return
+        try:
+            self._inline_scroll_job = self.win.after(250, self._sync_inline_scroll)
+        except tk.TclError:
+            self._inline_scroll_job = None
+
+    def _sync_inline_scroll(self) -> None:
+        self._inline_scroll_job = None
+        host = getattr(self, "_dict_inline_host", None)
+        if host is None or getattr(self, "_dict_view_mode", "simple") != "original":
+            return
+        host.execute_script_async(
+            "JSON.stringify({y:window.scrollY,"
+            "h:document.documentElement.scrollHeight,"
+            "c:document.documentElement.clientHeight})",
+            self._apply_inline_scroll_metrics,
+        )
+        self._schedule_inline_scroll_sync()
+
+    def _apply_inline_scroll_metrics(self, result) -> None:
+        if not result:
+            return
+        try:
+            data = json.loads(result)
+            if isinstance(data, str):
+                data = json.loads(data)
+            y = float(data.get("y") or 0)
+            height = float(data.get("h") or 0)
+            client = float(data.get("c") or 0)
+        except (ValueError, TypeError):
+            return
+        self._inline_scroll_metrics = (y, height, client)
+        if height <= client:
+            self.scrollbar.set(0, 1)
+            return
+        self.scrollbar.set(y / height, min(1.0, (y + client) / height))
+
+    def _scroll_inline_original(self, *args) -> None:
+        if len(args) < 2:
+            return
+        metrics = getattr(self, "_inline_scroll_metrics", None)
+        if not metrics:
+            return
+        y, height, client = metrics
+        maximum = max(1.0, height - client)
+        if args[0] == "moveto":
+            try:
+                target = float(args[1]) * maximum
+            except ValueError:
+                return
+        elif args[0] == "scroll":
+            try:
+                number = float(args[1])
+            except ValueError:
+                return
+            step = client * 0.9 if str(args[2]) == "pages" else 40
+            target = y + number * step
+        else:
+            return
+        target = max(0.0, min(maximum, target))
+        host = getattr(self, "_dict_inline_host", None)
+        if host is not None:
+            host.execute_script_async(f"window.scrollTo(0, {target})", lambda _r: None)
+
     def _ensure_inline_frame(self):
         frame = getattr(self, "_dict_inline_frame", None)
         if frame is not None:
@@ -376,6 +462,7 @@ class DictViewMixin:
             return 0, "", False
 
     def _dispose_inline_dict(self) -> None:
+        self._restore_outer_scrollbar()
         host = getattr(self, "_dict_inline_host", None)
         if host is not None:
             try:

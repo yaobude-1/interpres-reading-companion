@@ -98,6 +98,7 @@ class WebViewHost:
         self._ensure_task = None
         self._pending_load = None
         self._ready_callbacks: list = []
+        self._script_callbacks: list = []
         try:
             self.frame.bind("<Destroy>", self._on_frame_destroy, add="+")
         except Exception as exc:  # noqa: BLE001
@@ -333,6 +334,10 @@ class WebViewHost:
                 callback(True)
             except Exception as exc:  # noqa: BLE001
                 log.warning("WebView2 ready 回调失败: %s", exc)
+        pending_scripts = self._script_callbacks
+        self._script_callbacks = []
+        for script, callback in pending_scripts:
+            self.execute_script_async(script, callback)
 
     def _init_fail(self, message: str) -> None:
         self._initializing = False
@@ -345,6 +350,13 @@ class WebViewHost:
                 callback(False)
             except Exception as exc:  # noqa: BLE001
                 log.warning("WebView2 failure 回调失败: %s", exc)
+        scripts = self._script_callbacks
+        self._script_callbacks = []
+        for _script, callback in scripts:
+            try:
+                callback(None)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("WebView2 script failure 回调失败: %s", exc)
 
     # ------------------------------------------------------------------- loop
     def _on_frame_destroy(self, event) -> None:
@@ -520,12 +532,45 @@ class WebViewHost:
             self._fail(f"执行 JS 失败：{exc}")
             return None
 
+    def execute_script_async(self, script: str, callback) -> None:
+        """Run JS and deliver its string result on the Tk thread."""
+        if not self.ensure():
+            callback(None)
+            return
+        if not self._active:
+            self._script_callbacks.append((script, callback))
+            return
+        task = self.execute_script(script)
+        if task is None:
+            callback(None)
+            return
+        self._poll_script(task, callback)
+
+    def _poll_script(self, task, callback) -> None:
+        try:
+            finished = bool(task.IsCompleted)
+        except Exception:
+            callback(None)
+            return
+        if not finished:
+            try:
+                self.frame.after(50, lambda: self._poll_script(task, callback))
+            except tk.TclError:
+                callback(None)
+            return
+        try:
+            callback(task.Result)
+        except Exception as exc:  # noqa: BLE001
+            log.debug("读取 WebView JS 结果失败: %s", exc)
+            callback(None)
+
     # ------------------------------------------------------------------ close
     def dispose(self) -> None:
         self._active = False
         self._initializing = False
         self._ready_callbacks = []
         self._pending_load = None
+        self._script_callbacks = []
         if self._init_job is not None:
             try:
                 self.frame.after_cancel(self._init_job)
