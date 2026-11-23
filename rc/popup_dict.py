@@ -266,6 +266,10 @@ class DictViewMixin:
                 simple.pack(fill="x")
             except tk.TclError:
                 pass
+        try:
+            self.scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=(2, 4))
+        except tk.TclError:
+            pass
         self._update_dict_view_buttons()
         try:
             self.win.update_idletasks()
@@ -302,6 +306,10 @@ class DictViewMixin:
                 pass
         frame.pack(fill="x", pady=(4, 0))
         host.show()
+        try:
+            self.scrollbar.pack_forget()
+        except tk.TclError:
+            pass
         try:
             self.win.update_idletasks()
         except tk.TclError:
