@@ -103,6 +103,7 @@ DEFAULT_CONFIG: dict = {
     "prompt_chat_rules": "",
     "chat_passage_chars": 4000,
     "chat_auto_context": True,
+    "chat_context_timeout": 1.2,
     # 外观：主题/强调色在启动时读取，修改后需重启；透明度下次打开窗口生效
     "appearance": {
         "theme": "dark",

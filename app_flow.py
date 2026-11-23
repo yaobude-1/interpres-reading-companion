@@ -163,7 +163,8 @@ class FlowMixin:
         if bool(self.config.get("chat_auto_context", True)):
             hwnd = int(payload.get("hwnd") or 0)
             if hwnd:
-                info = uia_context.read_context(hwnd)
+                timeout = float(self.config.get("chat_context_timeout", 1.2) or 1.2)
+                info = uia_context.read_context(hwnd, timeout=timeout)
                 if info.get("ok"):
                     context = str(info.get("paragraph") or "").strip()[:6000]
         return self.service.start_conversation(
