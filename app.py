@@ -64,6 +64,12 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
     def __init__(self, config: Config, *, enable_hotkeys: bool = True, silent: bool = False) -> None:
         self.config = config
         self.silent = silent
+        try:
+            from rc.htmlview import cleanup_temp_files
+
+            cleanup_temp_files()
+        except Exception as exc:  # noqa: BLE001 - 旧临时文件清理失败不影响启动
+            log.debug("清理旧 Edge 临时文件失败: %s", exc)
         anim.configure(bool((config.get("appearance") or {}).get("animations", True)))
         self.service = Service(config)
         try:

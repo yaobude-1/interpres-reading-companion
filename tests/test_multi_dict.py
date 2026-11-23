@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
+
+from tests.tmputil import local_temp  # noqa: E402
 
 from rc import dict_config  # noqa: E402
 from rc.config import Config  # noqa: E402
@@ -26,7 +27,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 def test_config() -> None:
     print("\n[配置迁移/显示]")
-    with tempfile.TemporaryDirectory(prefix="dict-config-") as tmp:
+    with local_temp(prefix="dict-config-") as tmp:
         p = Path(tmp)
         (p / "config.json").write_text(
             json.dumps(
@@ -92,7 +93,7 @@ def test_config() -> None:
 
 def test_multi_lookup() -> None:
     print("\n[多词典查词]")
-    with tempfile.TemporaryDirectory(prefix="dict-lookup-") as tmp:
+    with local_temp(prefix="dict-lookup-") as tmp:
         cfg = Config(Path(tmp))
         cfg.data["languages"] = {"en": {"label": "English"}}
         cfg.data["dictionaries"] = {"en": {"items": [], "muted": []}}

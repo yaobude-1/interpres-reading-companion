@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import struct
 import sys
-import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+
+from tests.tmputil import local_temp  # noqa: E402
 
 from rc.dictionary import Dictionary  # noqa: E402
 from rc.stardict import StarDict  # noqa: E402
@@ -55,7 +56,7 @@ def build(base: Path) -> Path:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="stardict-") as tmp:
+    with local_temp(prefix="stardict-") as tmp:
         ifo = build(Path(tmp))
         raw = StarDict(ifo)
         print("\n[StarDict]")

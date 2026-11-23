@@ -33,3 +33,4 @@ tests/portable_*
 tests/tmptest/
 tests/mei_tmp/
 tests/.testdata/
+tests/.tmp_tests/

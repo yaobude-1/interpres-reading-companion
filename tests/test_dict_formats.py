@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import gzip
 import sys
-import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+
+from tests.tmputil import local_temp  # noqa: E402
 
 from rc.dictionary import Dictionary  # noqa: E402
 
@@ -91,7 +92,7 @@ def test_xdxf(base: Path) -> None:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="formats-") as tmp:
+    with local_temp(prefix="formats-") as tmp:
         base = Path(tmp)
         test_dsl(base)
         test_dictd(base)

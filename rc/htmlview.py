@@ -59,6 +59,21 @@ PROFILE_DIR = Path(tempfile.gettempdir()) / "interpres-edge-profile"
 LOOKUP_PREFIX = "rc-lookup:"
 
 
+def cleanup_temp_files() -> int:
+    """Remove stale fallback HTML from earlier Edge-based runs."""
+    removed = 0
+    try:
+        for path in Path(tempfile.gettempdir()).glob("rc-entry-*.html"):
+            try:
+                path.unlink()
+                removed += 1
+            except OSError:
+                continue
+    except OSError:
+        return removed
+    return removed
+
+
 def parse_lookup_title(title: str) -> str:
     """从 JS 设置的窗口标题里取出目标词；非查找标题返回空串。"""
     if not title.startswith(LOOKUP_PREFIX):

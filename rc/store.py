@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS translations (
     book    TEXT NOT NULL DEFAULT '',
     lang    TEXT NOT NULL DEFAULT '',
     text    TEXT NOT NULL,
+    norm    TEXT NOT NULL DEFAULT '',
     payload TEXT NOT NULL,
     created TEXT NOT NULL,
     updated TEXT NOT NULL,
@@ -229,6 +230,28 @@ class Store:
         wb_columns = {
             row["name"] for row in self._conn.execute("PRAGMA table_info(wordbooks)")
         }
+        tr_columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(translations)")
+        }
+        if "norm" not in tr_columns:
+            self._conn.execute(
+                "ALTER TABLE translations ADD COLUMN norm TEXT NOT NULL DEFAULT ''"
+            )
+            self._conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_tr_norm ON translations (book, norm)"
+            )
+            rows = self._conn.execute(
+                "SELECT id, text FROM translations WHERE norm = ''"
+            ).fetchall()
+            for row in rows:
+                self._conn.execute(
+                    "UPDATE translations SET norm = ? WHERE id = ?",
+                    (_normalize_for_match(row["text"]), row["id"]),
+                )
+        else:
+            self._conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_tr_norm ON translations (book, norm)"
+            )
         if "anki_json" not in wb_columns:
             self._conn.execute(
                 "ALTER TABLE wordbooks ADD COLUMN anki_json TEXT NOT NULL DEFAULT ''"
@@ -608,40 +631,47 @@ class Store:
             return None
         stamp = now()
         with self._lock:
-            rows = self._conn.execute(
-                "SELECT id, text FROM translations WHERE book = ?", (book or "",)
-            ).fetchall()
-            for row in rows:
-                other = _normalize_for_match(row["text"])
-                if not other:
-                    continue
-                # 新文本已经被更长的记录覆盖 → 不重复存
-                if len(other) > len(norm) and norm in other:
-                    self._conn.execute(
-                        "UPDATE translations SET hits = hits + 1, updated = ? WHERE id = ?",
-                        (stamp, row["id"]),
-                    )
-                    self._conn.commit()
-                    return int(row["id"])
+            covered = self._conn.execute(
+                """SELECT id FROM translations
+                   WHERE book = ? AND length(norm) > ? AND instr(norm, ?) > 0
+                   ORDER BY length(norm) DESC LIMIT 1""",
+                (book or "", len(norm), norm),
+            ).fetchone()
+            if covered is not None:
+                self._conn.execute(
+                    "UPDATE translations SET hits = hits + 1, updated = ? WHERE id = ?",
+                    (stamp, covered["id"]),
+                )
+                self._conn.commit()
+                return int(covered["id"])
             # 旧的短记录被新记录吸收
-            for row in rows:
-                other = _normalize_for_match(row["text"])
-                if other and len(other) < len(norm) and other in norm:
-                    self._conn.execute("DELETE FROM translations WHERE id = ?", (row["id"],))
+            self._conn.execute(
+                """DELETE FROM translations
+                   WHERE book = ? AND length(norm) < ? AND instr(?, norm) > 0""",
+                (book or "", len(norm), norm),
+            )
             existing = self._conn.execute(
                 "SELECT id FROM translations WHERE book = ? AND text = ?", (book or "", text)
             ).fetchone()
             if existing:
                 self._conn.execute(
-                    "UPDATE translations SET payload = ?, updated = ?, hits = hits + 1 WHERE id = ?",
-                    (json.dumps(payload, ensure_ascii=False), stamp, existing["id"]),
+                    "UPDATE translations SET payload = ?, norm = ?, updated = ?, hits = hits + 1 WHERE id = ?",
+                    (json.dumps(payload, ensure_ascii=False), norm, stamp, existing["id"]),
                 )
                 self._conn.commit()
                 return int(existing["id"])
             cur = self._conn.execute(
-                """INSERT INTO translations (book, lang, text, payload, created, updated, hits)
-                   VALUES (?, ?, ?, ?, ?, ?, 1)""",
-                (book or "", lang or "", text, json.dumps(payload, ensure_ascii=False), stamp, stamp),
+                """INSERT INTO translations (book, lang, text, norm, payload, created, updated, hits)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 1)""",
+                (
+                    book or "",
+                    lang or "",
+                    text,
+                    norm,
+                    json.dumps(payload, ensure_ascii=False),
+                    stamp,
+                    stamp,
+                ),
             )
             self._conn.commit()
             return int(cur.lastrowid)
