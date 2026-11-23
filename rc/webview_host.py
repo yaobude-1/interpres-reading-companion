@@ -268,6 +268,14 @@ class WebViewHost:
         self._init_job = None
         if not self._initializing:
             return
+        if self._left_mouse_down():
+            self._schedule_init()
+            return
+        if time.time() < self._pump_paused_until:
+            # Dragging/resizing the Tk window: keep the async WebView init
+            # alive without running DoEvents inside the modal move loop.
+            self._schedule_init()
+            return
         try:
             self._Application.DoEvents()
         except Exception as exc:  # noqa: BLE001
@@ -381,6 +389,14 @@ class WebViewHost:
         if not self._active:
             self._pump_id = None
             return
+        if self._left_mouse_down():
+            # The user is dragging the Tk window or a scrollbar. Let Tk own
+            # the modal loop; DoEvents here is what made the window jump back.
+            try:
+                self._pump_id = self.frame.after(30, self._pump)
+            except Exception:
+                self._pump_id = None
+            return
         if time.time() < self._pump_paused_until:
             # 用户正在拖动/缩放 Tk 窗口时不要跑 DoEvents，否则会打断
             # Windows 的移动/缩放模态循环，表现为窗口跳回原位。
@@ -405,6 +421,13 @@ class WebViewHost:
 
     def _touch(self, seconds: float = 2.0) -> None:
         self._active_until = max(self._active_until, time.time() + seconds)
+
+    @staticmethod
+    def _left_mouse_down() -> bool:
+        try:
+            return bool(ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000)
+        except Exception:
+            return False
 
     # ------------------------------------------------------------------ events
     def _on_navigation_starting(self, _sender, args) -> None:
