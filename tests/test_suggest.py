@@ -68,7 +68,7 @@ def main() -> int:
     print("\n[输入建议]")
     app.panel.dict_input.delete(0, "end")
     app.panel.dict_input.insert(0, "tset")
-    app.panel._lookup_dict(_keep_suggestions=True)
+    app.panel._lookup_dict(_keep_suggestions=True, sync=True)
     app.panel._update_suggestions()
     app.root.update()
     items = [it["word"] for it in app.panel._suggest_items]
@@ -104,7 +104,7 @@ def main() -> int:
     print("\n[滚动条]")
     app.panel.dict_input.delete(0, "end")
     app.panel.dict_input.insert(0, "contents")
-    app.panel._lookup_dict()
+    app.panel._lookup_dict(sync=True)
     app.root.update()
     time.sleep(0.3)
     app.root.update()
@@ -114,7 +114,7 @@ def main() -> int:
 
     print("\n[空内容不滚]")
     app.panel.dict_input.delete(0, "end")
-    app.panel._lookup_dict()
+    app.panel._lookup_dict(sync=True)
     app.root.update()
     c = app.panel.content_canvas
     base_y = app.panel.dict_input.winfo_rooty() - c.winfo_rooty()
@@ -135,7 +135,7 @@ def main() -> int:
     print("\n[滚轮路由]")
     app.panel.dict_input.delete(0, "end")
     app.panel.dict_input.insert(0, "go")
-    app.panel._lookup_dict()
+    app.panel._lookup_dict(sync=True)
     app.panel.win.minsize(320, 360)
     app.panel.win.geometry("620x420")
     app.root.update()

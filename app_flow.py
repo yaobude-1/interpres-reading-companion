@@ -7,8 +7,9 @@ import threading
 import time
 
 from rc import capture, textutil, uia_context
-from rc.htmlview import EntryViewer
+from rc.dict_view_controller import view_url
 from rc.selection import capture_selected_text
+from rc.webview_window import WebViewEntryWindow
 
 log = logging.getLogger("rc")
 
@@ -79,42 +80,66 @@ class FlowMixin:
 
         def worker() -> None:
             try:
-                hits = self.service.lookup_all(word)
+                hits = self.service.lookup_all(word, context="popup")
             except Exception:  # noqa: BLE001
                 log.exception("查词失败")
                 hits = []
             log.info("查词命中 %d 本词典", len(hits))
             if hits:
-                self.events.put(("dict", (word, hits[0]["entry"], anchor, hits)))
+                entry = next(
+                    (h["entry"] for h in hits if (h.get("entry") or {}).get("is_default")),
+                    hits[0]["entry"],
+                )
+                try:
+                    self.service.record_lookup(entry, word, "")
+                except Exception as exc:  # noqa: BLE001 - 历史失败不影响浮窗
+                    log.debug("记录浮窗查词历史失败: %s", exc)
+                self.events.put(("dict", (word, entry, anchor, hits)))
             else:
                 self.events.put(("dict_missing", (word, anchor)))
 
         threading.Thread(target=worker, daemon=True, name="lookup").start()
 
-    def show_entry_html(self, word: str, lang: str = "") -> None:
-        """打开词典原版条目（Chromium 渲染）。"""
-        lang = lang or "en"
-        html = self.service.entry_html(word, lang)
-        if not html:
-            self.toast("这本词典没有原版条目")
+    def show_entry_html(self, word: str, lang: str = "", dict_id: str = "") -> None:
+        """打开词典原版条目（和面板同一个 WebView2 渲染器）。"""
+        dict_id = (dict_id or "").strip()
+        if not dict_id:
+            for hit in self.service.lookup_all(word, context="popup"):
+                entry = hit.get("entry") or {}
+                if lang and entry.get("lang") != lang:
+                    continue
+                dict_id = str(hit.get("dict_id") or entry.get("dict_id") or "")
+                if dict_id:
+                    break
+        url = self._dict_view_url(word, lang, dict_id)
+        if not url:
             return
-        if self._entry_viewer is None or not self._entry_viewer.win or not self._entry_viewer.win.winfo_exists():
-            self._entry_viewer = EntryViewer(
+        window = getattr(self, "_entry_window", None)
+        if window is None or not window.win or not window.win.winfo_exists():
+            self._entry_dict_id = dict_id
+            self._entry_window = WebViewEntryWindow(
                 self.root,
-                on_close=lambda: setattr(self, "_entry_viewer", None),
-                on_link=self._entry_link,
+                on_lookup=self._entry_lookup,
             )
-        self._entry_viewer.show(html, word, lang)
+            window = self._entry_window
+        else:
+            self._entry_dict_id = dict_id
+        window.show(url, word)
 
-    def _entry_link(self, word: str, lang: str = "") -> str:
-        """原版条目里点了词典内部链接：返回目标词条的 HTML。"""
-        word = (word or "").strip()
-        if not word:
+    def _dict_view_url(self, word: str, lang: str = "", dict_id: str = "") -> str:
+        port, token, running = self._dict_server_info()
+        if not running or not port:
+            self.toast("原版需要本地词典服务，服务未启动")
             return ""
-        html = self.service.entry_html(word, lang or "en")
-        if not html:
-            self.toast("这本词典没有这个词条")
-        return html
+        return view_url(port, token, word, lang=lang or "en", dict_id=dict_id)
+
+    def _entry_lookup(self, word: str) -> None:
+        window = getattr(self, "_entry_window", None)
+        if window is None:
+            return
+        url = self._dict_view_url(word, "", getattr(self, "_entry_dict_id", ""))
+        if url:
+            window.load(url, word)
 
     def _show_details(self, payload: dict, anchor) -> None:
         self.popup.show_result(payload, anchor)

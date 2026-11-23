@@ -24,6 +24,12 @@ following third-party components. Their licenses apply to those components.
 | [Pillow](https://python-pillow.org/) | 12.x | HPND | installed Python environment |
 | [lxml](https://lxml.de/) | 6.x | BSD-3-Clause | installed Python environment |
 | [six](https://github.com/benjaminp/six) | 1.17.0 | MIT | installed Python environment |
+| [pythonnet](https://github.com/pythonnet/pythonnet) | 3.0.5 | MIT | installed Python environment |
+| [clr_loader](https://github.com/pythonnet/clr-loader) | 0.2.10 | MIT | installed Python environment |
+| [cffi](https://cffi.readthedocs.io/) | 2.1.1 | MIT | installed Python environment |
+| [dissect.util](https://github.com/fox-it/dissect.util) LZO decompressor | 3.24 | Apache-2.0 | adapted in `rc/lzo.py` |
+| [Microsoft WebView2 SDK](https://learn.microsoft.com/microsoft-edge/webview2/) | 1.0.4370.26 | Microsoft license | `rc/webview2/` |
+| Microsoft Edge WebView2 Runtime | 157.x | Microsoft license | installed by Windows/Edge |
 
 ## Build-time only
 

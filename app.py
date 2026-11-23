@@ -26,9 +26,12 @@ from rc import __version__
 from rc import anim
 from rc import capture
 from rc.bubble import Bubble, QuickButton
+from rc.clipboard_watch import ClipboardWatcher
 from rc.config import Config
 from rc.hotkey import HotkeyWatcher
 from rc.instance import SingleInstance
+from rc.ocr import OcrUnavailable, clean_text as clean_ocr_text, recognize_image
+from rc.ocr_picker import OCRPicker
 from rc.panel import MainPanel
 from rc.popup import PopupWindow
 from rc.selection import MouseWatcher, foreground_exe
@@ -118,6 +121,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 "ask_chat": self.ask_chat,
                 "dict_lookup": self._dict_jump,
                 "show_entry": self.show_entry_html,
+                "dict_server": self._dict_server_info,
                 "fuzzy": lambda w, lang="": self.service.fuzzy_lookup(w, lang or None, 12),
             },
         )
@@ -138,6 +142,9 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self._sel_gen = 0
         self._bubble_gen = 0
         self._sel_watcher: MouseWatcher | None = None
+        self.clipboard = ClipboardWatcher(
+            self.root, config, self._on_clipboard_text
+        )
 
         self.panel = MainPanel(
             self.root,
@@ -154,10 +161,13 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 "speak": self.speak,
                 "show_entry": self.show_entry_html,
                 "word_card": self.show_word_card,
+                "book_lang": self._book_lang,
+                "dict_server": self._dict_server_info,
                 "close": self._close_panel,
             },
         )
         restore_panel_geometry(self.config, self.panel)
+        self._dict_release_job = self.root.after(120_000, self._release_idle_dicts)
 
         self.api = ApiServer(
             self.service,
@@ -179,7 +189,6 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         self.watcher: HotkeyWatcher | None = None
         if enable_hotkeys:
             self._start_hotkeys()
-            self._start_selection_watch()
 
         self.tray = None
         if enable_hotkeys:
@@ -228,8 +237,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
 
     def _start_hotkeys(self) -> None:
         combos = {
-            "translate": str(self.config.get("hotkey", "ctrl+alt+t")),
             "settings": str(self.config.get("settings_hotkey", "ctrl+alt+s")),
+            "ocr": str(self.config.get("ocr_hotkey", "ctrl+alt+o")),
         }
         try:
             self.watcher = HotkeyWatcher(combos, lambda name: self.events.put(("hotkey", name)))
@@ -264,7 +273,64 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             log.error("划词监听启动失败：%s", exc)
 
     # ------------------------------------------------------------------ 事件循环
+    def _on_clipboard_text(self, text: str, anchor: tuple[int, int]) -> None:
+        """Copied text from a whitelisted reader: classify and open result."""
+        book = ""
+        try:
+            title = capture.foreground_title()
+            if title and "Interpres" not in title:
+                book = capture.book_from_title(title) or ""
+        except Exception as exc:  # noqa: BLE001 - 书名识别失败不影响复制查词
+            log.debug("复制查词识别书名失败: %s", exc)
+        self._handle_external_text(text, anchor, book)
+
+    def _handle_external_text(
+        self, text: str, anchor: tuple[int, int], book: str = ""
+    ) -> None:
+        clean = " ".join(str(text or "").split())
+        if not clean:
+            return
+        self._pending_selection = (clean, book, anchor, 0)
+        self._open_selection_bubble(anchor)
+
+    def start_ocr(self) -> None:
+        picker = getattr(self, "_ocr_picker", None)
+        try:
+            if picker is not None and picker.win.winfo_exists():
+                picker.win.lift()
+                picker.win.focus_force()
+                return
+        except tk.TclError:
+            pass
+        self._ocr_picker = OCRPicker(self.root, self._on_ocr_image)
+
+    def _on_ocr_image(self, image, bbox) -> None:
+        anchor = ((bbox[0] + bbox[2]) // 2, (bbox[1] + bbox[3]) // 2)
+        self.popup.show_busy(anchor, "正在识别图片…")
+        language = str(self.config.get("ocr_language", "") or "")
+
+        def worker() -> None:
+            try:
+                text = recognize_image(image, language)
+                text = clean_ocr_text(text)
+                if text.strip():
+                    self.events.put(("ocr_text", (text, anchor)))
+                else:
+                    self.events.put(("ocr_error", ("没有识别到文字", anchor)))
+            except OcrUnavailable as exc:
+                self.events.put(("ocr_error", (str(exc), anchor)))
+            except Exception as exc:  # noqa: BLE001 - OCR failure must not kill thread
+                log.exception("OCR 失败")
+                self.events.put(("ocr_error", (f"OCR 失败：{exc}", anchor)))
+
+        threading.Thread(target=worker, daemon=True, name="ocr").start()
+
     def _pump(self) -> None:
+        if getattr(self, "_enable_hotkeys", False):
+            try:
+                self.clipboard.poll()
+            except Exception as exc:  # noqa: BLE001 - 剪贴板轮询失败不影响事件循环
+                log.debug("剪贴板轮询失败: %s", exc)
         try:
             self._pump_events()
         except Exception:
@@ -296,7 +362,9 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                         self.popup.show_dictionary(entry, anchor, word)
                 elif kind == "dict_missing":
                     word, anchor = payload
-                    self.popup.show_dict_missing(word, anchor, self.service.has_dictionaries())
+                    self.popup.show_dict_missing(
+                        word, anchor, self.service.has_dictionaries(context="popup")
+                    )
                 elif kind == "result":
                     payload_data, anchor = payload
                     detected = (payload_data.get("source_lang") or "").lower()
@@ -377,6 +445,12 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                     self.popup.receive_chat_error(conv_id, message)
                 elif kind == "toast":
                     self.toast(payload)
+                elif kind == "ocr_text":
+                    text, anchor = payload
+                    self._handle_external_text(text, anchor)
+                elif kind == "ocr_error":
+                    message, _anchor = payload
+                    self.popup.show_error(message, retry=self.start_ocr)
                 elif kind == "show_panel":
                     self.open_panel()
                 elif kind == "open_settings":
@@ -411,7 +485,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 return
             book = capture.book_from_title(title)
             if book and book != self.panel.book:
-                log.info("前台换书：%s → %s", self.panel.book, book)
+                log.debug("前台换书：%s → %s", self.panel.book, book)
                 self.panel.on_book(book)
         except Exception as exc:  # noqa: BLE001 - 前台换书只是锦上添花，失败不影响划词
             log.debug("前台换书检测失败: %s", exc)
@@ -425,8 +499,8 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         if name == "settings":
             # 热键现在打开主面板，设置从面板右上角的齿轮进
             self.open_panel()
-        elif name == "translate":
-            self.start_translation()
+        elif name == "ocr":
+            self.start_ocr()
 
     def open_panel(self) -> None:
         # 「自动跟随当前书籍」打开时，按前台阅读器的标题识别书名；否则用上次手动选的
@@ -505,6 +579,29 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
         except Exception as exc:  # noqa: BLE001 - 查书语言失败时按未知语言处理
             log.debug("查询书名语言失败: %s", exc)
         return ""
+
+    def _dict_server_info(self) -> tuple[int, str, bool]:
+        """给面板原版 WebView 用：本地资源服务的端口、token、是否在运行。"""
+        port = int(self.config.get("server_port", 18777))
+        token = str(self.config.get("server_token", "") or "")
+        api = getattr(self, "api", None)
+        if api is not None and not api.running:
+            try:
+                api.start()
+            except OSError as exc:
+                log.debug("按需启动词典服务失败: %s", exc)
+        running = bool(api is not None and api.running)
+        return port, token, running
+
+    def _release_idle_dicts(self) -> None:
+        try:
+            self.service.dicts.release_idle(300)
+        except Exception as exc:  # noqa: BLE001 - 后台释放失败不影响查词
+            log.debug("释放空闲词典失败: %s", exc)
+        try:
+            self._dict_release_job = self.root.after(120_000, self._release_idle_dicts)
+        except tk.TclError:
+            self._dict_release_job = None
 
     def _ask_lang_consent(self, lang: str) -> bool:
         """没有词典的语言：先问是否允许只用 AI。"""
@@ -671,12 +768,29 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
             self.watcher.stop()
         if self._sel_watcher:
             self._sel_watcher.stop()
+        job = getattr(self, "_dict_release_job", None)
+        if job is not None:
+            try:
+                self.root.after_cancel(job)
+            except tk.TclError:
+                pass
+            self._dict_release_job = None
         if getattr(self, "tray", None):
             self.tray.stop()
         try:
             self.api.stop()
         except OSError as exc:  # noqa: BLE001 - 退出时端口可能已释放
             log.debug("停止本地 API 失败: %s", exc)
+        if getattr(self, "panel", None) is not None:
+            try:
+                self.panel._dispose_dict_webview()
+            except Exception as exc:  # noqa: BLE001 - 退出时 WebView 清理失败不阻塞
+                log.debug("退出时清理 WebView 失败: %s", exc)
+        if getattr(self, "popup", None) is not None:
+            try:
+                self.popup._dispose_inline_dict()
+            except Exception as exc:  # noqa: BLE001 - 退出时浮窗 WebView 清理失败不阻塞
+                log.debug("退出时清理浮窗 WebView 失败: %s", exc)
         try:
             self.root.quit()
             self.root.destroy()
@@ -742,7 +856,16 @@ def _focus_existing_window() -> None:
 
 def setup_logging(data_dir: Path, debug: bool) -> None:
     data_dir.mkdir(parents=True, exist_ok=True)
-    handlers: list[logging.Handler] = [logging.FileHandler(data_dir / "app.log", encoding="utf-8")]
+    from logging.handlers import RotatingFileHandler
+
+    handlers: list[logging.Handler] = [
+        RotatingFileHandler(
+            data_dir / "app.log",
+            maxBytes=2 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        )
+    ]
     if debug:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(

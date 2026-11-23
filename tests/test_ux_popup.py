@@ -109,7 +109,7 @@ def main() -> int:
         app.panel._show_tab("dict")
         app.panel.dict_input.delete(0, "end")
         app.panel.dict_input.insert(0, "hello")
-        app.panel._lookup_dict()
+        app.panel._lookup_dict(sync=True)
         app.panel.win.update()
         texts = []
 

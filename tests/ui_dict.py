@@ -44,7 +44,7 @@ def main() -> int:
         app.open_panel()
         app.panel._show_tab("dict")
         app.panel.dict_input.insert(0, "ephemeral")
-        app.panel._lookup_dict()
+        app.panel._lookup_dict(sync=True)
         app.panel.win.geometry("+40+40")
 
     def shot_panel() -> None:

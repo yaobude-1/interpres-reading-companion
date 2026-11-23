@@ -8,11 +8,11 @@ from __future__ import annotations
 import json
 import logging
 import re
-import time
 import urllib.error
 import urllib.request
 from typing import Any
 
+from . import __version__
 from .netpolicy import validate_base_url
 
 log = logging.getLogger("rc")
@@ -133,7 +133,8 @@ class Translator:
                             on_partial(partial)
                         except Exception as exc:  # noqa: BLE001 - 回调来自界面层，异常不能中断流式接收
                             log.debug("on_partial 回调失败: %s", exc)
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 - 流式失败时回退整段请求
+            log.warning("流式翻译失败，回退整段请求：%s", exc)
             buffer = ""
         if not buffer.strip():
             # 服务器不支持流式：退回普通请求，保证有结果
@@ -180,7 +181,8 @@ class Translator:
             ):
                 got = True
                 yield piece
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 - 流式失败时退回整段
+            log.warning("流式对话失败，停止流式：%s", exc)
             got = False
         if not got:
             yield self._chat(
@@ -230,7 +232,6 @@ class Translator:
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
 
-        started = time.time()
         try:
             body = self._post(url, payload)
         except LLMError as exc:
@@ -240,8 +241,6 @@ class Translator:
                 body = self._post(url, payload)
             else:
                 raise
-        finally:
-            _ = time.time() - started
 
         try:
             data = json.loads(body)
@@ -294,7 +293,7 @@ class Translator:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.config.api_key}",
                 "Accept": "text/event-stream",
-                "User-Agent": "ReadingCompanion/0.1",
+                "User-Agent": f"ReadingCompanion/{__version__}",
             },
         )
         timeout = float(api.get("timeout", 90))
@@ -349,7 +348,7 @@ class Translator:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.config.api_key}",
                 "Accept": "application/json",
-                "User-Agent": "ReadingCompanion/0.1",
+                "User-Agent": f"ReadingCompanion/{__version__}",
             },
         )
         timeout = float(api.get("timeout", 90))

@@ -241,7 +241,13 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
 
     # ------------------------------------------------------------------ 尺寸/位置
     def _on_canvas_resize(self, event) -> None:
+        host = getattr(self, "_dict_inline_host", None)
+        if host is not None:
+            host.pause(0.2)
         self.canvas.itemconfigure(self._canvas_item, width=event.width)
+        resize = getattr(self, "_resize_inline_dict", None)
+        if resize is not None:
+            resize()
 
     def _screen(self) -> tuple[int, int]:
         return self.win.winfo_screenwidth(), self.win.winfo_screenheight()
@@ -565,8 +571,22 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
             pass
 
     # ------------------------------------------------------------------ 内容构建
-    def _clear(self) -> None:
+    def _clear(self, keep_web: bool = False) -> None:
+        if not keep_web:
+            dispose = getattr(self, "_dispose_inline_dict", None)
+            if dispose is not None:
+                dispose()
+        else:
+            host = getattr(self, "_dict_inline_host", None)
+            if host is not None:
+                host.hide()
         for child in self.body.winfo_children():
+            if keep_web and child is getattr(self, "_dict_inline_frame", None):
+                try:
+                    child.pack_forget()
+                except tk.TclError:
+                    pass
+                continue
             child.destroy()
 
     def _label(self, parent, text: str, **kw) -> tk.Label:
@@ -808,6 +828,9 @@ class PopupWindow(DictViewMixin, ChatViewMixin, ResultViewMixin):
 
     def hide(self) -> None:
         self._visible = False
+        host = getattr(self, "_dict_inline_host", None)
+        if host is not None:
+            host.hide()
         tts = self.cb.get("stop_speak")
         if tts:
             tts()

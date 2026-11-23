@@ -85,6 +85,7 @@ class MainPanel(
         self.win.minsize(520, 700)
         self.win.protocol("WM_DELETE_WINDOW", self._on_close)
         self.win.bind("<Escape>", lambda _e: self._on_close())
+        self.win.bind("<Destroy>", self._on_panel_destroy, add="+")
         appearance = service.config.get("appearance") or {}
         try:
             opacity = float(appearance.get("panel_opacity", 1.0))
@@ -247,8 +248,25 @@ class MainPanel(
             font=(FONT_FAMILY, 12),
         )
         self.dict_input.pack(side="left", fill="x", expand=True, ipady=6, padx=(0, 8))
-        self._button(dict_bar, "查", self._lookup_dict, primary=True).pack(side="left")
-        self.dict_input.bind("<Return>", lambda _e: (self._lookup_dict(), "break")[1])
+        self.dict_history_btn = tk.Label(
+            dict_bar,
+            text="🕘",
+            bg=BG,
+            fg=DIM,
+            font=(FONT_FAMILY, 11),
+            cursor="hand2",
+            padx=4,
+        )
+        self.dict_history_btn.pack(side="left", padx=(0, 6))
+        self.dict_history_btn.bind("<Button-1>", lambda _e: self._show_lookup_history_menu())
+        self.dict_history_btn.bind(
+            "<Enter>", lambda _e: self.dict_history_btn.configure(fg=TEXT)
+        )
+        self.dict_history_btn.bind(
+            "<Leave>", lambda _e: self.dict_history_btn.configure(fg=DIM)
+        )
+        self._button(dict_bar, "查", lambda: self._lookup_dict(record=True), primary=True).pack(side="left")
+        self.dict_input.bind("<Return>", lambda _e: (self._lookup_dict(record=True), "break")[1])
         self.dict_input.bind("<KeyRelease>", self._on_dict_typing)
 
         # 输入框下方的建议列表：独立半透明浮层，跟随窗口移动、可滚轮滑动
@@ -291,6 +309,7 @@ class MainPanel(
         self._suggest_index = -1
         self._suggest_items: list[dict] = []
         self.win.bind("<Configure>", self._reposition_suggest, add="+")
+        self.win.bind("<Configure>", self._on_panel_configure, add="+")
         self.win.bind("<MouseWheel>", self._route_wheel, add="+")
         self.win.bind("<Button-1>", self._dismiss_on_click, add="+")
         self.win.bind("<FocusOut>", self._on_main_focus_out, add="+")
@@ -301,6 +320,14 @@ class MainPanel(
 
         self.dict_result = tk.Frame(self.dict_frame, bg=BG)
         self.dict_result.pack(fill="x", pady=(8, 0))
+        self._dict_web_frame = None
+        self._dict_web_host = None
+        self._dict_view_mode = str(
+            self.service.config.get("dict_view_default", "simple") or "simple"
+        )
+        self._dict_view_entry = None
+        self._dict_view_query = ""
+        self._dict_simple = None
         self.dict_hint = tk.Label(
             self.dict_result,
             text="输入一个单词，本地词典查询，不消耗 token",
@@ -490,12 +517,42 @@ class MainPanel(
             self._hide_suggestions()
         except tk.TclError:  # 控件可能已销毁，刻意忽略
             pass
-        """Esc / ✕：按设置决定是退出程序还是只隐藏。"""
+        try:
+            self._dispose_dict_webview()
+        except Exception as exc:  # noqa: BLE001 - 关闭时 WebView 失败不影响退出
+            log.debug("关闭 WebView 失败: %s", exc)
         handler = self.cb.get("close")
         if handler is not None:
             handler()
         else:
             self.hide()
+
+    def _on_panel_destroy(self, event) -> None:
+        if event.widget is not self.win:
+            return
+        job = getattr(self, "_dict_lookup_poll_job", None)
+        if job is not None:
+            try:
+                self.win.after_cancel(job)
+            except tk.TclError:
+                pass
+            self._dict_lookup_poll_job = None
+        try:
+            self._dispose_dict_webview()
+        except Exception as exc:  # noqa: BLE001 - 销毁时 WebView 失败不影响退出
+            log.debug("销毁 WebView 失败: %s", exc)
+
+    def _on_panel_configure(self, event) -> None:
+        if event.widget is not self.win:
+            return
+        host = getattr(self, "_dict_web_host", None)
+        if host is not None:
+            host.pause(0.3)
+        size = (int(event.width), int(event.height))
+        if size == getattr(self, "_last_panel_size", None):
+            return
+        self._last_panel_size = size
+        self._resize_dict_web()
 
     def _set_book_label(self, book: str) -> None:
         text = f"《{textutil.display(book, 26)}》 ▾" if book else "选择书籍 ▾"
@@ -606,6 +663,8 @@ class MainPanel(
 
     def _show_tab(self, name: str) -> None:
         self.current_tab = name
+        if name != "dict" and getattr(self, "_dict_web_host", None) is not None:
+            self._dict_web_host.hide()
         try:
             self._hide_suggestions()
         except tk.TclError:  # 控件可能已销毁，刻意忽略
@@ -644,9 +703,16 @@ class MainPanel(
             self.tab_dict.configure(bg=PANEL, fg=TEXT)
             self.tab_translate.configure(bg=BG, fg=DIM)
             self.dict_input.focus_set()
+            if (
+                getattr(self, "_dict_view_mode", "simple") == "original"
+                and getattr(self, "_dict_web_host", None) is not None
+            ):
+                self._dict_web_host.show()
             self._sync_content_scroll()
         else:
             self.dict_frame.pack_forget()
+            if getattr(self, "_dict_web_host", None) is not None:
+                self._dict_web_host.hide()
             self.trans_frame.pack(fill="x")
             self.tab_translate.configure(bg=PANEL, fg=TEXT)
             self.tab_dict.configure(bg=BG, fg=DIM)

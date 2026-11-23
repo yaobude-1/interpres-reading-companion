@@ -33,7 +33,16 @@ Write-Host "Building single-file exe (about 1 minute)..."
     --add-data "rc\tts_onecore.ps1;rc" `
     --add-data "rc\play_mp3.ps1;rc" `
     --add-data "rc\uia_context.ps1;rc" `
+    --add-data "rc\locales;rc\locales" `
+    --add-data "$root\rc\webview2;rc\webview2" `
     --collect-submodules lxml `
+    --hidden-import winrt.windows.media.ocr `
+    --hidden-import winrt.windows.graphics.imaging `
+    --hidden-import winrt.windows.storage `
+    --hidden-import winrt.windows.storage.streams `
+    --hidden-import winrt.windows.globalization `
+    --hidden-import winrt.windows.foundation `
+    --hidden-import winrt.windows.foundation.collections `
     --paths "$vendor" `
     --hidden-import pystray `
     --hidden-import pystray._win32 `
@@ -43,8 +52,16 @@ Write-Host "Building single-file exe (about 1 minute)..."
     --hidden-import rc.language_dialog `
     --hidden-import rc.anki_card_settings `
     --hidden-import rc.wordbook_anki_settings `
+    --hidden-import rc.stardict `
+    --hidden-import rc.dsl `
+    --hidden-import rc.dictd `
+    --hidden-import rc.xdxf `
+    --hidden-import rc.lzo `
     --hidden-import edge_tts `
     --hidden-import aiohttp `
+    --hidden-import pythonnet `
+    --hidden-import clr_loader `
+    --collect-submodules clr_loader `
     --collect-submodules edge_tts `
     --collect-submodules aiohttp `
     --collect-data certifi `

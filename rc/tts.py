@@ -55,6 +55,7 @@ class TTS:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._script = _SCRIPT_SRC
         self._lock = threading.Lock()
+        self._synth_lock = threading.Lock()
         self._voices: list[dict] | None = None
         self._last: Path | None = None
 
@@ -240,6 +241,7 @@ class TTS:
         text_file = self.cache_dir / f"{key}.txt"
         text_file.write_text(text, encoding="utf-8-sig")
         command = template.format(
+            text=text,
             text_file=str(text_file),
             out_file=str(out),
             lang=lang,
@@ -264,12 +266,13 @@ class TTS:
     def speak_with(self, text: str, voice: str, lang: str = "", engine: str = "") -> Path:
         """用指定音色/引擎朗读（设置里试听用）。"""
         engine = (engine or self.engine_for(lang) or "system").strip().lower()
-        if engine == "edge":
-            path = self._edge_synthesize(text, voice, lang)
-        elif engine == "command":
-            path = self._command_synthesize(text, lang)
-        else:
-            path = self._synthesize(text, voice, lang)
+        with self._synth_lock:
+            if engine == "edge":
+                path = self._edge_synthesize(text, voice, lang)
+            elif engine == "command":
+                path = self._command_synthesize(text, lang)
+            else:
+                path = self._synthesize(text, voice, lang)
         with self._lock:
             winsound.PlaySound(None, winsound.SND_PURGE)
             log.info("播放音频 %s size=%s", path.name, path.stat().st_size)
@@ -433,6 +436,7 @@ class TTS:
         log.info("MCI 播放完成 %s", path.name)
 
     def _play_soundplayer(self, path: Path) -> None:
+        safe_path = str(path).replace("'", "''")
         try:
             subprocess.run(
                 [
@@ -441,7 +445,7 @@ class TTS:
                     "-ExecutionPolicy",
                     "Bypass",
                     "-Command",
-                    f"(New-Object System.Media.SoundPlayer '{path}').PlaySync()",
+                    f"(New-Object System.Media.SoundPlayer '{safe_path}').PlaySync()",
                 ],
                 capture_output=True,
                 timeout=120,

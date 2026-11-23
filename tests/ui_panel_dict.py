@@ -44,7 +44,7 @@ def main() -> int:
         app.open_panel()
         app.panel._show_tab("dict")
         app.panel.dict_input.insert(0, word)
-        app.panel._lookup_dict()
+        app.panel._lookup_dict(sync=True)
         app.panel.win.geometry("+60+60")
         app.panel.win.attributes("-topmost", True)
         app.panel.win.lift()
@@ -65,7 +65,7 @@ def main() -> int:
         app.panel._show_tab("dict")
         app.panel.dict_input.delete(0, "end")
         app.panel.dict_input.insert(0, word)
-        app.panel._lookup_dict()
+        app.panel._lookup_dict(sync=True)
 
     app.root.after(600, open_panel)
     app.root.after(1100, lookup_later)

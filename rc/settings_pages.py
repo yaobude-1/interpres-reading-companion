@@ -71,23 +71,42 @@ class SettingsPagesMixin:
 
     def _build_hotkey_section(self) -> None:
         outer = self._page_bodies["general"]
-        self._section(outer, "热键与划词")
+        self._section(outer, "热键与复制查词")
         hot = tk.Frame(outer, bg=PANEL)
         hot.pack(fill="x", pady=(4, 12))
         self.var_hotkey = tk.StringVar(value=self.config.get("hotkey", "ctrl+alt+t"))
         self.var_settings_hotkey = tk.StringVar(
             value=self.config.get("settings_hotkey", "ctrl+alt+s")
         )
-        self._field(hot, 0, "划词翻译", self.var_hotkey)
-        self._field(hot, 1, "打开面板", self.var_settings_hotkey)
+        self.var_ocr_hotkey = tk.StringVar(
+            value=self.config.get("ocr_hotkey", "ctrl+alt+t")
+        )
+        selection = self.config.get("selection") or {}
+        self.var_clipboard = tk.BooleanVar(
+            value=bool(selection.get("clipboard_enabled", True))
+        )
+        self._field(hot, 0, "打开面板", self.var_settings_hotkey)
+        self._field(hot, 1, "截图 OCR", self.var_ocr_hotkey)
+        tk.Checkbutton(
+            hot,
+            text="复制文本后自动查词 / 翻译（仅阅读应用白名单）",
+            variable=self.var_clipboard,
+            bg=PANEL,
+            fg=TEXT,
+            selectcolor=BORDER_SOFT,
+            activebackground=PANEL,
+            activeforeground=TEXT,
+            font=(FONT_FAMILY, 9),
+            anchor="w",
+        ).grid(row=2, column=0, columnspan=4, sticky="w", padx=12, pady=5)
 
         hot_btns = tk.Frame(hot, bg=PANEL)
-        hot_btns.grid(row=2, column=0, columnspan=4, sticky="w", padx=12, pady=(4, 10))
-        self._button(hot_btns, "划词按钮设置…", self.open_selection_settings).pack(side="left")
+        hot_btns.grid(row=3, column=0, columnspan=4, sticky="w", padx=12, pady=(4, 10))
+        self._button(hot_btns, "复制查词设置…", self.open_selection_settings).pack(side="left")
         self._button(hot_btns, "原版配色…", self.open_entry_colors).pack(side="left", padx=(8, 0))
         tk.Label(
             hot_btns,
-            text="拖选后自动出现「译」按钮，可关、可换颜色和透明度",
+            text="在阅读器里 Ctrl+C 或右键复制后自动弹出；可在设置里随时关闭",
             bg=PANEL,
             fg=DIM,
             font=(FONT_FAMILY, 8),
@@ -175,6 +194,7 @@ class SettingsPagesMixin:
         dict_row = tk.Frame(outer, bg=BG)
         dict_row.pack(fill="x", pady=(0, 6))
         self._button(dict_row, "词典设置…", self.open_dictionary_settings).pack(side="left")
+        self._button(dict_row, "词形与变位表…", self.open_user_lang).pack(side="left", padx=(8, 0))
         tk.Label(
             dict_row,
             text="添加本地 MDX/MDD 词典、调整查询顺序",
@@ -211,6 +231,36 @@ class SettingsPagesMixin:
             bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
         )
         audio_box.pack(side="left", padx=(8, 0))
+
+        view_row = tk.Frame(outer, bg=BG)
+        view_row.pack(fill="x", pady=(0, 6))
+        tk.Label(
+            view_row, text="词典默认视图", bg=BG, fg=DIM, font=(FONT_FAMILY, 9)
+        ).pack(side="left")
+        self._dict_view_labels = {
+            "simple": "精简释义优先",
+            "original": "原版排版优先",
+        }
+        self._dict_view_label_to_key = {
+            value: key for key, value in self._dict_view_labels.items()
+        }
+        current_view = self._dict_view_labels.get(
+            str(self.config.get("dict_view_default", "simple")), "精简释义优先"
+        )
+        self.var_dict_view = tk.StringVar(value=tr(current_view))
+        view_box = tk.OptionMenu(
+            view_row,
+            self.var_dict_view,
+            *[tr(value) for value in self._dict_view_labels.values()],
+        )
+        view_box.configure(
+            bg=PANEL, fg=TEXT, activebackground=PANEL, activeforeground=TEXT,
+            relief="flat", highlightthickness=0, font=(FONT_FAMILY, 9), width=18, anchor="w",
+        )
+        view_box["menu"].configure(
+            bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=ON_ACCENT
+        )
+        view_box.pack(side="left", padx=(8, 0))
 
         install_row = tk.Frame(outer, bg=BG)
         install_row.pack(fill="x", pady=(0, 6))

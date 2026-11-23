@@ -86,8 +86,13 @@ class SettingsActionsMixin:
         api["model"] = self.var_model.get().strip() or "deepseek-chat"
         if save:
             self.config.data["hotkey"] = self.var_hotkey.get().strip() or "ctrl+alt+t"
+            selection = self.config.data.setdefault("selection", {})
+            selection["clipboard_enabled"] = bool(self.var_clipboard.get())
             self.config.data["settings_hotkey"] = (
                 self.var_settings_hotkey.get().strip() or "ctrl+alt+s"
+            )
+            self.config.data["ocr_hotkey"] = (
+                self.var_ocr_hotkey.get().strip() or "ctrl+alt+t"
             )
             self.config.data["anki_skip_existing"] = bool(self.var_skip_anki.get())
             if hasattr(self, "var_dict2anki"):
@@ -136,6 +141,10 @@ class SettingsActionsMixin:
                     "Dictionary audio only": "dict_only",
                 }.get(_audio_value, "dict_first"),
             )
+            if hasattr(self, "var_dict_view"):
+                self.config.data["dict_view_default"] = self._dict_view_label_to_key.get(
+                    self.var_dict_view.get(), "simple"
+                )
             languages = self.config.data.get("languages") or {}
             languages_now = self.config.data.get("languages") or {}
             for code, (voice_var, deck_var) in self.lang_vars.items():
@@ -199,6 +208,8 @@ class SettingsActionsMixin:
             "model": self.var_model.get().strip(),
             "hotkey": self.var_hotkey.get().strip(),
             "settings_hotkey": self.var_settings_hotkey.get().strip(),
+            "ocr_hotkey": self.var_ocr_hotkey.get().strip(),
+            "clipboard": bool(self.var_clipboard.get()),
             "skip": bool(self.var_skip_anki.get()),
             "dict2anki": bool(getattr(self, "var_dict2anki", tk.BooleanVar(value=False)).get()),
             "prompts": prompts,
@@ -206,6 +217,7 @@ class SettingsActionsMixin:
             "follow": bool(self.var_follow_book.get()),
             "quit": bool(self.var_quit_on_close.get()),
             "audio": self.var_audio_source.get(),
+            "dict_view": getattr(self, "var_dict_view", tk.StringVar(value="精简释义优先")).get(),
             "stream": self.var_stream_speed.get().strip(),
             "chat": self.var_chat_passage.get().strip(),
             "lang_lock": bool(getattr(self, "var_lang_delete_lock", tk.BooleanVar(value=True)).get()),
@@ -302,6 +314,13 @@ class SettingsActionsMixin:
         from .dictionary_settings import DictionarySettings
 
         DictionarySettings(self.win, self.config, self.service.dicts, self.on_saved)
+
+    def open_user_lang(self) -> None:
+        from .user_lang_dialog import UserLangDialog
+
+        self._user_lang_dialog = UserLangDialog(
+            self.win, self.config, self.service.user_lang, self.service.dicts
+        )
 
     def open_chat_history(self) -> None:
         from .chat_ui import ChatHistoryWindow

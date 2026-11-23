@@ -39,7 +39,7 @@ class PanelSuggestMixin:
                 self._accept_suggestion(word)
                 return "break"
             self._hide_suggestions()
-            self._lookup_dict()
+            self._lookup_dict(record=True)
             return "break"
         self._highlight_suggestion()
         return "break"
@@ -218,7 +218,7 @@ class PanelSuggestMixin:
         self._hide_suggestions()
         self.dict_input.delete(0, "end")
         self.dict_input.insert(0, word)
-        self._lookup_dict()
+        self._lookup_dict(record=True)
         try:
             self.dict_input.icursor("end")
             self.dict_input.focus_set()

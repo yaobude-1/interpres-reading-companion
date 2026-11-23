@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import tkinter as tk
 
+from .dict_view_controller import view_url
 from .popup_common import source_label
 from .theme import (
     ACCENT,
@@ -16,6 +18,8 @@ from .theme import (
     PANEL_ALT,
     TEXT,
 )
+
+log = logging.getLogger("rc")
 
 
 class DictViewMixin:
@@ -40,12 +44,15 @@ class DictViewMixin:
         self._reset_to_translate(chat_button=False)
         self._mode = "dict"
         self._dict = entry
+        self._dict_entry = entry
+        if not hasattr(self, "_dict_view_mode"):
+            self._dict_view_mode = str(self.config.get("dict_view_default", "simple"))
         if anchor != self._anchor:
             self._user_moved = False
         self._anchor = anchor
         self._dict_word = word or entry.get("word") or entry.get("query") or ""
         self.current = None
-        self._clear()
+        self._clear(keep_web=True)
         self._dict_editing = False
         self._dict_entry = None
         self.title.configure(text="查词")
@@ -97,33 +104,55 @@ class DictViewMixin:
         star.bind("<Button-1>", lambda _e, st=star: self._save_dict_word(st))
         star.bind("<Enter>", lambda _e: star.configure(fg=TEXT))
         star.bind("<Leave>", lambda _e, st=star: st.configure(fg=st.cget("fg")))
-        original = self._label(head, "原版", fg=TEXT, font=(FONT_FAMILY, 8))
-        original.pack(side="left", padx=(10, 0))
-        original.configure(cursor="hand2")
-        original.bind(
-            "<Button-1>",
-            lambda _e: self.cb.get("show_entry", lambda *_a: None)(
-                self._dict_word, entry.get("lang") or ""
-            ),
-        )
-        original.bind("<Enter>", lambda _e: original.configure(fg=ACCENT))
-        original.bind("<Leave>", lambda _e: original.configure(fg=TEXT))
         source = entry.get("source") or ""
         if source:
             self._label(head, source_label(source), fg=GREEN, font=(FONT_FAMILY, 8)).pack(
                 side="left", padx=(8, 0)
             )
+        simple = tk.Frame(self.body, bg=BG)
+        self._dict_simple = simple
         redirect = (entry.get("redirect") or "").strip()
         if redirect:
-            self._show_redirect_notice(redirect, entry)
+            self._show_redirect_notice(redirect, entry, parent=simple)
+
+        self._dict_view_bar = tk.Frame(self.body, bg=BG)
+        self._dict_view_bar.pack(fill="x", pady=(0, 6))
+        self._label(self._dict_view_bar, "视图", fg=DIM, font=(FONT_FAMILY, 8)).pack(
+            side="left", padx=(0, 6)
+        )
+        self._dict_view_buttons = {}
+        for key, text in (("simple", "精简"), ("original", "原版")):
+            button = self._label(
+                self._dict_view_bar,
+                text,
+                fg=TEXT if key == "simple" else DIM,
+                font=(FONT_FAMILY, 8),
+                bg=PANEL if key == "simple" else BG,
+                padx=7,
+                pady=2,
+            )
+            button.pack(side="left", padx=(0, 4))
+            button.configure(cursor="hand2")
+            button.bind("<Button-1>", lambda _e, k=key: self._set_dict_view_mode(k))
+            self._dict_view_buttons[key] = button
+        self._dict_view_notice = self._label(
+            self._dict_view_bar, "", fg=MUTED, font=(FONT_FAMILY, 8)
+        )
+        self._dict_view_notice.pack(side="right")
 
         alternatives = alternatives or []
         if len(alternatives) > 1:
             bar = tk.Frame(self.body, bg=BG)
             bar.pack(fill="x", pady=(0, 6))
+            current_id = (entry.get("dict_id") or "").strip()
             current = (entry.get("source") or "", entry.get("lang") or "")
             for hit in alternatives:
-                active = (hit.get("source") or "", hit.get("lang") or "") == current
+                hit_id = (hit.get("dict_id") or "").strip()
+                active = (
+                    hit_id == current_id
+                    if current_id
+                    else (hit.get("source") or "", hit.get("lang") or "") == current
+                )
                 label = tk.Label(
                     bar,
                     text=source_label(hit.get("source", "")),
@@ -146,7 +175,7 @@ class DictViewMixin:
         if morph:
             lemma_text = morph.get("lemma") or ""
             lemma_label = self._label(
-                self.body,
+                simple,
                 f"原形 {lemma_text}（{morph.get('label', '')}）",
                 fg=ACCENT,
                 font=(FONT_FAMILY, 9),
@@ -155,7 +184,7 @@ class DictViewMixin:
             if lemma_text:
                 lemma_label.configure(cursor="hand2")
                 lemma_label.bind("<Button-1>", lambda _e, w=lemma_text: self._dict_jump(w))
-            tabs = tk.Frame(self.body, bg=BG)
+            tabs = tk.Frame(simple, bg=BG)
             tabs.pack(fill="x", pady=(0, 4))
             self._dict_tab_meaning = tk.Label(
                 tabs, text="释义", bg=PANEL, fg=TEXT, font=(FONT_FAMILY, 9, "bold"),
@@ -171,7 +200,7 @@ class DictViewMixin:
             self._dict_tab_meaning.bind("<Button-1>", lambda _e: self._show_dict_tab("meaning"))
             self._dict_tab_conj.bind("<Button-1>", lambda _e: self._show_dict_tab("conj"))
 
-        container = tk.Frame(self.body, bg=BG)
+        container = tk.Frame(simple, bg=BG)
         container.pack(fill="x", pady=(4, 0))
         self._dict_meaning = tk.Frame(container, bg=BG)
         self._dict_meaning.pack(fill="x")
@@ -180,11 +209,12 @@ class DictViewMixin:
         if morph:
             self._render_morph_tables(self._dict_conj, morph)
 
-        actions = tk.Frame(self.body, bg=BG)
+        actions = tk.Frame(simple, bg=BG)
         actions.pack(fill="x", pady=(10, 4))
         self._dict_action(actions, "用 AI 译", self._translate_dict_word).pack(side="right")
 
         self.footer.configure(text="Enter 收藏 · 空格 发音 · Esc 关闭")
+        self._apply_dict_view_mode()
         self._reveal()
 
     def _show_dict_tab(self, name: str) -> None:
@@ -199,10 +229,160 @@ class DictViewMixin:
             self._dict_tab_meaning.configure(bg=PANEL, fg=TEXT)
             self._dict_tab_conj.configure(bg=BG, fg=DIM)
 
-    def _show_redirect_notice(self, target: str, entry: dict) -> None:
+    # ------------------------------------------------------------ inline original
+    def _set_dict_view_mode(self, mode: str) -> None:
+        if mode not in ("simple", "original"):
+            return
+        self._dict_view_mode = mode
+        self._update_dict_view_buttons()
+        self._apply_dict_view_mode()
+
+    def _update_dict_view_buttons(self) -> None:
+        for key, button in getattr(self, "_dict_view_buttons", {}).items():
+            active = key == getattr(self, "_dict_view_mode", "simple")
+            button.configure(bg=PANEL if active else BG, fg=TEXT if active else DIM)
+
+    def _apply_dict_view_mode(self) -> None:
+        if getattr(self, "_dict_simple", None) is None:
+            return
+        if getattr(self, "_dict_view_mode", "simple") == "original":
+            self._show_inline_original()
+        else:
+            self._show_inline_simple()
+
+    def _show_inline_simple(self) -> None:
+        host = getattr(self, "_dict_inline_host", None)
+        if host is not None:
+            host.hide()
+        frame = getattr(self, "_dict_inline_frame", None)
+        if frame is not None:
+            try:
+                frame.pack_forget()
+            except tk.TclError:
+                pass
+        simple = getattr(self, "_dict_simple", None)
+        if simple is not None:
+            try:
+                simple.pack(fill="x")
+            except tk.TclError:
+                pass
+        self._update_dict_view_buttons()
+        try:
+            self.win.update_idletasks()
+            self._place()
+        except tk.TclError:
+            pass
+
+    def _show_inline_original(self) -> None:
+        entry = self._dict or {}
+        word = self._dict_word or entry.get("word") or ""
+        dict_id = str(entry.get("dict_id") or "").strip()
+        lang = str(entry.get("lang") or self._lang or "en")
+        port, token, running = self._dict_server_info()
+        if not running or not port:
+            self._inline_fallback("原版不可用：本地词典服务未启动")
+            return
+        frame = self._ensure_inline_frame()
+        host = getattr(self, "_dict_inline_host", None)
+        if frame is None or host is None:
+            self._inline_fallback("原版不可用：WebView2 未初始化")
+            return
+        if not host.ensure():
+            self._inline_fallback(f"原版不可用：{host.error or 'WebView2 初始化失败'}")
+            return
+        url = view_url(port, token, word, lang=lang, dict_id=dict_id)
+        if not host.load_url(url):
+            self._inline_fallback(f"原版不可用：{host.error or '加载失败'}")
+            return
+        simple = getattr(self, "_dict_simple", None)
+        if simple is not None:
+            try:
+                simple.pack_forget()
+            except tk.TclError:
+                pass
+        frame.pack(fill="x", pady=(4, 0))
+        host.show()
+        self._resize_inline_dict()
+        self._update_dict_view_buttons()
+        if getattr(self, "_dict_view_notice", None) is not None:
+            self._dict_view_notice.configure(text="")
+        try:
+            self.win.update_idletasks()
+            self._place()
+        except tk.TclError:
+            pass
+
+    def _inline_fallback(self, message: str) -> None:
+        self._dict_view_mode = "simple"
+        self._show_inline_simple()
+        if getattr(self, "_dict_view_notice", None) is not None:
+            self._dict_view_notice.configure(text=message)
+
+    def _resize_inline_dict(self) -> None:
+        frame = getattr(self, "_dict_inline_frame", None)
+        host = getattr(self, "_dict_inline_host", None)
+        if frame is None or host is None or getattr(self, "_dict_view_mode", "simple") != "original":
+            return
+        try:
+            if not frame.winfo_ismapped():
+                return
+            height = max(300, int(self.canvas.winfo_height()) - 8)
+            frame.configure(height=height)
+            host.resize()
+        except tk.TclError:
+            pass
+
+    def _ensure_inline_frame(self):
+        frame = getattr(self, "_dict_inline_frame", None)
+        if frame is not None:
+            try:
+                if frame.winfo_exists():
+                    return frame
+            except tk.TclError:
+                pass
+        try:
+            from .webview_host import WebViewHost
+
+            frame = tk.Frame(self.body, bg=BG, height=430)
+            frame.pack_propagate(False)
+            self._dict_inline_frame = frame
+            self._dict_inline_host = WebViewHost(frame, on_lookup=self._dict_jump)
+            return frame
+        except Exception as exc:  # noqa: BLE001 - 原版不可用回退精简
+            log.debug("浮窗 WebView 创建失败: %s", exc)
+            return None
+
+    def _dict_server_info(self) -> tuple[int, str, bool]:
+        getter = self.cb.get("dict_server")
+        if not callable(getter):
+            return 0, "", False
+        try:
+            port, token, running = getter()
+            return int(port or 0), str(token or ""), bool(running)
+        except Exception:
+            return 0, "", False
+
+    def _dispose_inline_dict(self) -> None:
+        host = getattr(self, "_dict_inline_host", None)
+        if host is not None:
+            try:
+                host.dispose()
+            except Exception as exc:  # noqa: BLE001 - 关闭时 WebView 失败不影响弹窗
+                log.debug("浮窗 WebView 关闭失败: %s", exc)
+            self._dict_inline_host = None
+        frame = getattr(self, "_dict_inline_frame", None)
+        if frame is not None:
+            try:
+                frame.destroy()
+            except tk.TclError:
+                pass
+            self._dict_inline_frame = None
+        self._dict_simple = None
+
+    def _show_redirect_notice(self, target: str, entry: dict, parent=None) -> None:
         """词典把查询词重定向到了另一个词条：明确提示，别冒充。"""
         source = source_label(entry.get("source") or "")
-        box = tk.Frame(self.body, bg=PANEL_ALT)
+        box = tk.Frame(parent or self.body, bg=PANEL_ALT)
         box.pack(fill="x", pady=(0, 8))
         self._label(
             box,
@@ -229,11 +409,27 @@ class DictViewMixin:
 
     def _render_dict_senses(self, parent, entry: dict) -> None:
         matched = entry.get("matched") or ""
-        if matched and matched.lower() != self._dict_word.lower():
+        user_form = (entry.get("user_form") or "").strip()
+        if user_form:
+            user_row = tk.Frame(parent, bg=BG)
+            user_row.pack(fill="x", pady=(0, 6))
+            self._label(
+                user_row,
+                f"用户词形：{user_form} → {matched or entry.get('word') or ''}",
+                fg=ACCENT,
+                font=(FONT_FAMILY, 8),
+            ).pack(side="left")
+        if (
+            matched
+            and matched.lower() != self._dict_word.lower()
+            and not entry.get("morph")
+            and not user_form
+        ):
+            accent = entry.get("match") == "accent"
             hint_row = tk.Frame(parent, bg=BG)
             hint_row.pack(fill="x", pady=(0, 6))
             self._label(
-                hint_row, "按原形 ", fg=DIM, font=(FONT_FAMILY, 8)
+                hint_row, "重音匹配到 " if accent else "按原形 ", fg=DIM, font=(FONT_FAMILY, 8)
             ).pack(side="left")
             lemma_link = self._label(
                 hint_row, matched, fg=ACCENT, font=(FONT_FAMILY, 8, "underline")
@@ -241,9 +437,10 @@ class DictViewMixin:
             lemma_link.pack(side="left")
             lemma_link.configure(cursor="hand2")
             lemma_link.bind("<Button-1>", lambda _e, w=matched: self._dict_jump(w))
-            self._label(
-                hint_row, " 查到", fg=DIM, font=(FONT_FAMILY, 8)
-            ).pack(side="left")
+            if not accent:
+                self._label(
+                    hint_row, " 查到", fg=DIM, font=(FONT_FAMILY, 8)
+                ).pack(side="left")
         senses = entry.get("senses") or []
         groups: dict[str, list[dict]] = {}
         order: list[str] = []
@@ -650,6 +847,7 @@ class DictViewMixin:
                 "dict_example": first.get("example") or "",
                 "dict_example_cn": first.get("example_cn") or "",
                 "audio_key": entry.get("audio_key") or "",
+                "dict_id": entry.get("dict_id") or "",
             }
         )
         if star is not None:

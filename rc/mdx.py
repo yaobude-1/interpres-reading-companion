@@ -28,6 +28,8 @@ import threading
 import zlib
 from pathlib import Path
 
+from .lzo import decompress as _lzo_decompress
+
 log = logging.getLogger("rc")
 
 
@@ -62,8 +64,15 @@ class MDX:
         version = self.attrs.get("GeneratedByEngineVersion") or ""
         if self.encrypted in ("2", "3", "yes"):
             raise MDXError("这本词典带加密锁（Encrypted=2），需要注册码，暂不支持")
-        if version.startswith("1."):
-            raise MDXError(f"暂不支持 MDX {version} 格式")
+        if self.encrypted in ("1",):
+            raise MDXError("这本词典加密了记录块（Encrypted=1），暂不支持")
+        try:
+            self._version_number = float(version or "2.0")
+        except ValueError:
+            self._version_number = 2.0
+        self._legacy = self._version_number < 2.0
+        if self._legacy and not version.startswith("1."):
+            raise MDXError(f"不认识的 MDX 版本：{version}")
         self.version = version or "2.0"
         self._keys: list[tuple[str, int]] = []
         self._key_index: dict[str, int] = {}
@@ -92,6 +101,32 @@ class MDX:
     def _read_key_info(self) -> None:
         f = self._fh
         f.seek(self._meta_at)
+        if self._legacy:
+            (
+                self.num_key_blocks,
+                self.num_entries,
+                self._info_comp,
+                self.key_block_size,
+            ) = struct.unpack(">IIII", f.read(16))
+            self._info_at = self._meta_at + 16
+            f.seek(self._info_at)
+            info = f.read(self._info_comp)
+            pos = 0
+            self._key_blocks: list[tuple[int, int]] = []
+            for _ in range(self.num_key_blocks):
+                _entries = struct.unpack(">I", info[pos : pos + 4])[0]
+                pos += 4
+                head_len = info[pos]
+                pos += 1
+                pos += head_len * self._unit
+                tail_len = info[pos]
+                pos += 1
+                pos += tail_len * self._unit
+                comp, decomp = struct.unpack(">II", info[pos : pos + 8])
+                pos += 8
+                self._key_blocks.append((comp, decomp))
+            return
+
         (
             self.num_key_blocks,
             self.num_entries,
@@ -128,13 +163,17 @@ class MDX:
         f = self._fh
         f.seek(self._info_at + self._key_block_meta_size())
         unit = self._unit
-        for comp, _decomp in self._key_blocks:
+        width = 4 if self._legacy else 8
+        for comp, decomp in self._key_blocks:
             block = f.read(comp)
-            data = _inflate_block(block)
+            data = _inflate_block(block, decomp if self._legacy else None)
             pos = 0
-            while pos + 8 + unit <= len(data):
-                offset = struct.unpack(">Q", data[pos : pos + 8])[0]
-                pos += 8
+            while pos + width + unit <= len(data):
+                if width == 4:
+                    offset = struct.unpack(">I", data[pos : pos + 4])[0]
+                else:
+                    offset = struct.unpack(">Q", data[pos : pos + 8])[0]
+                pos += width
                 if unit == 2:
                     end = pos
                     while end + 1 < len(data) and not (data[end] == 0 and data[end + 1] == 0):
@@ -173,7 +212,24 @@ class MDX:
         f = self._fh
         start = self._info_at + self.info_comp + sum(c for c, _d in self._key_blocks)
         f.seek(start)
-        num_blocks, _num_entries, info_size, _data_size = struct.unpack(">QQQQ", f.read(32))
+        if self._legacy:
+            num_blocks, _num_entries, info_size, _data_size = struct.unpack(
+                ">IIII", f.read(16)
+            )
+            blocks = []
+            acc = 0
+            for _ in range(num_blocks):
+                comp, decomp = struct.unpack(">II", f.read(8))
+                blocks.append((comp, decomp, acc))
+                acc += decomp
+            self._record_blocks = blocks
+            self._record_start = f.tell()
+            self._record_total = acc
+            return
+
+        num_blocks, _num_entries, info_size, _data_size = struct.unpack(
+            ">QQQQ", f.read(32)
+        )
         blocks = []
         acc = 0
         for _ in range(num_blocks):
@@ -202,10 +258,12 @@ class MDX:
         if index not in self._cache:
             f = self._fh
             f.seek(self._record_start)
-            for i, (comp, _decomp, _start) in enumerate(self._record_blocks):
+            for i, (comp, decomp, _start) in enumerate(self._record_blocks):
                 if i == index:
                     self._cache.clear()
-                    self._cache[index] = _inflate_block(f.read(comp))
+                    self._cache[index] = _inflate_block(
+                        f.read(comp), decomp if self._legacy else None
+                    )
                     break
                 f.seek(comp, 1)
         data = self._cache[index]
@@ -302,8 +360,8 @@ class MDD(MDX):
         return self.lookup_bytes(sound_key)
 
 
-def _inflate_block(block: bytes) -> bytes:
-    """块结构：[type(4) + checksum(4) + zlib]，type=2 表示 zlib。"""
+def _inflate_block(block: bytes, expected: int | None = None) -> bytes:
+    """块结构：[type(4) + checksum(4) + payload]，type 1=LZO, 2=zlib。"""
     if len(block) < 8:
         raise MDXError("数据块太短")
     kind = struct.unpack("<I", block[:4])[0]
@@ -313,7 +371,14 @@ def _inflate_block(block: bytes) -> bytes:
             return _decompress_capped(body)
         except zlib.error:
             return _decompress_capped(block[4:])
-    if kind in (0, 1):
+    if kind == 1:
+        if expected is None:
+            raise MDXError("LZO 块缺少解压长度")
+        try:
+            return _lzo_decompress(body, expected)
+        except (ValueError, IndexError) as exc:
+            raise MDXError(f"LZO 解压失败：{exc}") from exc
+    if kind == 0:
         return body
     raise MDXError(f"不认识的压缩类型：{kind}")
 

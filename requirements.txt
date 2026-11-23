@@ -4,5 +4,18 @@ pystray==0.19.5
 edge-tts==7.3.1
 aiohttp==3.14.5
 
+# WebView2 host (Windows)
+pythonnet==3.0.5
+
+# Windows OCR (screenshot OCR); Python 3.12 wheels
+winrt-runtime==4.2.0
+winrt-Windows.Foundation==4!10.0.28000.2957
+winrt-Windows.Foundation.Collections==4!10.0.28000.2957
+winrt-Windows.Globalization==4!10.0.28000.2957
+winrt-Windows.Graphics.Imaging==4!10.0.28000.2957
+winrt-Windows.Media.Ocr==4!10.0.28000.2957
+winrt-Windows.Storage==4!10.0.28000.2957
+winrt-Windows.Storage.Streams==4!10.0.28000.2957
+
 # build only（与构建机一致）
 pyinstaller==6.22.3

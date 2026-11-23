@@ -289,6 +289,7 @@ class ResultViewMixin:
                 "dict_example": (term.get("dict") or {}).get("example", ""),
                 "dict_example_cn": (term.get("dict") or {}).get("example_cn", ""),
                 "audio_key": (term.get("dict") or {}).get("audio_key", ""),
+                "dict_id": (term.get("dict") or {}).get("dict_id", ""),
             }
         )
         self.saved.add(key)
@@ -340,6 +341,7 @@ class ResultViewMixin:
                     self._dict_word,
                     entry.get("lang") or self._lang,
                     entry.get("audio_key") or "",
+                    entry.get("dict_id") or "",
                 )
             return
         text = self.current.get("text", "")

@@ -1,6 +1,6 @@
 # Interpres
 
-A Windows reading companion for foreign-language books: select text in your reader, get a translation with real dictionary definitions, keep vocabulary per language, and sync it to Anki.
+A Windows reading companion for foreign-language books: copy text in your reader, get a translation or dictionary card, keep vocabulary per language, and sync it to Anki.
 
 English | [中文说明](docs/README.zh-CN.md)
 
@@ -8,7 +8,8 @@ English | [中文说明](docs/README.zh-CN.md)
 
 ## Features
 
-- **Selection translation** — press `Ctrl+Alt+T` over selected text (or click the floating “译” button) and get a translation next to it. Works in Chrome, Edge, Firefox, Calibre, SumatraPDF, Acrobat, Okular and Thorium.
+- **Screenshot OCR** — press `Ctrl+Alt+T`, drag over text in an image or scanned PDF, and the recognized text goes through the same dictionary/translation path. Uses the local Windows OCR engine; screenshots are not uploaded.
+- **Clipboard lookup & translation** — copy text in a reader (`Ctrl+C` or right-click **Copy**) and Interpres decides between a local dictionary lookup and an AI translation. No floating selection button. Works in Chrome, Edge, Firefox, Calibre, SumatraPDF, Acrobat, Okular and Thorium; the reading-app whitelist and automatic trigger can be changed or switched off in Settings.
 - **Local MDX/MDD dictionaries** — bring your own Longman, Oxford, etc. Lookup is offline; fuzzy search handles accents and typos. The AI only fills context that the dictionary cannot.
 - **AI chat with context** — ask questions about the passage or the book; in
   Edge/Chrome the paragraph around the selection is read automatically (can be
@@ -63,7 +64,7 @@ What you *do* get is the source, the build script, and a local-first workflow yo
 1. Download `Interpres.zip` from Releases and extract it.
 2. Run `Interpres.exe` from the extracted folder. It is portable and keeps its data in your user profile; nothing is installed system-wide.
 3. Press `Ctrl+Alt+S` to open the panel, then click the gear (top right) to open settings; paste your API key and click **Test connection**.
-4. Select text in a reader and press `Ctrl+Alt+T`.
+4. Copy a word or passage in a reader (`Ctrl+C` or right-click **Copy**).
 
 What changed in each version: see [CHANGELOG.md](CHANGELOG.md) or the Releases page.
 
@@ -71,8 +72,8 @@ Hotkeys:
 
 | Hotkey | Action |
 |---|---|
-| `Ctrl+Alt+T` | Translate selection / open panel |
 | `Ctrl+Alt+S` | Open panel |
+| `Ctrl+Alt+T` | Screenshot OCR |
 | `Esc` | Close panel (behaviour configurable) |
 
 ## Uninstall

@@ -3,6 +3,96 @@
 User-visible changes per release. Engineering-only work is summarised briefly too,
 so the repository history is not the only record of what changed.
 
+## Unreleased
+
+### Added
+- Screenshot OCR: `Ctrl+Alt+T` opens a full-screen region picker and sends
+  recognized text through the same dictionary/translation path. Uses Windows
+  OCR locally; no screenshot or OCR text is uploaded.
+- Clipboard lookup: copying text in a reading app (`Ctrl+C` or right-click
+  Copy) automatically opens a dictionary card or translation. The old
+  selection button and `Ctrl+Alt+T` translation hotkey were removed; the
+  clipboard trigger and reading-app whitelist can be disabled in Settings.
+- Dictionary lookup now returns every configured dictionary as a source bar above
+  the definitions, ranked by match quality (exact → accent → lemma → redirect);
+  the book's language only breaks ties.
+- Accent-insensitive exact lookup: `creer` finds French `créer`, marked as an
+  accent match instead of a redirect.
+- User word forms and user conjugation tables: add `form → lemma` mappings or
+  import a table; every table row becomes a reverse-lookup form automatically,
+  and user data overrides dictionary/built-in matches with a visible badge.
+- Extract inflected forms from a dictionary's own `@@@LINK` redirects: scan once,
+  review the candidates, and add the real inflections to the user form list.
+  Results are cached per dictionary. A bulk mode adds all candidates above a
+  similarity threshold at once.
+- Experimental WebView2 original-layout renderer: a Tk frame hosts a WinForms
+  WebView2, raw MDX HTML is served through a local resource endpoint, and the
+  dictionary's own CSS/MDD images/audio are preserved. The dictionary tab has a
+  精简/原版 toggle; the default is configurable in Settings → 词典与发音.
+- Read unencrypted MDX 1.2 dictionaries (LZO and zlib blocks), so older
+  Oxford/Longman-style releases open again.
+- Read StarDict `.ifo` / `.idx` / `.dict[.dz]` dictionaries as a fallback for
+  non-MDX sources such as the Liddell-Scott Greek lexicon. Original HTML and
+  plain-text lookup both work; StarDict has no MDD audio.
+- A language can now hold an ordered list of dictionaries, not just one. The
+  dictionary settings page supports multi-select import, per-dictionary
+  “显示” checkboxes, reordering and removal. Hidden dictionaries stay in the
+  config but are not loaded or queried; the source bar and original view follow
+  the selected dictionary's stable `dict_id`.
+- Dictionaries now live in one global library and can be assigned to several
+  language groups. Each group has its own order, muted set and default
+  dictionary. Imports start unassigned; assignment happens after import or from
+  the group page. A group's default dictionary is selected first when it hits.
+- The dictionary group page supports drag handles (and ↑/↓) for ordering,
+  separate “面板 / 弹窗” visibility toggles, a default-dictionary star, and
+  display-name renaming in the library.
+- The lookup popup now uses the same popup mute set, default-dictionary
+  selection and `dict_id` source switching as the panel. It has an inline
+  精简/原版 toggle and embeds the WebView2 original page directly in the popup
+  instead of opening a separate window.
+- WebView2 resizing now follows the popup and panel dimensions; move-only Tk
+  configure events no longer call `MoveWindow`, avoiding native-child ghosting
+  while dragging the main window.
+- Panel dictionary lookups run off the Tk main thread and deliver results
+  through a queued poller; full-entry and raw-HTML results are cached per
+  dictionary, and the popup reuses its inline WebView2 host when moving between
+  words.
+- Logging rotates at 2 MB with three backups and foreground book-change logs
+  are DEBUG-only; the WebView2 message pump runs at 15 ms while active and
+  45 ms when idle. Idle dictionaries are released after five minutes, and the
+  panel/popup share raw-headword and original-URL helpers.
+- Each language group can choose a separate Anki definition dictionary
+  (defaulting to the group's ★ dictionary). Saved words now record their
+  `dict_id`, used as a fallback when the Anki choice is unavailable.
+- English localization covers the new Anki/group controls, inline original
+  view and lookup failure messages; `rc/locales` is now included in both
+  onefile and portable builds.
+- A whole language group can be muted from its header; muting disables all of
+  its dictionaries for both the panel and popup until unmuted.
+- The 查询 tab now keeps a deduplicated recent-lookup history behind the clock
+  icon, with a full history window, re-query, delete and clear actions. It is
+  separate from the vocabulary list and is stored locally.
+- Lookup history adds inline star save/unsave, source-dictionary preference
+  when reopening, language/book filters, total/frequency stats and a
+  configurable retention limit.
+
+### Fixed
+- Translation history now keeps its limit per book instead of trimming the
+  global table, so reading one book no longer evicts another book's history.
+- Custom TTS commands accept `{text}`; concurrent synthesis is serialized;
+  SoundPlayer paths escape single quotes.
+- The WebView2 profile/SDK directories are unique per process, dangerous
+  navigation schemes are blocked, and initialization timeout is 10 seconds.
+- Config writes are serialized, LLM streaming failures are logged, and the
+  LLM User-Agent now uses the real version.
+- Oxford-Hachette entries: senses are grouped under their real part of speech
+  (`nm`, `vtr`, `vi`, …) instead of all landing under `nm`.
+- French `-re` verbs: `vends / vend / vendent / vendu / vendrai → vendre`.
+- French noun/adjective forms: `chevaux → cheval`, `heureuse → heureux`,
+  `travaux → travail`, etc.
+- German/Spanish/Italian no longer borrow the French conjugator (Italian words
+  ending in `-re` used to display a French conjugation table).
+
 ## 1.0.8 — 2026-11-23
 
 ### Added

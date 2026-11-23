@@ -29,7 +29,7 @@ class MediaMixin:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def speak(self, text: str, lang: str, audio_key: str = "") -> None:
+    def speak(self, text: str, lang: str, audio_key: str = "", dict_id: str = "") -> None:
         source = str(self.config.get("audio_source", "dict_first"))
 
         def worker() -> None:
@@ -38,7 +38,7 @@ class MediaMixin:
                 if source == "tts":
                     self.service.speak(text, lang)
                     return
-                if audio_key and self.service.play_dictionary_audio(lang, audio_key):
+                if audio_key and self.service.play_dictionary_audio(lang, audio_key, dict_id):
                     return
                 if source == "dict_only":
                     self.events.put(("toast", "这个词没有本地音频"))
