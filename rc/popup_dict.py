@@ -332,10 +332,14 @@ class DictViewMixin:
         if frame is None or host is None or getattr(self, "_dict_view_mode", "simple") != "original":
             return
         try:
-            height = int(self.canvas.winfo_height()) - 8
-            if height < 120:
+            # The inline frame starts below the view/source rows. Using the
+            # whole canvas height made the WebView extend under the footer,
+            # so its last lines were unreachable even at scroll bottom.
+            frame_top = max(0, frame.winfo_rooty() - self.canvas.winfo_rooty())
+            available = int(self.canvas.winfo_height()) - frame_top - 8
+            if available < 120:
                 return
-            frame.configure(height=max(300, height))
+            frame.configure(height=max(200, available))
             host.resize()
         except tk.TclError:
             pass
