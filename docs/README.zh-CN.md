@@ -10,15 +10,17 @@
 
 - **复制查词/翻译**：在阅读器里复制文字（`Ctrl+C` 或右键复制），程序自动判断单词走词典、句子走翻译；不再有划词小按钮。支持 Chrome、Edge、Firefox、Calibre、SumatraPDF、Acrobat、Okular、Thorium；白名单和自动触发可在设置里关闭。
 - **截图 OCR**：按 `Ctrl+Alt+T` 框选图片或扫描版 PDF 里的文字，识别后走同样的查词/翻译流程；使用 Windows 本地 OCR，不上传截图。
-- **本地 MDX/MDD 词典**：自己准备朗文、牛津等词典；查词完全离线，模糊匹配能处理重音和拼写错误。AI 只补词典没有的上下文。
-- **结合上下文的 AI 对话**：可以问当前段落或整本书的问题；在 Edge/Chrome 里会自动读取选中文字所在段落（设置里可关），其他阅读器可以手动补充上下文。
+- **本地多词典**：支持 MDX/MDD、未加密 MDX 1.2、StarDict、DSL、Dictd、XDXF；每种语言可挂多本，来源栏并列命中的词典，可排序、设默认、单独静音或整组静音。
+- **原版排版**：面板和浮窗都可用 WebView2 显示词典自己的 HTML/CSS/图片/音频，浮窗内长词条可滚动。
+- **AI 对话**：可以围绕短语或当前书提问；需要段落上下文时可手动粘贴。
+- **查词历史**：查询页时钟图标记录最近查词，支持来源优先、星标、语言/书籍筛选、统计和保留上限。
 - **按语言分本的生词本**：单词按语言分组，也可以自建词本（例如「英语 · 雅思」）。每本词本对应独立的 Anki 牌组。
-- **Anki 同步**：英语默认使用 [Dict2Anki](https://github.com/ninja33/anki-dict-helper) 笔记类型；其他语言使用内置的 `Interpres` 笔记类型，包含结构化义项、成对例句和音频。
+- **Anki 同步**：英语默认使用 [Dict2Anki](https://github.com/ninja33/anki-dict-helper) 笔记类型；其他语言使用内置的 `Interpres` 笔记类型，包含结构化义项、成对例句和音频；每种语言可单独选择 Anki 释义词典。
 - **语言是数据，不是代码**：可以添加任意语言（意大利语、日语、俄语……），填代码、显示名、音色和牌组即可；词典按语言挂载。
 - **发音**：Windows SAPI/OneCore、Edge 在线神经音色，或自定义命令（Piper、eSpeak、自己的脚本）。
 - **流式显示**：译文和对话按可配置的字速逐字显示。
 - **外观**：深色/浅色主题、强调色预设、浮窗宽度/高度/透明度、主界面透明度；浮窗可拖任意边/角缩放，双击上/下边缘恢复自动高度；主题修改重启后生效。
-- **记录**：翻译记录和对话记录按书分组，可搜索，可导出 Markdown / TSV / CSV。
+- **记录**：翻译记录和对话记录按书分组，可搜索，可导出 Markdown / TSV / CSV；查词页的时钟图标另有最近查词、来源优先、星标、筛选和保留上限。
 - **生词卡片**：在生词本里双击一个词，弹出它的词典卡片；没配词典时显示保存的释义和例句。
   单词表可按单词或释义搜索，点列头排序（单词/音标/释义/来源/时间/同步），选择会被记住。
 - **本地 HTTP 接口**：仅回环、带 token，方便自己写脚本调用（翻译、生词、术语、发音、Anki 推送）。
@@ -31,9 +33,11 @@
 ## 环境
 
 - Windows 10/11 64 位
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)：原版排版需要；没有时仍可用精简视图
 - 自己的 DeepSeek API Key（或任意 OpenAI 兼容接口）
 - 可选：[Anki](https://apps.ankiweb.net/) + [AnkiConnect](https://ankiweb.net/shared/info/2055492159)，用于同步卡片
-- 可选：MDX/MDD 词典（不随软件分发，见下文）
+- 可选：MDX/MDD/StarDict/DSL/Dictd/XDXF 词典（不随软件分发，见下文）
+- 可选：截图 OCR 需要 Windows 对应语言的 OCR 可选功能（英语/中文/法语通常已装）
 
 ## 这个项目没有什么
 
@@ -56,6 +60,7 @@
 2. 进入解压后的文件夹，运行 `Interpres.exe`。它是绿色版，数据保存在用户目录，不往系统里安装东西。
 3. 按 `Ctrl+Alt+S` 打开主面板，点右上角齿轮进入设置，填入 API Key，点 **测试连接**。
 4. 在阅读器里复制一个单词或一段话（`Ctrl+C` 或右键复制）。
+5. 图片或扫描版 PDF：按 `Ctrl+Alt+T` 框选文字。
 
 每个版本改了什么：见 [`CHANGELOG.md`](../CHANGELOG.md) 或 Releases 页面。
 
@@ -105,13 +110,22 @@
 
 ## 词典
 
-软件不带词典。把 `.mdx`/`.mdd` 放到任意位置，在 **设置 → 语言、词典与发音 → 词典设置** 里添加。解析器支持 MDX 2.0；加密词典和 MDX 1.2 暂不支持。
+软件不带词典。把词典文件放到任意位置，在 **设置 → 语言、词典与发音 → 词典设置** 里添加。支持：
+
+- MDX/MDD 2.0
+- 未加密 MDX 1.2（zlib / LZO）
+- StarDict（`.ifo` / `.idx` / `.dict[.dz]`）
+- DSL（`.dsl` / `.dsl.dz`）
+- Dictd（`.index`）
+- XDXF（`.xdxf` / `.xdxf.dz`）
+
+加密 MDX 暂不支持。一种语言可以挂多本词典；来源栏会列出所有命中，**设置 → 语言、词典与发音 → 词典设置… → 查词组** 里可以调顺序、设默认、控制面板/弹窗单独可见，或整组静音。Anki 释义词典也可以按语言单独选择。
 
 词典是有版权的作品，请合法获取和使用。词典文件不会被发送到任何地方，查询完全在本地进行。
 
 如果你的词典 HTML 结构特殊，不用改代码，可以在 **设置 → 语言、词典与发音 → 词典设置… → 词典映射…** 里配置。字段格式和朗文示例见 [DICT_PROFILES.md](DICT_PROFILES.md)。
 
-词典没收录的变形，可以在 **设置 → 语言与发音 → 词形与变位表…** 里补“变形 → 原形”或导入变位表；格式和示例见 [USER_LANG_DATA.md](USER_LANG_DATA.md)。
+词典没收录的变形，可以在 **设置 → 语言、词典与发音 → 词形与变位表…** 里补“变形 → 原形”或导入变位表；格式和示例见 [USER_LANG_DATA.md](USER_LANG_DATA.md)。
 
 ## 数据与隐私
 
@@ -119,11 +133,13 @@
 
 ```
 config.json   设置（API Key 用 Windows DPAPI 加密，仅本地）
-reading.db    生词、对话、翻译缓存
-app.log       日志（不记录选中文本正文）
+reading.db    生词、对话、翻译缓存、查词历史
+app.log       日志（不记录复制文本、截图或书籍正文）
 cache/        TTS 音频缓存
 exports/      CSV/TSV/Markdown 导出
 ```
+
+剪贴板监听和截图 OCR 都在本地运行。OCR 截图只写成临时 PNG 供 Windows OCR 读取，识别后立即删除；识别出的文字按普通复制文本处理，不会由 OCR 上传。剪贴板触发可在设置里关闭，默认只监听阅读应用白名单。
 
 联网只发生在：
 
@@ -190,7 +206,7 @@ ruff check .
 ```
 app.py                    入口：应用外壳、热键、托盘、main()
 app_panel.py              主面板接线：翻译、提问、历史窗口
-app_flow.py               选区 → 气泡 → 详情 → 查词
+app_flow.py               剪贴板/OCR 文字 → 查词或翻译
 app_media.py              收藏、Anki 推送、发音、术语锁定
 rc/service.py             Service（mixin 组合）：对话、历史、状态
 rc/service_base.py        mixin 共享属性的注解声明
@@ -198,10 +214,16 @@ rc/service_translate.py   翻译流程：分块、缓存、流式
 rc/service_dict.py        查词、词形、词条 HTML
 rc/service_vocab.py       生词本、语言、术语表
 rc/service_anki.py        Anki 字段、模板、推送
+rc/service_lookup_history.py 查词历史、统计与保留上限
 rc/service_common.py      分块/缓存小工具
 rc/llm.py                 翻译/对话客户端（流式、JSON 解析）
 rc/rich.py                词典 HTML → 结构化义项/例句
 rc/mdx.py                 纯标准库 MDX/MDD 读取
+rc/stardict.py            StarDict 读取
+rc/dsl.py                 DSL / DSL.dz 读取
+rc/dictd.py               Dictd 读取
+rc/xdxf.py                XDXF / XDXF.dz 读取
+rc/lzo.py                 MDX 1.2 的 LZO 解压
 rc/panel.py               主窗口外壳：布局、书籍、滚动、状态
 rc/panel_translate.py     翻译页：流式输出、进度、错误
 rc/panel_dict.py          查词页：查询、义项、词形、收藏
@@ -211,11 +233,23 @@ rc/vocab_panel.py         生词本外壳：布局、搜索、刷新
 rc/vocab_table.py         单词表：排序、列宽、双击词卡
 rc/vocab_books.py         词本列表与新建/改名/删除对话框
 rc/vocab_actions.py       移动/删除/导出单词、Anki 同步
-rc/popup.py               划词弹窗外壳：生命周期、定位、滚轮、缩放
-rc/popup_dict.py          词典卡片：义项、词形、近义词
+rc/popup.py               弹窗外壳：生命周期、定位、滚轮、缩放
+rc/popup_dict.py          词典卡片：义项、原版 WebView2、长词条滚动
 rc/popup_chat.py          内联对话卡片：气泡、输入栏、流式
 rc/popup_result.py        翻译结果卡片：生词、语法、操作
 rc/popup_common.py        弹窗小工具
+rc/dict_config.py         全局词典库、分组、静音、默认、Anki 词典
+rc/dictmanager.py         词典加载、来源选择、缓存和空闲释放
+rc/dictionary.py          单本词典：查询、音频、词条 HTML
+rc/dict_forms.py          用户词形与变位表
+rc/dict_view.py           原版词条 HTML/CSS 与 CSP 包装
+rc/dict_view_controller.py 面板/浮窗共享的词头和 URL 工具
+rc/webview_host.py        WinForms WebView2 宿主
+rc/webview_window.py      独立 WebView2 原版窗口（旧入口）
+rc/clipboard_watch.py     白名单剪贴板监听
+rc/ocr.py                 Windows.Media.Ocr 封装
+rc/ocr_picker.py          全屏 OCR 框选
+rc/lookup_history_ui.py   查词历史窗口、筛选、星标和统计
 rc/settings_ui.py         设置窗口外壳：分页、标签、共享控件
 rc/settings_pages.py      设置窗口：每页一个构建函数
 rc/settings_actions.py    设置窗口：保存、测试、对话框、导出
@@ -224,9 +258,7 @@ rc/config.py              配置文件、DPAPI 密钥存储、语言表
 rc/server.py              仅回环的本地 HTTP API（token、大小限制）
 rc/netpolicy.py           服务地址校验：只允许 HTTPS 或回环
 rc/capture.py             剪贴板快照与选中文字捕获
-rc/selection.py           拖选/双击选词的鼠标监听
-rc/dictionary.py          单本 MDX 词典：查询、音频、词条 HTML
-rc/dictmanager.py         按语言管理词典与缓存
+rc/selection.py           前台/选区底层辅助函数
 rc/anki.py                AnkiConnect 客户端、字段与模板
 rc/tts.py                 发音：SAPI、Edge 或自定义命令
 rc/theme.py               共享配色与字体
@@ -234,7 +266,7 @@ rc/store.py               SQLite 存储
 rc/i18n.py                中英文显示层翻译
 # 其余对话框/子窗口：book_settings、entry_settings、selection_settings、
 # dictionary_settings、dict_profiles、language_dialog、anki_card_settings、
-# wordbook_anki_settings、vocab_panel、translation_ui、chat_ui
+# wordbook_anki_settings、vocab_panel、translation_ui、chat_ui、user_lang_dialog
 ```
 
 更完整的变更记录见 [`CHANGELOG.md`](../CHANGELOG.md)。
@@ -243,10 +275,11 @@ rc/i18n.py                中英文显示层翻译
 
 - 代码由 AI 生成，没有经过专业程序员审查；请把它当作实验性个人项目。
 - 只在作者自己的 Windows 机器和少数几个阅读器上测试过，其他软件、缩放比例和系统版本没有覆盖。
-- 划词依赖剪贴板模拟，少数选择处理特殊的程序可能不工作。
+- 复制查词默认只监听阅读应用白名单，其他程序里复制不会触发；可以在设置里关闭。
+- 截图 OCR 依赖 Windows OCR 语言包，目前按主屏区域框选；手写、竖排、特别小或对比度低的文字识别率有限。
+- 原版排版需要 WebView2 Runtime；没有它时仍可使用精简词典视图。
+- 不支持加密 MDX（未加密 MDX 2.0 / 1.2 支持）。
 - API Key 用 Windows DPAPI 加密，换电脑或换 Windows 用户后需要重新填一次（生词本和历史记录可以直接拷）。
-- 每种语言只使用一本 MDX 词典，没有多词典合并显示。
-- 不支持 MDX 1.2 和加密词典。
 - 拉丁语没有原生 TTS 音色，会回退到意大利语（Edge）或法语（SAPI）。
 - Edge TTS 是非官方 Microsoft 接口，可能随时变化。
 - Anki 同步依赖 AnkiConnect 和正在运行的 Anki；没有离线队列或失败重试。

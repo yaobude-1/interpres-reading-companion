@@ -10,10 +10,9 @@ English | [中文说明](docs/README.zh-CN.md)
 
 - **Screenshot OCR** — press `Ctrl+Alt+T`, drag over text in an image or scanned PDF, and the recognized text goes through the same dictionary/translation path. Uses the local Windows OCR engine; screenshots are not uploaded.
 - **Clipboard lookup & translation** — copy text in a reader (`Ctrl+C` or right-click **Copy**) and Interpres decides between a local dictionary lookup and an AI translation. No floating selection button. Works in Chrome, Edge, Firefox, Calibre, SumatraPDF, Acrobat, Okular and Thorium; the reading-app whitelist and automatic trigger can be changed or switched off in Settings.
-- **Local MDX/MDD dictionaries** — bring your own Longman, Oxford, etc. Lookup is offline; fuzzy search handles accents and typos. The AI only fills context that the dictionary cannot.
-- **AI chat with context** — ask questions about the passage or the book; in
-  Edge/Chrome the paragraph around the selection is read automatically (can be
-  turned off in settings), and other readers can paste context manually.
+- **Local dictionaries** — MDX/MDD, unencrypted MDX 1.2, StarDict, DSL, Dictd and XDXF. Add several dictionaries per language, order them, mark a default, mute individual dictionaries or a whole group, and switch sources from the result bar. Lookup is offline; the AI only fills context the dictionary cannot.
+- **AI chat with context** — ask questions about a phrase or the current book; paste the paragraph manually to give the model context.
+- **Lookup history** — the clock icon in the Query tab keeps recent lookups with source preference, stars, language/book filters, stats and a configurable retention limit.
 - **Per-language vocabulary books** — words are grouped by language, and you can create your own word books (e.g. “English · IELTS”). Each book maps to its own Anki deck.
 - **Anki sync** — English uses the [Dict2Anki](https://github.com/ninja33/anki-dict-helper) note type by default; other languages use the bundled `Interpres` note type with structured senses, examples and audio.
 - **Languages are data, not code** — add any language (Italian, Japanese, Russian, …): code, display name, voice, deck. Dictionaries attach per language.
@@ -24,7 +23,8 @@ English | [中文说明](docs/README.zh-CN.md)
   the top/bottom edge to restore automatic height. Theme changes apply after a
   restart.
 - **History** — translation and conversation history per book, searchable and
-  exportable to Markdown, TSV or CSV.
+  exportable to Markdown, TSV or CSV; recent dictionary lookups have their own
+  clock-icon history in the Query tab.
 - **Vocabulary cards** — double-click a saved word to open its dictionary card
   (or the fields saved with it when no dictionary is configured). The word table
   can be searched by word or meaning and sorted by any column; the choice is
@@ -55,9 +55,11 @@ What you *do* get is the source, the build script, and a local-first workflow yo
 ## Requirements
 
 - Windows 10/11 (64-bit)
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) for the original dictionary layout (simple mode still works without it)
 - Your own DeepSeek API key (or any OpenAI-compatible endpoint)
 - Optional: [Anki](https://apps.ankiweb.net/) + [AnkiConnect](https://ankiweb.net/shared/info/2055492159) for card sync
-- Optional: MDX/MDD dictionaries (not bundled, see below)
+- Optional: MDX/MDD/StarDict/DSL/Dictd/XDXF dictionaries (not bundled, see below)
+- Optional: Windows OCR language feature for screenshot OCR (English/Chinese/French are common; install the language in Windows Settings)
 
 ## Quick start
 
@@ -65,6 +67,7 @@ What you *do* get is the source, the build script, and a local-first workflow yo
 2. Run `Interpres.exe` from the extracted folder. It is portable and keeps its data in your user profile; nothing is installed system-wide.
 3. Press `Ctrl+Alt+S` to open the panel, then click the gear (top right) to open settings; paste your API key and click **Test connection**.
 4. Copy a word or passage in a reader (`Ctrl+C` or right-click **Copy**).
+5. For an image or scanned PDF, press `Ctrl+Alt+T` and drag over the text.
 
 What changed in each version: see [CHANGELOG.md](CHANGELOG.md) or the Releases page.
 
@@ -126,13 +129,18 @@ are left untouched, and the dialog warns first.
 
 ## Dictionaries
 
-The app does not ship dictionaries. Put `.mdx`/`.mdd` files anywhere and add them in **Settings → Language & audio → Dictionary settings…**. The parser supports MDX 2.0; encrypted or MDX 1.2 files are not supported yet.
+The app does not ship dictionaries. Put dictionary files anywhere and add them in **Settings → Language & audio → Dictionary settings…**. Supported formats:
 
-The original-entry viewer keeps the dictionary's HTML and CSS, but removes
-dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links
-before rendering. Its own toolbar buttons are handled by the app's injected
-script; a dictionary that depends on custom JavaScript interactivity will look
-correct but not run its own scripts.
+- MDX/MDD 2.0
+- unencrypted MDX 1.2 (zlib and LZO blocks)
+- StarDict (`.ifo` / `.idx` / `.dict[.dz]`)
+- DSL (`.dsl`, `.dsl.dz`)
+- Dictd (`.index`)
+- XDXF (`.xdxf`, `.xdxf.dz`)
+
+Encrypted MDX files are not supported. A language can contain several dictionaries; the result bar lists every hit, and **Settings → Language & audio → Dictionary settings… → Groups** controls order, default, per-dictionary panel/popup visibility and whole-group mute. The Anki definition dictionary can be chosen separately per language.
+
+The original-entry viewer uses WebView2 and keeps the dictionary's own HTML/CSS/images/audio, but removes dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links before rendering. Its own toolbar buttons are handled by the app's injected script; a dictionary that depends on custom JavaScript interactivity will look correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
 
@@ -144,11 +152,17 @@ All settings and data live in `%USERPROFILE%\.reading-companion\`:
 
 ```
 config.json   settings (API key encrypted with Windows DPAPI)
-reading.db    vocabulary, conversations, translation cache
-app.log       logs (no selected text or document bodies)
+reading.db    vocabulary, conversations, translation cache, lookup history
+app.log       logs (no copied text, screenshots or document bodies)
 cache/        TTS audio cache
 exports/      CSV/TSV/Markdown exports
 ```
+
+Clipboard monitoring and screenshot OCR run locally. OCR screenshots are written
+to a temporary PNG only for the Windows OCR call, then deleted; recognized text
+is treated like copied text and is not uploaded by OCR itself. The clipboard
+trigger can be disabled in settings, and only whitelisted reading apps are
+monitored by default.
 
 Network access is limited to:
 
@@ -224,7 +238,7 @@ Some tests use a mock OpenAI/AnkiConnect server; Anki integration tests skip aut
 ```
 app.py                    entry point: Application shell, hotkeys, tray, main()
 app_panel.py              main-panel wiring: translate, ask, history windows
-app_flow.py               selection → bubble → details → dictionary flow
+app_flow.py               clipboard/OCR text → dictionary or translation flow
 app_media.py              save word, Anki push, pronunciation, term locking
 rc/service.py             Service (mixin composition): chat, history, status
 rc/service_base.py        annotated attributes shared by the service mixins
@@ -232,10 +246,16 @@ rc/service_translate.py   translation pipeline: chunking, cache, streaming
 rc/service_dict.py        dictionary lookup, morphology, entry HTML
 rc/service_vocab.py       vocabulary, languages, glossary
 rc/service_anki.py        Anki fields, templates, push
+rc/service_lookup_history.py  recent lookup records, stats and retention
 rc/service_common.py      chunking/cache helpers shared by the mixins
 rc/llm.py                 chat/translation client (streaming, JSON parsing)
 rc/rich.py                dictionary HTML → structured senses/examples
 rc/mdx.py                 pure-stdlib MDX/MDD reader
+rc/stardict.py            StarDict reader
+rc/dsl.py                 DSL / DSL.dz reader
+rc/dictd.py               Dictd reader
+rc/xdxf.py                XDXF / XDXF.dz reader
+rc/lzo.py                 LZO block decompressor for MDX 1.2
 rc/panel.py               main window shell: layout, books, scrolling, status
 rc/panel_translate.py     translate tab: streaming output, progress, errors
 rc/panel_dict.py          dictionary tab: lookup, senses, morphology, save
@@ -245,11 +265,23 @@ rc/vocab_panel.py         vocabulary tab shell: layout, search, refresh
 rc/vocab_table.py         word table: sorting, column widths, word cards
 rc/vocab_books.py         word-book list and book dialogs
 rc/vocab_actions.py       move/delete/export words, Anki sync
-rc/popup.py               selection popup shell: lifecycle, placement, wheel, resizing
-rc/popup_dict.py          dictionary card: senses, morphology, similar words
+rc/popup.py               popup shell: lifecycle, placement, wheel, resizing
+rc/popup_dict.py          dictionary card: senses, original view, inline WebView2
 rc/popup_chat.py          inline chat card: bubbles, input bar, streaming
 rc/popup_result.py        translation result card: terms, grammar, actions
 rc/popup_common.py        small popup helpers
+rc/dict_config.py         global dictionary library, groups, mute/default/Anki choice
+rc/dictmanager.py         dictionary loading, source selection, cache and idle release
+rc/dictionary.py          one dictionary: lookup, audio and raw entry
+rc/dict_forms.py          user word forms and conjugation tables
+rc/dict_view.py           original-entry HTML/CSS and CSP wrapper
+rc/dict_view_controller.py shared raw-word/URL helpers for panel and popup
+rc/webview_host.py        reusable WinForms WebView2 host
+rc/webview_window.py      standalone WebView2 entry window (legacy entry point)
+rc/clipboard_watch.py     whitelisted clipboard trigger
+rc/ocr.py                 Windows.Media.Ocr wrapper
+rc/ocr_picker.py          full-screen OCR region picker
+rc/lookup_history_ui.py   recent lookup window, filters, stars and stats
 rc/settings_ui.py         settings window shell: pages, tabs, shared widgets
 rc/settings_pages.py      settings window: one builder per page
 rc/settings_actions.py    settings window: save, test, dialogs, export
@@ -258,9 +290,7 @@ rc/config.py              settings file, DPAPI key storage, language table
 rc/server.py              loopback-only HTTP API (token, size limits)
 rc/netpolicy.py           endpoint validation: HTTPS or loopback only
 rc/capture.py             clipboard snapshot and selected-text capture
-rc/selection.py           mouse watcher for drag / double-click selection
-rc/dictionary.py          one MDX dictionary: lookup, audio, entry HTML
-rc/dictmanager.py         per-language dictionary registry and cache
+rc/selection.py           low-level foreground/selection helpers
 rc/anki.py                AnkiConnect client, note fields and templates
 rc/tts.py                 speech: SAPI, Edge or a custom command
 rc/theme.py               shared palette and font
@@ -268,17 +298,18 @@ rc/store.py               SQLite storage
 rc/i18n.py                zh/en display-layer translation
 # remaining dialog windows: book_settings, entry_settings, selection_settings,
 # dictionary_settings, dict_profiles, language_dialog, anki_card_settings,
-# wordbook_anki_settings, vocab_panel, translation_ui, chat_ui
+# wordbook_anki_settings, vocab_panel, translation_ui, chat_ui, user_lang_dialog
 ```
 
 ## Known limitations and rough edges
 
 - The code was generated by an AI agent and has not been reviewed by a professional developer. Treat it as an experimental personal project.
 - Testing was done on the author's own Windows machine and a handful of readers; other apps, DPI settings and Windows versions are not covered.
-- Text selection capture relies on clipboard simulation; some apps with unusual selection handling will not work.
+- Clipboard lookup only monitors the reading-app whitelist by default; copying from other apps does nothing. It can be disabled entirely in settings.
+- Screenshot OCR uses the Windows OCR language packs and currently captures the primary monitor region; recognition of handwriting, vertical text and very small/low-contrast text is imperfect.
+- The original dictionary layout needs the WebView2 Runtime; without it, the compact dictionary view still works.
+- Encrypted MDX files are not supported (unencrypted MDX 2.0 and 1.2 are).
 - The API key is encrypted with Windows DPAPI, so copying `config.json` to another machine or Windows user means the key has to be entered again (bookmarks and history copy fine).
-- Only one MDX dictionary per language is used for lookup; there is no merged multi-dictionary view.
-- MDX 1.2 and encrypted dictionaries are not supported.
 - Latin has no native TTS voice; the app falls back to Italian (Edge) or French (SAPI).
 - Edge TTS is an unofficial Microsoft endpoint and may change without notice.
 - Anki sync depends on AnkiConnect and a running Anki instance; there is no offline queue or retry.
