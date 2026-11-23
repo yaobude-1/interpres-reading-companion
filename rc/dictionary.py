@@ -27,6 +27,22 @@ from .mdx import MDD, MDX, MDXError, html_to_text
 log = logging.getLogger("rc")
 
 
+def _ohd_example_pair(example) -> tuple[str, str]:
+    """OHD 例句 → (法语, 英语)；短语块用 b.ohd-phrase 而不是 source/target。"""
+    phrase = example.find("b", cls="ohd-phrase")
+    if phrase is not None:
+        source = phrase.clean_text()
+        content = example.find("div", cls="ohd-example-content")
+        text = content.clean_text() if content is not None else ""
+        return source, text.replace(source, "", 1).strip()
+    source_node = example.find(cls="ohd-example-source")
+    target_node = example.find(cls="ohd-example-target")
+    return (
+        source_node.clean_text() if source_node is not None else "",
+        target_node.clean_text() if target_node is not None else "",
+    )
+
+
 @dataclass
 class Sense:
     definition: str = ""          # 英文释义
@@ -89,12 +105,32 @@ class Dictionary:
     ) -> None:
         self.path = Path(mdx_path)
         self._profiles = profiles or []
-        self._mdx = MDX(self.path)
-        # 词典自己的名字优先（MDX 头里的 Title），没有才退回文件名
-        title = unescape(str(self._mdx.attrs.get("Title") or "")).strip()
+        self._backend = None
+        name_lower = self.path.name.lower()
+        if name_lower.endswith((".dsl", ".dsl.dz")):
+            from .dsl import DSL
+
+            self._backend = DSL(self.path)
+        elif self.path.suffix.lower() in (".ifo", ".idx"):
+            from .stardict import StarDict
+
+            self._backend = StarDict(self.path)
+        elif self.path.suffix.lower() == ".index":
+            from .dictd import Dictd
+
+            self._backend = Dictd(self.path)
+        elif name_lower.endswith((".xdxf", ".xdxf.dz", ".xdxf.gz")):
+            from .xdxf import XDXF
+
+            self._backend = XDXF(self.path)
+        self._mdx = self._backend or MDX(self.path)
+        # 词典自己的名字优先（MDX 头里的 Title / StarDict 的 bookname），没有才退回文件名
+        title = unescape(
+            str(self._mdx.attrs.get("Title") or self._mdx.attrs.get("bookname") or "")
+        ).strip()
         self.name = title or self.path.stem
         self._mdd = None
-        if mdd_path and Path(mdd_path).exists():
+        if self._backend is None and mdd_path and Path(mdd_path).exists():
             try:
                 self._mdd = MDD(mdd_path)
             except MDXError:
@@ -129,6 +165,8 @@ class Dictionary:
 
     # ------------------------------------------------------------------ 查询
     def lookup(self, word: str) -> DictEntry | None:
+        if self._backend is not None:
+            return self._backend.entry(word)
         html = self._mdx.lookup(word)
         if not html:
             return None
@@ -227,29 +265,65 @@ class Dictionary:
         node = root.find("div", cls="ohd-pronunciation")
         if node:
             entry.phonetic = node.clean_text().strip(" /")
-        node = root.find("i", cls="ohd-pos")
-        if node:
-            entry.pos = node.clean_text()
 
-        for block in root.find_all("blockquote", cls="ohd-sense"):
-            sense = Sense()
-            content = block.find("div", cls="ohd-sense-content")
-            if content:
-                lines = content.clean_text().split("\n")
-                if lines:
-                    sense.definition = lines[0]
-            examples = block.find_all("blockquote", cls="ohd-example")
-            for example in examples:
-                source = example.find(cls="ohd-example-source")
-                target = example.find(cls="ohd-example-target")
-                if source:
-                    sense.example = source.clean_text()
-                if target:
-                    sense.example_cn = target.clean_text()
-                if sense.example:
-                    break
-            if sense.definition:
-                entry.senses.append(sense)
+        # 每个 ohd-pos-block 是一个词性区（I. nm / II. vtr / III. vi ...）。
+        # 只认带 ohd-pos-heading 的顶层块，里面嵌套的子块是同一词性下的短语。
+        blocks = [
+            block
+            for block in root.find_all("div", cls="ohd-pos-block")
+            if block.find("div", cls="ohd-pos-heading")
+        ]
+        first_pos = ""
+        for block in blocks:
+            heading = block.find("div", cls="ohd-pos-heading")
+            pos_node = heading.find("i", cls="ohd-pos") if heading is not None else None
+            pos = pos_node.clean_text().strip() if pos_node is not None else ""
+            if not pos:
+                continue
+            if not first_pos:
+                first_pos = pos
+            added = 0
+            for blockquote in block.find_all("blockquote", cls="ohd-sense"):
+                # 跳过嵌套子块里的义项，否则会把同一词性的短语重复列出来
+                parent = blockquote.parent
+                nested = False
+                while parent is not None and parent is not block:
+                    if "ohd-pos-block" in (parent.attrs.get("class") or "").split():
+                        nested = True
+                        break
+                    parent = parent.parent
+                if nested:
+                    continue
+                sense = Sense(pos=pos)
+                content = blockquote.find("div", cls="ohd-sense-content")
+                if content is not None:
+                    lines = content.clean_text().split("\n")
+                    if lines:
+                        sense.definition = lines[0]
+                for example in blockquote.find_all("blockquote", cls="ohd-example"):
+                    source = example.find(cls="ohd-example-source")
+                    target = example.find(cls="ohd-example-target")
+                    if source is not None:
+                        sense.example = source.clean_text()
+                    if target is not None:
+                        sense.example_cn = target.clean_text()
+                    if sense.example:
+                        break
+                if sense.definition:
+                    entry.senses.append(sense)
+                    added += 1
+            # 有些词性块只有短语表（如 I. nm 的 au sortir de、V. Idiome），
+            # 没有 ohd-sense；用第一条短语/例句补一个义项。
+            if not added:
+                examples = block.find_all("blockquote", cls="ohd-example")
+                if examples:
+                    src, tgt = _ohd_example_pair(examples[0])
+                    if src or tgt:
+                        sense = Sense(pos=pos)
+                        sense.definition = f"{src} — {tgt}" if tgt else src
+                        entry.senses.append(sense)
+        if first_pos:
+            entry.pos = first_pos
 
     # ------------------------------------------------------ 通用（如拉丁词典）
     def _parse_generic(self, entry: DictEntry, html: str) -> None:
@@ -279,6 +353,33 @@ class Dictionary:
                     entry.senses[-1].example = line.lstrip("▶ ").strip()[:300]
             if len(entry.senses) >= 8:
                 break
+
+    def raw(self, word: str) -> str | None:
+        """Word's raw MDX HTML (following @@@LINK), without parsing."""
+        return self._mdx.lookup(word)
+
+    def resource(self, name: str) -> bytes | None:
+        """Bytes from the dictionary's MDD archive or its folder (CSS/images)."""
+        if not name or self._backend is not None:
+            return None
+        key = str(name).replace("/", "\\").lstrip("\\")
+        if self._mdd:
+            data = self._mdd.lookup_bytes(key)
+            if data is None:
+                data = self._mdd.lookup_bytes("\\" + key)
+            if data is not None:
+                return data
+        # 有些词典把 CSS/图片放在 MDX 同目录，而不是 MDD 里
+        try:
+            base = self.path.parent.resolve()
+            target = (base / key.replace("\\", "/")).resolve()
+            if base != target and base not in target.parents:
+                return None
+            if target.is_file():
+                return target.read_bytes()
+        except OSError:
+            return None
+        return None
 
     def audio(self, sound_key: str) -> bytes | None:
         if not self._mdd:

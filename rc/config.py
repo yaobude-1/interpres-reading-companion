@@ -11,6 +11,7 @@ import ctypes
 import json
 import os
 import secrets
+import threading
 from pathlib import Path
 
 DEFAULT_LANGUAGES: dict[str, dict] = {
@@ -111,17 +112,23 @@ DEFAULT_CONFIG: dict = {
         "animations": True,
     },
     "audio_source": "dict_first",
+    "dict_view_default": "simple",
     "history_keep": 30,
+    "lookup_history_enabled": True,
+    "lookup_history_keep": 300,
+    "ocr_hotkey": "ctrl+alt+t",
+    "ocr_language": "",
     # 本地词典：按语种配置 mdx / mdd
     "use_dictionary": True,
     "dictionaries": {
-        "en": {"mdx": "", "mdd": ""},
-        "fr": {"mdx": "", "mdd": ""},
-        "la": {"mdx": "", "mdd": ""},
+        "en": {"items": [], "muted": []},
+        "fr": {"items": [], "muted": []},
+        "la": {"items": [], "muted": []},
     },
     # 划词小按钮
     "selection": {
         "enabled": True,
+        "clipboard_enabled": True,
         "drag": True,
         "double_click": True,
         "delay_ms": 150,
@@ -235,6 +242,7 @@ class Config:
         self.path = self.data_dir / "config.json"
         self.data: dict = copy.deepcopy(DEFAULT_CONFIG)
         self._api_key_undecryptable: bool | None = None
+        self._save_lock = threading.RLock()
         self.load()
 
     # ---------------------------------------------------------------- load / save
@@ -248,6 +256,14 @@ class Config:
         except Exception:
             raw = {}
         self.data = _merge(copy.deepcopy(DEFAULT_CONFIG), raw)
+        from .dict_config import normalize
+
+        normalize(self.data)
+        if not self.data.get("ocr_hotkey_migrated"):
+            if str(self.data.get("ocr_hotkey") or "") == "ctrl+alt+o":
+                self.data["ocr_hotkey"] = "ctrl+alt+t"
+            self.data["ocr_hotkey_migrated"] = True
+            self.save()
         if not self.data.get("server_token"):
             self.data["server_token"] = secrets.token_hex(16)
             self.save()
@@ -263,15 +279,29 @@ class Config:
             self.save()
 
     def save(self) -> None:
-        key = str(self.api.get("api_key") or "").strip()
-        if key and not key.startswith("dpapi:"):
-            protected = _dpapi_protect(key)
-            if protected:
-                self.api["api_key"] = protected
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(self.data, ensure_ascii=False, indent=2), encoding="utf-8")
-        tmp.replace(self.path)
+        from .dict_config import normalize
+
+        with self._save_lock:
+            normalize(self.data)
+            key = str(self.api.get("api_key") or "").strip()
+            if key and not key.startswith("dpapi:"):
+                protected = _dpapi_protect(key)
+                if protected:
+                    self.api["api_key"] = protected
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_suffix(".json.tmp")
+            try:
+                tmp.write_text(
+                    json.dumps(self.data, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                tmp.replace(self.path)
+            except OSError:
+                try:
+                    tmp.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                raise
 
     # ---------------------------------------------------------------- accessors
     @property

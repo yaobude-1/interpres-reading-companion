@@ -1,0 +1,25 @@
+{
+  "it": {
+    "forms": {
+      "parlo": "parlare",
+      "vado": "andare"
+    },
+    "tables": {
+      "parlare": [
+        {
+          "key": "present",
+          "zh": "现在时",
+          "fr": "Presente",
+          "rows": [
+            ["io", "parlo"],
+            ["tu", "parli"],
+            ["lui/lei", "parla"],
+            ["noi", "parliamo"],
+            ["voi", "parlate"],
+            ["loro", "parlano"]
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -27,15 +27,17 @@ from .service_common import (
     split_chunks as split_chunks,
 )
 from .service_dict import DictMixin
+from .service_lookup_history import LookupHistoryMixin
 from .service_translate import TranslateMixin
 from .service_vocab import VocabMixin
 from .store import Store
 from .tts import TTS
+from .user_lang import UserLangData
 
 log = logging.getLogger("rc")
 
 
-class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
+class Service(VocabMixin, AnkiMixin, DictMixin, LookupHistoryMixin, TranslateMixin):
     def __init__(self, config: Config) -> None:
         self.config = config
         self.data_dir = config.data_dir
@@ -45,6 +47,7 @@ class Service(VocabMixin, AnkiMixin, DictMixin, TranslateMixin):
         self.tts = TTS(config, self.data_dir / "cache" / "tts")
         self.anki = Anki()
         self.dicts = DictionaryManager(config)
+        self.user_lang = UserLangData(self.data_dir)
         self._context_lock = threading.Lock()
         # 每个窗口最近一次选中内容，用于给短查询补上下文
         self._recent: dict[str, dict] = {}

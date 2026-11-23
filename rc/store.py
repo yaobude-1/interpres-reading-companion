@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS vocab (
     dict_example TEXT NOT NULL DEFAULT '',
     dict_example_cn TEXT NOT NULL DEFAULT '',
     audio_key    TEXT NOT NULL DEFAULT '',
+    dict_id      TEXT NOT NULL DEFAULT '',
     UNIQUE (lang, lemma)
 );
 
@@ -96,6 +97,21 @@ CREATE TABLE IF NOT EXISTS history (
     book     TEXT NOT NULL DEFAULT '',
     lang     TEXT NOT NULL DEFAULT '',
     created  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS lookup_history (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    lang      TEXT NOT NULL,
+    word      TEXT NOT NULL,
+    lemma     TEXT NOT NULL DEFAULT '',
+    dict_id   TEXT NOT NULL DEFAULT '',
+    source    TEXT NOT NULL DEFAULT '',
+    preview   TEXT NOT NULL DEFAULT '',
+    book      TEXT NOT NULL DEFAULT '',
+    count     INTEGER NOT NULL DEFAULT 1,
+    created   TEXT NOT NULL,
+    last_used TEXT NOT NULL,
+    UNIQUE (lang, lemma)
 );
 
 CREATE TABLE IF NOT EXISTS conversations (
@@ -205,6 +221,7 @@ class Store:
             ("dict_example", "TEXT NOT NULL DEFAULT ''"),
             ("dict_example_cn", "TEXT NOT NULL DEFAULT ''"),
             ("audio_key", "TEXT NOT NULL DEFAULT ''"),
+            ("dict_id", "TEXT NOT NULL DEFAULT ''"),
             ("wordbook_id", "INTEGER NOT NULL DEFAULT 0"),
         ):
             if name not in columns:
@@ -409,6 +426,7 @@ class Store:
             data.get("dict_example", ""),
             data.get("dict_example_cn", ""),
             data.get("audio_key", ""),
+            data.get("dict_id", ""),
         )
         with self._lock:
             row = self._conn.execute(
@@ -429,6 +447,7 @@ class Store:
                        dict_example = COALESCE(NULLIF(?, ''), dict_example),
                        dict_example_cn = COALESCE(NULLIF(?, ''), dict_example_cn),
                        audio_key = COALESCE(NULLIF(?, ''), audio_key),
+                       dict_id = COALESCE(NULLIF(?, ''), dict_id),
                        updated = ?
                        WHERE id = ?""",
                     (*values, ts, row["id"]),
@@ -442,8 +461,8 @@ class Store:
                 """INSERT INTO vocab
                    (word, reading, pos, meaning, sentence, book, difficulty,
                     dict_source, dict_meaning, dict_example, dict_example_cn, audio_key,
-                    lang, lemma, tags, created, updated, wordbook_id)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    dict_id, lang, lemma, tags, created, updated, wordbook_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (*values, lang, lemma, data.get("tags", ""), ts, ts, book_id),
             )
             self._conn.commit()
@@ -686,11 +705,128 @@ class Store:
                 (text, book or "", lang or "", now()),
             )
             self._conn.execute(
-                """DELETE FROM history WHERE id NOT IN
-                   (SELECT id FROM history ORDER BY id DESC LIMIT ?)""",
-                (keep,),
+                """DELETE FROM history WHERE book = ? AND id NOT IN
+                   (SELECT id FROM history WHERE book = ?
+                    ORDER BY id DESC LIMIT ?)""",
+                (book or "", book or "", keep),
             )
             self._conn.commit()
+
+    # --------------------------------------------------------- lookup history
+    def add_lookup(
+        self,
+        *,
+        lang: str,
+        word: str,
+        lemma: str = "",
+        dict_id: str = "",
+        source: str = "",
+        preview: str = "",
+        book: str = "",
+        keep: int = 300,
+    ) -> None:
+        lang = (lang or "??").strip().lower() or "??"
+        word = (word or "").strip()
+        lemma = (lemma or word).strip()
+        if not word:
+            return
+        ts = now()
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO lookup_history
+                   (lang, word, lemma, dict_id, source, preview, book, count, created, last_used)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+                   ON CONFLICT(lang, lemma) DO UPDATE SET
+                     word = excluded.word,
+                     dict_id = excluded.dict_id,
+                     source = excluded.source,
+                     preview = excluded.preview,
+                     book = excluded.book,
+                     count = lookup_history.count + 1,
+                     last_used = excluded.last_used""",
+                (
+                    lang,
+                    word,
+                    lemma,
+                    dict_id or "",
+                    source or "",
+                    preview or "",
+                    book or "",
+                    ts,
+                    ts,
+                ),
+            )
+            self._conn.execute(
+                """DELETE FROM lookup_history WHERE id NOT IN
+                   (SELECT id FROM lookup_history ORDER BY last_used DESC, id DESC LIMIT ?)""",
+                (max(1, int(keep)),),
+            )
+            self._conn.commit()
+
+    def lookup_history(self, limit: int = 50, lang: str = "", book: str = "") -> list[dict]:
+        clauses: list[str] = []
+        values: list = []
+        if lang:
+            clauses.append("lang = ?")
+            values.append(lang.strip().lower())
+        if book:
+            clauses.append("book = ?")
+            values.append(book)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        values.append(max(1, int(limit)))
+        with self._lock:
+            rows = self._conn.execute(
+                f"""SELECT * FROM lookup_history{where}
+                    ORDER BY last_used DESC, id DESC LIMIT ?""",
+                tuple(values),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def lookup_books(self) -> list[str]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT DISTINCT book FROM lookup_history
+                   WHERE book != '' ORDER BY book COLLATE NOCASE"""
+            ).fetchall()
+        return [str(row["book"]) for row in rows]
+
+    def lookup_stats(self) -> dict:
+        with self._lock:
+            row = self._conn.execute(
+                """SELECT COUNT(*) AS words, COALESCE(SUM(count), 0) AS total
+                   FROM lookup_history"""
+            ).fetchone()
+            top = self._conn.execute(
+                """SELECT word, count FROM lookup_history
+                   ORDER BY count DESC, last_used DESC LIMIT 5"""
+            ).fetchall()
+        return {
+            "words": int(row["words"] or 0),
+            "total": int(row["total"] or 0),
+            "top": [{"word": item["word"], "count": int(item["count"] or 0)} for item in top],
+        }
+
+    def prune_lookup_history(self, keep: int) -> int:
+        with self._lock:
+            cur = self._conn.execute(
+                """DELETE FROM lookup_history WHERE id NOT IN
+                   (SELECT id FROM lookup_history
+                    ORDER BY last_used DESC, id DESC LIMIT ?)""",
+                (max(1, int(keep)),),
+            )
+            self._conn.commit()
+            return int(cur.rowcount or 0)
+
+    def remove_lookup(self, lookup_id: int) -> None:
+        with self._lock:
+            self._conn.execute("DELETE FROM lookup_history WHERE id = ?", (int(lookup_id),))
+            self._conn.commit()
+
+    def clear_lookup_history(self) -> int:
+        with self._lock:
+            cur = self._conn.execute("DELETE FROM lookup_history")
+            self._conn.commit()
+            return int(cur.rowcount or 0)
 
     # ----------------------------------------------------------- conversations
     def recent_history(self, book: str, limit: int = 3) -> list[str]:

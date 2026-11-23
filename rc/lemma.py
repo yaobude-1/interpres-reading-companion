@@ -78,6 +78,9 @@ IRREGULAR = {
     "analyses": "analysis", "crises": "crisis", "theses": "thesis",
     "phenomena": "phenomenon", "criteria": "criterion", "data": "datum",
     "media": "medium", "indices": "index", "matrices": "matrix",
+    # 不规则比较级
+    "better": "good", "best": "good", "worse": "bad", "worst": "bad",
+    "further": "far", "furthest": "far", "elder": "old", "eldest": "old",
 }
 
 _VOWELS = "aeiou"
@@ -133,19 +136,74 @@ def english_candidates(word: str) -> list[str]:
     return out
 
 
+FRENCH_NOUN_IRREGULAR = {
+    "yeux": "œil",
+    "travaux": "travail",
+    "vieille": "vieux",
+    "vieilles": "vieux",
+    "fausse": "faux",
+    "fausses": "faux",
+    "publique": "public",
+    "publiques": "public",
+    "belle": "beau",
+    "belles": "beau",
+    "nouvelle": "nouveau",
+    "nouvelles": "nouveau",
+    "messieurs": "monsieur",
+    "mesdames": "madame",
+}
+
+
 def french_candidates(word: str) -> list[str]:
     word = word.lower()
     out: list[str] = []
+
+    def add(value: str) -> None:
+        if value and value != word and len(value) >= 2 and value not in out:
+            out.append(value)
+
+    bases = [word]
+    if word.endswith(("s", "x")) and len(word) > 3:
+        bases.append(word[:-1])
+    for base in bases:
+        if base in FRENCH_NOUN_IRREGULAR:
+            add(FRENCH_NOUN_IRREGULAR[base])
+        # 名词/形容词：chevaux → cheval，bateaux → bateau
+        if base.endswith("aux") and len(base) > 4:
+            add(base[:-3] + "al")
+        if base.endswith("eaux") and len(base) > 5:
+            add(base[:-1])
+        # 形容词阴性：heureuse → heureux，première → premier
+        if base.endswith("euse"):
+            add(base[:-4] + "eux")
+        if base.endswith("ère"):
+            add(base[:-3] + "er")
+        if base.endswith("elle"):
+            add(base[:-4] + "eau")
+        if base.endswith("enne"):
+            add(base[:-4] + "en")
+        if base.endswith("onne"):
+            add(base[:-4] + "on")
+        if base.endswith("ette"):
+            add(base[:-4] + "et")
+        if base.endswith("ive"):
+            add(base[:-3] + "if")
+        if base.endswith("che"):
+            add(base[:-3] + "c")
+        if base.endswith("gue"):
+            add(base[:-3] + "g")
+        if base.endswith("ce"):
+            add(base[:-2] + "x")
+        if base.endswith("e"):
+            add(base[:-1])
+
     for suffix in ("s", "x", "es", "ent", "ez", "ons", "ais", "ait", "aient", "é", "ée", "és", "ées", "er", "ir", "re"):
         if word.endswith(suffix) and len(word) - len(suffix) >= 3:
             stem = word[: -len(suffix)]
-            if stem not in out:
-                out.append(stem)
+            add(stem)
             if suffix in ("ent", "ez", "ons", "ais", "ait", "aient"):
-                if (stem + "er") not in out:
-                    out.append(stem + "er")
-                if (stem + "ir") not in out:
-                    out.append(stem + "ir")
+                add(stem + "er")
+                add(stem + "ir")
     return out
 
 
@@ -183,6 +241,18 @@ def latin_candidates(word: str) -> list[str]:
     return out
 
 
+def generic_candidates(word: str) -> list[str]:
+    """未知语言只做最保守的复数还原，不套任何具体语言的动词规则。"""
+    word = word.lower()
+    out: list[str] = []
+    for suffix in ("s", "es"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            value = word[: -len(suffix)]
+            if value not in out:
+                out.append(value)
+    return out
+
+
 def candidates(word: str, lang: str) -> list[str]:
     """按语言给出一串可能匹配的词形。"""
     text = (word or "").strip()
@@ -191,11 +261,12 @@ def candidates(word: str, lang: str) -> list[str]:
     lowered = text.lower()
     if lang == "en":
         return english_candidates(lowered)
-    if lang in ("fr", "de", "es", "it"):
+    if lang == "fr":
         return french_candidates(lowered)
     if lang == "la":
         return latin_candidates(lowered)
-    return [lowered]
+    # de/es/it 以及其他语言：没有专门规则，退回通用复数还原
+    return generic_candidates(lowered)
 
 
 def strip_word(text: str) -> str:

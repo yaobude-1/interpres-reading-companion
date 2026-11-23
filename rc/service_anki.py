@@ -29,11 +29,11 @@ class AnkiMixin(ServiceBase):
 
         lang = (word.get("lang") or "").lower()
         text = (word.get("word") or word.get("lemma") or "").strip()
-        dictionary = self.dicts.dictionary(lang)
+        dictionary = self.dicts.anki_dictionary(lang, str(word.get("dict_id") or ""))
         if dictionary is None or not text:
             return word
         try:
-            raw = dictionary._mdx.lookup(text)
+            raw = dictionary.raw(text)
             raw = raw if isinstance(raw, str) else ""
         except Exception:
             return word
@@ -108,11 +108,11 @@ class AnkiMixin(ServiceBase):
             "group": "",
             "exam_type": "",
         }
-        dictionary = self.dicts.dictionary(lang)
+        dictionary = self.dicts.anki_dictionary(lang, str(word.get("dict_id") or ""))
         senses: list[dict] = []
         if dictionary is not None and text:
             try:
-                raw = dictionary._mdx.lookup(text)
+                raw = dictionary.raw(text)
                 senses = extract_english(raw if isinstance(raw, str) else "")
             except Exception:
                 senses = []

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .llm import Translator
     from .store import Store
     from .tts import TTS
+    from .user_lang import UserLangData
 
 
 class ServiceBase:
@@ -30,3 +31,4 @@ class ServiceBase:
     tts: TTS
     anki: Anki
     dicts: DictionaryManager
+    user_lang: UserLangData

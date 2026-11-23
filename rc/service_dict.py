@@ -4,27 +4,63 @@ from __future__ import annotations
 
 import logging
 
-from . import audio, lemma
+from . import audio, fuzzy, lemma
 from .service_base import ServiceBase
 
 log = logging.getLogger("rc")
 
+# 词典词头里的音节分隔点/软连字符/下加点：ge·hen、ẹs·sen 与 gehen、essen 是同一个词
+_HEADWORD_IGNORED = (
+    "·",
+    "|",  # 俄语词典用竖线分隔词干/词尾
+    "\u00ad",
+    "\u200b",
+    "\u0323",  # combining dot below（朗氏用它标短音）
+    "\u0324",
+    "\u0325",
+    "\u0329",
+    "\u0331",
+    "\u0332",  # combining low line（牛津德语标重音）
+    "\u0336",
+    "\u0338",
+)
+
+
+def _headword_key(text: str) -> str:
+    value = str(text or "")
+    for char in _HEADWORD_IGNORED:
+        value = value.replace(char, "")
+    return value.strip()
+
 
 class DictMixin(ServiceBase):
-    def has_dictionaries(self) -> bool:
+    def has_dictionaries(self, context: str = "panel") -> bool:
         """有没有配置任何本地词典。"""
         for code in (self.config.data.get("languages") or {}):
-            if self.has_dictionary(code):
+            if self.has_dictionary(code, context):
                 return True
         return False
 
-    def has_dictionary(self, lang: str) -> bool:
+    def has_dictionary(self, lang: str, context: str = "panel") -> bool:
         try:
-            return bool(lang) and self.dicts.dictionary(lang) is not None
+            return bool(lang) and self._dictionary_for(lang, context) is not None
         except Exception:
             return False
 
-    def fuzzy_lookup(self, word: str, lang_hint: str | None = None, limit: int = 20) -> list[dict]:
+    def _dictionary_for(self, lang: str, context: str = "panel"):
+        """兼容只接受一个参数的测试替身。"""
+        try:
+            return self.dicts.dictionary(lang, context)
+        except TypeError:
+            return self.dicts.dictionary(lang)
+
+    def fuzzy_lookup(
+        self,
+        word: str,
+        lang_hint: str | None = None,
+        limit: int = 20,
+        context: str = "panel",
+    ) -> list[dict]:
         """相近词搜索：前缀 + 重音归一 + 编辑距离，返回 [{lang, word, pos, gloss, level}]。"""
         from . import fuzzy, gloss
 
@@ -40,28 +76,53 @@ class DictMixin(ServiceBase):
         for code in ("en", "fr", "la", "de", "es", "it"):
             if code not in order:
                 order.append(code)
+        results: list[dict] = []
+        seen: set[tuple[str, str, str]] = set()
+        dictionary_rank: dict[tuple[str, str], int] = {}
         for code in order:
-            dictionary = self.dicts.dictionary(code)
-            if dictionary is None:
-                continue
-            index = fuzzy.build_index(dictionary)
-            if index is None:
-                continue
-            found = index.search(text, limit)
-            if not found:
-                continue
-            results: list[dict] = []
-            for key, level in found:
-                raw = dictionary._mdx.lookup(key)
-                pos, meaning = gloss.quick_gloss(raw if isinstance(raw, str) else "", code)
-                results.append(
-                    {"lang": code, "word": key, "pos": pos, "gloss": meaning, "level": level}
-                )
-            return results
-        return []
+            dictionaries = self.dicts.dictionaries(code, context)
+            for dict_index, dictionary in enumerate(dictionaries):
+                dict_id = getattr(dictionary, "dict_id", "")
+                dictionary_rank[(code, dict_id)] = dict_index
+                index = fuzzy.build_index(dictionary)
+                if index is None:
+                    continue
+                found = index.search(text, limit)
+                if not found:
+                    continue
+                for key, level in found:
+                    if (code, dict_id, key) in seen:
+                        continue
+                    seen.add((code, dict_id, key))
+                    raw = dictionary._mdx.lookup(key)
+                    pos, meaning = gloss.quick_gloss(raw if isinstance(raw, str) else "", code)
+                    results.append(
+                        {
+                            "lang": code,
+                            "dict_id": dict_id,
+                            "source": dictionary.name,
+                            "word": key,
+                            "pos": pos,
+                            "gloss": meaning,
+                            "level": level,
+                        }
+                    )
+        rank = {code: index for index, code in enumerate(order)}
+        results.sort(
+            key=lambda item: (
+                item["level"],
+                rank.get(item["lang"], 999),
+                dictionary_rank.get((item["lang"], item.get("dict_id") or ""), 999),
+                len(item["word"]),
+                item["word"].lower(),
+            )
+        )
+        return results[:limit]
 
-    def lookup_all(self, word: str, lang_hint: str | None = None) -> list[dict]:
-        """在所有词典里查这个词，返回 [{lang, source, entry}]（语言提示排最前）。"""
+    def lookup_all(
+        self, word: str, lang_hint: str | None = None, context: str = "panel"
+    ) -> list[dict]:
+        """在所有可见词典里查这个词，返回 [{lang, source, dict_id, entry}]。"""
         text = lemma.strip_word(word)
         if not text:
             return []
@@ -71,81 +132,223 @@ class DictMixin(ServiceBase):
         for code in ("en", "fr", "la", "de", "es", "it"):
             if code not in order:
                 order.append(code)
+        # 用户数据/词典可能挂在任意语言上，不能只查固定几种
+        for code in self.config.data.get("languages") or {}:
+            if code not in order:
+                order.append(code)
         hits: list[dict] = []
         seen: set[tuple[str, str]] = set()
         for code in order:
-            dictionary = self.dicts.dictionary(code)
-            if dictionary is None:
-                continue
-            entry = None
-            for candidate in [text] + lemma.candidates(text, code):
-                entry = self.dicts.lookup_full(code, candidate)
+            dictionaries = self.dicts.dictionaries(code, context)
+            if not dictionaries:
+                legacy = self._dictionary_for(code, context)
+                if legacy is not None:
+                    dictionaries = [legacy]
+            default_id = self.dicts.default_id(code)
+            user_lemma = None
+            user_data = getattr(self, "user_lang", None)
+            if user_data is not None:
+                try:
+                    user_lemma = user_data.form_lemma(code, text)
+                except Exception:  # noqa: BLE001 - 用户数据损坏时继续正常查词
+                    user_lemma = None
+                if user_lemma and user_lemma.casefold() != text.casefold():
+                    user_entry = self._user_entry(code, user_lemma, text)
+                    user_entry["is_default"] = bool(
+                        default_id and user_entry.get("dict_id") == default_id
+                    )
+                    hits.append(
+                        {
+                            "lang": code,
+                            "source": "用户数据",
+                            "dict_id": user_entry.get("dict_id", ""),
+                            "entry": user_entry,
+                        }
+                    )
+            for dictionary in dictionaries:
+                entry = None
+                matched_candidate = text
+                entry = self._lookup_full_for(code, dictionary, text)
                 if entry:
-                    entry["matched"] = candidate
-                    break
-            if entry is None:
-                analysis = self.morph_analysis(text, code)
-                if analysis:
-                    entry = self.dicts.lookup_full(code, analysis["lemma"])
-                    if entry:
-                        entry["matched"] = analysis["lemma"]
-                        entry["morph"] = analysis
-            if not entry:
-                continue
-            self._annotate_redirect(entry, text, code)
-            # 英语：即使原词本身有条目，也把可能的原形列出来让用户选
-            if code == "en" and (entry.get("matched") or "").lower() == text.lower():
-                suggestions: list[str] = []
-                for cand in lemma.candidates(text, "en"):
-                    cand = cand.lower()
-                    if cand == text.lower() or cand in suggestions:
-                        continue
-                    if self.dicts.lookup_full(code, cand):
-                        suggestions.append(cand)
-                if suggestions:
-                    entry["lemma_suggestions"] = suggestions[:4]
-            matched = entry.get("matched") or ""
-            if entry.get("redirect"):
-                # 词典把查询词重定向到另一个词条；不要生成变形表
-                pass
-            elif matched and matched.lower() != text.lower():
-                # 靠词形还原命中的原形：补上「这是哪个变形」的说明和整表
-                analysis = self.morph_analysis(text, code)
-                if analysis:
-                    entry["morph"] = analysis
-            else:
-                table = self.conjugation_table(text, code)
-                if table:
-                    entry["morph"] = table
-                else:
+                    entry["matched"] = text
+                if entry is None:
+                    # 去重音精确：creer → créer。不猜语言，所有词典都试一遍。
+                    try:
+                        index = fuzzy.build_index(dictionary)
+                    except Exception:  # noqa: BLE001 - 索引构建失败时跳过
+                        index = None
+                    for key in index.exact_matches(text) if index is not None else []:
+                        if key.casefold() == text.casefold():
+                            continue
+                        entry = self._lookup_full_for(code, dictionary, key)
+                        if entry:
+                            entry["matched"] = key
+                            matched_candidate = key
+                            break
+                if entry is None:
+                    for candidate in lemma.candidates(text, code):
+                        entry = self._lookup_full_for(code, dictionary, candidate)
+                        if entry:
+                            entry["matched"] = candidate
+                            matched_candidate = candidate
+                            break
+                if entry is None:
+                    analysis = self.morph_analysis(text, code)
+                    if analysis:
+                        entry = self._lookup_full_for(code, dictionary, analysis["lemma"])
+                        if entry:
+                            entry["matched"] = analysis["lemma"]
+                            entry["morph"] = analysis
+                if not entry:
+                    continue
+                self._annotate_redirect(entry, text, code)
+                entry["match"] = self._match_kind(entry, text, matched_candidate)
+                # 英语：即使原词本身有条目，也把可能的原形列出来让用户选
+                if code == "en" and (entry.get("matched") or "").lower() == text.lower():
+                    suggestions: list[str] = []
+                    for cand in lemma.candidates(text, "en"):
+                        cand = cand.lower()
+                        if cand == text.lower() or cand in suggestions:
+                            continue
+                        if self._lookup_full_for(code, dictionary, cand):
+                            suggestions.append(cand)
+                    if suggestions:
+                        entry["lemma_suggestions"] = suggestions[:4]
+                matched = entry.get("matched") or ""
+                if entry.get("redirect"):
+                    # 词典把查询词重定向到另一个词条；不要生成变形表
+                    pass
+                elif matched and matched.lower() != text.lower():
+                    # 靠词形还原命中的原形：补上「这是哪个变形」的说明和整表
                     analysis = self.morph_analysis(text, code)
                     if analysis:
                         entry["morph"] = analysis
-            entry["query"] = text
-            entry["lang"] = code
-            key = (code, entry.get("source") or "")
-            if key in seen:
-                continue
-            seen.add(key)
-            hits.append({"lang": code, "source": entry.get("source") or "", "entry": entry})
-        # 词头精确命中的语言排前面：Longman 的 "fait" 会命中 "fait accompli"，
-        # 而法语词典里 "fait" 才是真正的词头。之后再按语言顺序、来源名排序。
-        query_key = text.lower()
+                else:
+                    table = self.conjugation_table(text, code)
+                    if table:
+                        entry["morph"] = table
+                    else:
+                        analysis = self.morph_analysis(text, code)
+                        if analysis:
+                            entry["morph"] = analysis
+                # 用户变位表：查原形时也把用户表挂上去（优先于内置表）
+                user_morph = self._user_table_morph(code, entry.get("word") or "", text)
+                if user_morph and not entry.get("redirect"):
+                    entry["morph"] = user_morph
+                    entry["user_table"] = True
+                entry["query"] = text
+                entry["lang"] = code
+                entry["dict_id"] = getattr(dictionary, "dict_id", "")
+                entry["is_default"] = bool(default_id and entry["dict_id"] == default_id)
+                key = (code, entry["dict_id"] or entry.get("source") or "")
+                if key in seen:
+                    continue
+                seen.add(key)
+                hits.append(
+                    {
+                        "lang": code,
+                        "source": entry.get("source") or "",
+                        "dict_id": entry["dict_id"],
+                        "entry": entry,
+                    }
+                )
+        # 按匹配质量排序：精确 → 去重音精确 → 词形还原 → 重定向。
+        # 同质量时按语言顺序、词典顺序、来源名排序。
+        match_rank = {"user": 0, "exact": 1, "accent": 2, "lemma": 3, "redirect": 4}
         language_rank = {code: index for index, code in enumerate(order)}
+        dictionary_rank: dict[tuple[str, str], int] = {}
+        for code in order:
+            for index, dictionary in enumerate(self.dicts.dictionaries(code, context)):
+                dictionary_rank[(code, getattr(dictionary, "dict_id", ""))] = index
         hits.sort(
             key=lambda hit: (
-                (hit["entry"].get("word") or "").strip().lower() != query_key,
+                match_rank.get((hit["entry"].get("match") or ""), 5),
                 language_rank.get(hit.get("lang") or "", 999),
+                dictionary_rank.get(
+                    (hit.get("lang") or "", hit.get("dict_id") or ""), 999
+                ),
                 hit.get("source") or "",
             )
         )
         return hits
 
+    def _lookup_full_for(self, code: str, dictionary, word: str) -> dict | None:
+        """兼容旧测试替身：真实词典走单本接口，无 dict_id 时走旧接口。"""
+        if getattr(dictionary, "dict_id", ""):
+            return self.dicts.lookup_full_with(dictionary, word)
+        return self.dicts.lookup_full(code, word)
+
+    @staticmethod
+    def _match_kind(entry: dict, query: str, candidate: str) -> str:
+        if entry.get("redirect"):
+            return "redirect"
+        head = str(entry.get("word") or "")
+        if _headword_key(head) == _headword_key(query):
+            return "exact"
+        if head and fuzzy.normalize(_headword_key(head)) == fuzzy.normalize(_headword_key(query)):
+            return "accent"
+        return "lemma"
+
+    def _user_table_morph(self, lang: str, lemma: str, form: str = "") -> dict | None:
+        """用户提供的变位表；命中时优先于内置表。"""
+        user_data = getattr(self, "user_lang", None)
+        if user_data is None:
+            return None
+        try:
+            groups = user_data.table(lang, lemma)
+        except Exception:  # noqa: BLE001 - 用户数据损坏时不影响正常查词
+            groups = None
+        if not groups:
+            return None
+        return {
+            "lemma": lemma,
+            "label": "用户提供",
+            "tables": groups,
+            "form": form or lemma,
+            "user": True,
+        }
+
+    def _user_entry(self, lang: str, lemma: str, form: str) -> dict:
+        """用户词形命中的词条：有词典释义就用词典，没有也保留词形/变位表。"""
+        entry = self.dicts.lookup_full(lang, lemma)
+        if entry is None:
+            entry = {
+                "word": lemma,
+                "lang": lang,
+                "source": "用户数据",
+                "phonetic": "",
+                "senses": [],
+            }
+        else:
+            entry = dict(entry)
+        original_source = entry.get("source") or ""
+        entry["source"] = "用户数据"
+        if original_source and original_source != "用户数据":
+            entry["user_dict_source"] = original_source
+        entry["matched"] = lemma
+        entry["match"] = "user"
+        entry["user_form"] = form
+        morph = self._user_table_morph(lang, lemma, form)
+        if morph:
+            entry["morph"] = morph
+            entry["user_table"] = True
+        return entry
+
     def _annotate_redirect(self, entry: dict, query: str, code: str) -> str:
         """标记 MDX @@@LINK 重定向：屈折词返回 inflection，词义重定向返回 lexical。"""
         headword = str(entry.get("word") or "").strip()
-        if not headword or headword.casefold() == query.casefold():
+        if (
+            not headword
+            or _headword_key(headword) == _headword_key(query)
+            # 只差重音（creer / créer）是同一个词，不是重定向
+            or fuzzy.normalize(_headword_key(headword)) == fuzzy.normalize(_headword_key(query))
+        ):
             return ""
+        # 变位/变格反查出来的原形（vends → vendre）是屈折，不是词义重定向
+        morph_lemma = str((entry.get("morph") or {}).get("lemma") or "").strip()
+        if morph_lemma and morph_lemma.casefold() == headword.casefold():
+            entry["matched"] = headword
+            return "inflection"
         forms = {c.casefold() for c in lemma.candidates(query, code)}
         if headword.casefold() in forms:
             entry["matched"] = headword
@@ -166,8 +369,22 @@ class DictMixin(ServiceBase):
         text = (word or "").strip().lower()
         if not text or not lang:
             return None
+        user_data = getattr(self, "user_lang", None)
+        if user_data is not None:
+            try:
+                groups = user_data.table(lang, text)
+            except Exception:  # noqa: BLE001 - 用户数据损坏时回退内置表
+                groups = None
+            if groups:
+                return {
+                    "lemma": text,
+                    "label": "用户提供",
+                    "tables": groups,
+                    "form": text,
+                    "user": True,
+                }
         try:
-            if lang in ("fr", "de", "es", "it"):
+            if lang == "fr":
                 from . import conjug_fr
 
                 tables = conjug_fr.table(text)
@@ -212,11 +429,25 @@ class DictMixin(ServiceBase):
         text = (word or "").strip().lower()
         if not text or not lang:
             return None
+        user_data = getattr(self, "user_lang", None)
+        if user_data is not None:
+            try:
+                user_lemma = user_data.form_lemma(lang, text)
+            except Exception:  # noqa: BLE001 - 用户数据损坏时回退内置规则
+                user_lemma = None
+            if user_lemma and user_lemma.casefold() != text.casefold():
+                return {
+                    "lemma": user_lemma,
+                    "label": "用户词形",
+                    "tables": user_data.table(lang, user_lemma) or [],
+                    "form": text,
+                    "user": True,
+                }
         dictionary = self.dicts.dictionary(lang)
         if dictionary is None:
             return None
         try:
-            if lang in ("fr", "de", "es", "it"):
+            if lang == "fr":
                 from . import conjug_fr
 
                 hit = conjug_fr.analyse(text, lambda w: bool(dictionary.lookup(w)))
@@ -324,18 +555,29 @@ class DictMixin(ServiceBase):
             log.exception("生成条目 HTML 失败")
             return ""
 
-    def dict_audio(self, lang: str, key: str) -> bytes | None:
+    def dict_audio(self, lang: str, key: str, dict_id: str = "") -> bytes | None:
         """取词典里的音频字节（给原版页面按需播放用）。"""
-        if not lang or not key:
+        if not key:
+            return None
+        if dict_id:
+            try:
+                return self.dicts.audio_by_id(dict_id, key)
+            except Exception:
+                return None
+        if not lang:
             return None
         try:
             return self.dicts.audio(lang, key)
         except Exception:
             return None
 
-    def play_dictionary_audio(self, lang: str, sound_key: str) -> bool:
+    def play_dictionary_audio(self, lang: str, sound_key: str, dict_id: str = "") -> bool:
         """播放词典里的音频（MP3/WAV），成功返回 True。"""
-        data = self.dicts.audio(lang, sound_key)
+        data = (
+            self.dicts.audio_by_id(dict_id, sound_key)
+            if dict_id
+            else self.dicts.audio(lang, sound_key)
+        )
         return audio.play_bytes(data)
 
     def _attach_dictionary(self, result: dict) -> None:
@@ -347,7 +589,10 @@ class DictMixin(ServiceBase):
             return
         for term in result.get("terms") or []:
             word = term.get("lemma") or term.get("word") or ""
-            entry = self.dicts.lookup(lang, word)
+            dictionary = self.dicts.anki_dictionary(lang)
+            if dictionary is None:
+                continue
+            entry = self.dicts.lookup_with(dictionary, word)
             if not entry:
                 continue
             term["dict"] = entry
@@ -366,7 +611,15 @@ class DictMixin(ServiceBase):
 
         key = word.get("audio_key") or ""
         if key and lang:
-            data = self.dicts.audio(lang, key)
+            dict_id = str(word.get("dict_id") or "").strip()
+            if not dict_id:
+                dictionary = self.dicts.anki_dictionary(lang)
+                dict_id = str(getattr(dictionary, "dict_id", "") or "")
+            data = (
+                self.dicts.audio_by_id(dict_id, key)
+                if dict_id
+                else self.dicts.audio(lang, key)
+            )
             if data and len(data) > 200:
                 return f"rc_{lang}_{safe}.mp3", data
 

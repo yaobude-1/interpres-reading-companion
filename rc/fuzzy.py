@@ -57,15 +57,24 @@ class FuzzyIndex:
 
     def __init__(self, keys) -> None:
         mapping: dict[str, str] = {}
+        by_norm: dict[str, list[str]] = {}
         for key in keys:
             norm = normalize(key)
-            if norm and norm not in mapping:
+            if not norm:
+                continue
+            by_norm.setdefault(norm, []).append(key)
+            if norm not in mapping:
                 mapping[norm] = key
         self._mapping = mapping
+        self._by_norm = by_norm
         self._sorted = sorted(mapping)
 
     def __len__(self) -> int:
         return len(self._sorted)
+
+    def exact_matches(self, query: str) -> list[str]:
+        """所有规范化后与 query 相同的原词条：creer → créer。"""
+        return list(self._by_norm.get(normalize(query), []))
 
     def _prefix(self, query: str) -> list[str]:
         start = bisect.bisect_left(self._sorted, query)
@@ -107,10 +116,11 @@ class FuzzyIndex:
         if len(seen) < limit:
             for distance, level in ((1, 2), (2, 3)):
                 for norm in self._bucket(query):
-                    if norm in seen:
+                    original = self._mapping[norm]
+                    if original in seen:
                         continue
                     if _damerau(norm, query, distance) <= distance:
-                        seen[self._mapping[norm]] = level
+                        seen[original] = level
                 if len(seen) >= limit * 2:
                     break
 

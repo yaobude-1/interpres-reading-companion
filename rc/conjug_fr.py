@@ -581,22 +581,42 @@ def analyse(word: str, lookup) -> tuple[str, str] | None:
     for base in [target] + lemma.candidates(target, "fr"):
         if base and len(base) > 1 and base not in candidates:
             candidates.append(base)
-    # 变形还原常见的无限式拼法
-    for suffix, infinitive in (
-        ("e", "er"), ("es", "er"), ("ent", "er"), ("ons", "er"), ("ez", "er"),
-        ("ais", "er"), ("ait", "er"), ("ions", "er"), ("iez", "er"), ("aient", "er"),
-        ("erai", "er"), ("eras", "er"), ("era", "er"), ("erons", "er"), ("erez", "er"),
-        ("eront", "er"), ("é", "er"), ("ée", "er"), ("és", "er"), ("ées", "er"),
-        ("a", "er"), ("as", "er"), ("âmes", "er"), ("âtes", "er"), ("èrent", "er"),
-        ("is", "ir"), ("it", "ir"), ("îmes", "ir"), ("îtes", "ir"), ("irent", "ir"),
-        ("issent", "ir"), ("issait", "ir"), ("irai", "ir"),
-        ("s", "re"), ("t", "re"), ("ait", "re"),
-    ):
-        if target.endswith(suffix) and len(target) > len(suffix):
-            stem = target[: -len(suffix)]
-            for inf in (stem + infinitive, stem + "r" if infinitive == "er" else ""):
-                if inf and inf.endswith("r") and inf not in candidates:
-                    candidates.append(inf)
+    # 按词尾反推原形：parlerions → parler（词干已是不定式时不再补 -er），
+    # finissons → finir，vendrai → vendre。
+    endings = {
+        "er": (
+            "", "e", "es", "ent", "ons", "ez", "ais", "ait", "ions", "iez",
+            "aient", "ai", "as", "a", "âmes", "âtes", "èrent", "erai", "eras",
+            "era", "erons", "erez", "eront", "é", "ée", "és", "ées", "ant",
+        ),
+        "ir": (
+            "", "is", "it", "issons", "issez", "issent", "issais", "issait",
+            "issions", "issiez", "issaient", "irai", "iras", "ira", "irons",
+            "irez", "iront", "isse", "isses", "i", "issant", "îmes", "îtes",
+            "irent", "ions", "iez", "ais", "ait", "aient",
+        ),
+        "re": (
+            "", "e", "es", "s", "t", "ons", "ez", "ent", "ais", "ait", "ions",
+            "iez", "aient", "ai", "as", "a", "ont", "is", "it", "îmes", "îtes",
+            "irent", "u", "us", "ue", "ues", "ant",
+        ),
+    }
+    for infinitive, suffixes in endings.items():
+        for suffix in suffixes:
+            if suffix and not target.endswith(suffix):
+                continue
+            stem = target[: -len(suffix)] if suffix else target
+            if len(stem) < 3:
+                continue
+            if stem.endswith(infinitive):
+                candidate = stem
+            elif infinitive == "re" and stem.endswith("r"):
+                # vendrai / vendrais 的词干是 vendr，补 e 才是 vendre
+                candidate = stem + "e"
+            else:
+                candidate = stem + infinitive
+            if candidate not in candidates:
+                candidates.append(candidate)
 
     # 1) 不规则动词优先（suis -> être，而不是瞎猜成 suir）
     hit = irregular_index().get(target)
@@ -623,7 +643,8 @@ def analyse(word: str, lookup) -> tuple[str, str] | None:
             ("participe", "分词", ""),
         ]:
             for person, form in _persons(key, data[key]):
-                if form and (form == target or form.split()[-1] == target):
+                raw = form[2:] if form.startswith("j'") else form
+                if form and (raw == target or form == target or form.split()[-1] == target):
                     if person in ("现在分词", "过去分词"):
                         label = f"{zh}，{person}"
                     elif key == "imperatif":

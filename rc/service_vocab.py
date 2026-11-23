@@ -25,6 +25,7 @@ class VocabMixin(ServiceBase):
         dict_example: str = "",
         dict_example_cn: str = "",
         audio_key: str = "",
+        dict_id: str = "",
     ) -> dict:
         lang = (lang or "??").lower()
         word_id = self.store.add_word(
@@ -43,6 +44,7 @@ class VocabMixin(ServiceBase):
                 "dict_example": dict_example,
                 "dict_example_cn": dict_example_cn,
                 "audio_key": audio_key,
+                "dict_id": dict_id,
             }
         )
         return {"id": word_id, "total": self.store.word_count(lang), "lang": lang}

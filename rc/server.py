@@ -10,13 +10,16 @@ from __future__ import annotations
 import hmac
 import json
 import logging
+import mimetypes
 import socket
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from pathlib import PurePosixPath
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from . import __version__
+from .dict_view import build_raw_page
 from .netpolicy import validate_base_url
 from .service import Service
 
@@ -133,10 +136,12 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
             except Exception:
                 return {}
 
-        def _authorized(self) -> bool:
+        def _authorized(self, query: dict | None = None) -> bool:
             if not token:
                 return True
             supplied = self.headers.get("X-RC-Token") or ""
+            if not supplied and query:
+                supplied = str(query.get("token") or "")
             # 常量时间比较，避免逐字符比较泄露 token 前缀
             return hmac.compare_digest(supplied, token)
 
@@ -145,6 +150,78 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
             query = {k: v[0] for k, v in parse_qs(parsed.query).items()}
             return parsed.path.rstrip("/") or "/", query
 
+        # ------------------------------------------------------------- dictionary
+        def _dict_view(self, query: dict) -> None:
+            lang = str(query.get("lang") or "")
+            dict_id = str(query.get("dict_id") or "")
+            word = str(query.get("word") or "")
+            entry = (
+                service.dicts.raw_entry_by_id(dict_id, word)
+                if dict_id
+                else service.dicts.raw_entry(lang, word)
+            )
+            if not entry:
+                self._json({"ok": False, "error": "dictionary entry not found"}, 404)
+                return
+            port = int(self.server.server_address[1])
+            token_q = quote(token)
+            scope = dict_id or lang
+            lookup_lang = lang or service.dicts.language_of(scope)
+            resource_base = (
+                f"http://127.0.0.1:{port}/api/dict-res/{quote(scope)}/{token_q}/"
+            )
+            lookup_base = (
+                f"interpres://lookup?lang={quote(lookup_lang)}&word="
+            )
+            page = build_raw_page(
+                entry["html"],
+                source=entry.get("source") or "",
+                word=word,
+                resource_base=resource_base,
+                lookup_base=lookup_base,
+            )
+            self._raw(page.encode("utf-8"), "text/html; charset=utf-8")
+
+        def _dict_resource(self, path: str) -> None:
+            rest = path[len("/api/dict-res/") :]
+            parts = rest.split("/", 2)
+            if len(parts) < 3:
+                self._json({"ok": False, "error": "bad resource path"}, 404)
+                return
+            scope = unquote(parts[0])
+            supplied = unquote(parts[1])
+            resource = unquote(parts[2]).replace("\\", "/")
+            if token and not hmac.compare_digest(supplied, token):
+                self._json({"ok": False, "error": "unauthorized"}, 401)
+                return
+            if not resource or ".." in PurePosixPath(resource).parts:
+                self._json({"ok": False, "error": "unsafe resource path"}, 404)
+                return
+            if service.dicts.language_of(scope):
+                data = service.dicts.resource_by_id(scope, resource)
+            else:
+                data = service.dicts.resource(scope, resource)
+            if data is None:
+                self._json({"ok": False, "error": "resource not found"}, 404)
+                return
+            content_type = mimetypes.guess_type(resource)[0] or "application/octet-stream"
+            self._raw(data, content_type)
+
+        def _dict_audio(self, query: dict) -> None:
+            lang = str(query.get("lang") or "")
+            dict_id = str(query.get("dict_id") or "")
+            key = str(query.get("key") or "")
+            data = (
+                service.dicts.audio_by_id(dict_id, key)
+                if dict_id
+                else service.dict_audio(lang, key)
+            )
+            if data is None:
+                self._json({"ok": False, "error": "audio not found"}, 404)
+                return
+            content_type = mimetypes.guess_type(key)[0] or "audio/mpeg"
+            self._raw(data, content_type)
+
         # ------------------------------------------------------------------ verbs
         def do_GET(self) -> None:
             path, query = self._route()
@@ -152,10 +229,17 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
                 if path == "/api/health":
                     self._json({"ok": True, "version": __version__})
                     return
-                if not self._authorized():
+                if path.startswith("/api/dict-res/"):
+                    self._dict_resource(path)
+                    return
+                if not self._authorized(query):
                     self._json({"ok": False, "error": "unauthorized"}, 401)
                     return
-                if path == "/api/status":
+                if path == "/api/dict-view":
+                    self._dict_view(query)
+                elif path == "/api/dict-audio":
+                    self._dict_audio(query)
+                elif path == "/api/status":
                     self._json(service.status())
                 elif path == "/api/vocab":
                     words = service.vocab(query.get("lang"), query.get("book"), int(query.get("limit", 500)))
