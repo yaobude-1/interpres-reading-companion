@@ -302,6 +302,10 @@ class DictViewMixin:
                 pass
         frame.pack(fill="x", pady=(4, 0))
         host.show()
+        try:
+            self.win.update_idletasks()
+        except tk.TclError:
+            pass
         self._resize_inline_dict()
         self._update_dict_view_buttons()
         if getattr(self, "_dict_view_notice", None) is not None:
@@ -309,6 +313,7 @@ class DictViewMixin:
         try:
             self.win.update_idletasks()
             self._place()
+            self.win.after_idle(self._resize_inline_dict)
         except tk.TclError:
             pass
 
@@ -324,10 +329,10 @@ class DictViewMixin:
         if frame is None or host is None or getattr(self, "_dict_view_mode", "simple") != "original":
             return
         try:
-            if not frame.winfo_ismapped():
+            height = int(self.canvas.winfo_height()) - 8
+            if height < 120:
                 return
-            height = max(300, int(self.canvas.winfo_height()) - 8)
-            frame.configure(height=height)
+            frame.configure(height=max(300, height))
             host.resize()
         except tk.TclError:
             pass
