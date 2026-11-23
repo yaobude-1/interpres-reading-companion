@@ -65,6 +65,25 @@ def build_raw_page(
       setTimeout(function () {{ window.scrollTo(0, 0); }}, 60);
     }} catch (e) {{}}
   }});
+
+  // Dictionary audio icons are ordinary links rewritten to the local
+  // resource URL. Navigating to the MP3 replaces the article with
+  // Chromium's standalone media player; play it in place instead.
+  document.addEventListener('click', function (event) {{
+    var node = event.target;
+    while (node && node !== document && node.tagName !== 'A') {{
+      node = node.parentElement;
+    }}
+    if (!node || node.tagName !== 'A') return;
+    var href = node.href || '';
+    if (!/\\.(?:mp3|wav|ogg|oga|m4a|aac|flac|spx)(?:$|[?#])/i.test(href)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    try {{
+      new Audio(href).play();
+    }} catch (e) {{}}
+    return false;
+  }}, true);
 </script>
 </head>
 <body><div class="gd-raw">{html}</div></body></html>"""
