@@ -26,6 +26,7 @@ import re
 import struct
 import threading
 import zlib
+from collections import OrderedDict
 from pathlib import Path
 
 from .lzo import decompress as _lzo_decompress
@@ -79,7 +80,8 @@ class MDX:
         self._index: MdxIndex | None = None
         self._record_blocks: list[tuple[int, int, int]] = []
         self._record_start = 0
-        self._cache: dict[int, bytes] = {}
+        self._cache: OrderedDict[int, bytes] = OrderedDict()
+        self._cache_limit = 8
         self._read_header_offset()
         self._read_key_info()
         self._read_record_info()
@@ -286,12 +288,16 @@ class MDX:
             f.seek(self._record_start)
             for i, (comp, decomp, _start) in enumerate(self._record_blocks):
                 if i == index:
-                    self._cache.clear()
                     self._cache[index] = _inflate_block(
                         f.read(comp), decomp if self._legacy else None
                     )
                     break
                 f.seek(comp, 1)
+            self._cache.move_to_end(index)
+            while len(self._cache) > self._cache_limit:
+                self._cache.popitem(last=False)
+        else:
+            self._cache.move_to_end(index)
         data = self._cache[index]
         local = offset - self._record_blocks[index][2]
         # 记录长度由下一个记录的偏移决定（MDD 的音频里也有 0x00，不能靠找 0 截断）
@@ -400,6 +406,7 @@ class MDX:
         if self._index is not None:
             self._index.close()
             self._index = None
+        self._cache.clear()
         try:
             self._fh.close()
         except OSError as exc:  # noqa: BLE001 - 关闭失败不影响已读数据

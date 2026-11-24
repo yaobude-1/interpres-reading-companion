@@ -732,6 +732,7 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 lambda: self.toast("Interpres 已在后台运行 · 划词后点「译」，或按 Ctrl+Alt+T"),
             )
         self._tts_self_test()
+        self._preload_dictionaries()
         self.root.mainloop()
 
     def _tts_self_test(self) -> None:
@@ -744,6 +745,23 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 log.exception("tts 自检失败")
 
         threading.Thread(target=worker, daemon=True, name="tts-selftest").start()
+
+    def _preload_dictionaries(self) -> None:
+        """Load headword sidecars in the background, like GoldenDict's startup scan."""
+        import threading
+
+        languages = list((self.config.data.get("languages") or {}).keys())
+        if not languages:
+            return
+
+        def worker() -> None:
+            for code in languages:
+                try:
+                    self.service.dicts.dictionaries(code)
+                except Exception as exc:  # noqa: BLE001 - preload failure is non-fatal
+                    log.debug("预加载词典失败 %s: %s", code, exc)
+
+        threading.Thread(target=worker, daemon=True, name="dict-preload").start()
 
     def shutdown(self) -> None:
         if self.quitting:
