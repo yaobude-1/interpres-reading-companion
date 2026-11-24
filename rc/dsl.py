@@ -9,11 +9,15 @@ from __future__ import annotations
 
 import gzip
 import html
+import logging
 import re
 from pathlib import Path
 from urllib.parse import quote
 
+from .dsl_index import DslIndex, KeyView
 from .mdx import html_to_text
+
+log = logging.getLogger("rc")
 
 _HEADER_RE = re.compile(r'^#([A-Z_]+)\s+"(.*)"\s*$')
 
@@ -94,11 +98,24 @@ class DSL:
         self.path = Path(path)
         self._entries: list[tuple[str, str]] = []
         self._index: dict[str, int] = {}
-        self._keys: list[str] = []
+        self._keys: list[str] | KeyView = []
         self.attrs: dict[str, str] = {}
         self.encoding = "UTF-16"
         self.version = "DSL"
         self.encrypted = "No"
+        self._key_store: DslIndex | None = None
+        try:
+            self._key_store = DslIndex.open_or_build(self.path)
+        except Exception as exc:  # noqa: BLE001 - 索引失败时退回内存
+            log.debug("DSL sidecar 不可用: %s", exc)
+        if self._key_store is not None:
+            self._keys = KeyView(self._key_store)
+            self.attrs = dict(self._key_store.attrs)
+            self.entry_count = self._key_store.entry_count
+            self.attrs["Title"] = (
+                self.attrs.get("NAME") or self.attrs.get("Title") or self.path.stem
+            )
+            return
         self._load()
 
     def _read(self) -> str:
@@ -146,6 +163,9 @@ class DSL:
         key = (word or "").strip()
         if not key:
             return None
+        if self._key_store is not None:
+            body = self._key_store.find_folded(key.lower())
+            return _dsl_to_html(body) if body is not None else None
         index = self._index.get(key.lower())
         if index is None:
             return None
@@ -153,6 +173,8 @@ class DSL:
 
     def keys_matching(self, prefix: str, limit: int = 10) -> list[str]:
         prefix = (prefix or "").lower()
+        if self._key_store is not None:
+            return self._key_store.prefix(prefix, limit)
         out = []
         for key in self._keys:
             if key.lower().startswith(prefix):
@@ -177,4 +199,7 @@ class DSL:
         )
 
     def close(self) -> None:
+        if self._key_store is not None:
+            self._key_store.close()
+            self._key_store = None
         self._entries.clear()

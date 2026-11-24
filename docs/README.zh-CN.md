@@ -123,7 +123,7 @@
 
 加密 MDX 暂不支持。一种语言可以挂多本词典；来源栏会列出所有命中，**设置 → 语言、词典与发音 → 词典设置… → 查词组** 里可以调顺序、设默认、控制面板/弹窗单独可见，或整组静音。Anki 释义词典也可以按语言单独选择。
 
-MDX/MDD 词典第一次加载时会在词典旁边生成 `.rcidx` 词头索引（目录只读时放到 `%LOCALAPPDATA%\Interpres\dict-index`）。第一次模糊搜索还会生成 `.rcfuzzy` 缓存。它们都可以安全删除；词典文件大小或修改时间变化后会自动重建。
+MDX/MDD、StarDict、DSL 词典会在源文件旁边生成 `.rcidx` 索引缓存（目录只读时放到 `%LOCALAPPDATA%\Interpres\dict-index`）；第一次模糊搜索还会生成 `.rcfuzzy` 缓存。它们都可以安全删除；词典文件大小或修改时间变化后会自动重建。导入词典时会在后台建索引，并在词典设置窗口显示进度。
 
 词典是有版权的作品，请合法获取和使用。词典文件不会被发送到任何地方，查询完全在本地进行。
 
@@ -225,7 +225,9 @@ rc/rich.py                词典 HTML → 结构化义项/例句
 rc/mdx.py                 纯标准库 MDX/MDD 读取
 rc/mdx_index.py           MDX/MDD 的 SQLite 持久化词头索引
 rc/stardict.py            StarDict 读取
+rc/stardict_index.py      StarDict 持久化词头索引
 rc/dsl.py                 DSL / DSL.dz 读取
+rc/dsl_index.py           DSL 正文/词头持久化索引
 rc/dictd.py               Dictd 读取
 rc/xdxf.py                XDXF / XDXF.dz 读取
 rc/lzo.py                 MDX 1.2 的 LZO 解压

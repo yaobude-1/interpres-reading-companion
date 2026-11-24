@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import copy
+import logging
+import queue
+import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, simpledialog
+from tkinter import filedialog, simpledialog, ttk
 
 from . import dict_config
 from .i18n import lang_display_name, tr
@@ -13,6 +16,8 @@ from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PANEL_ALT,
 from .textutil import display
 from .theme import BORDER_SOFT, ON_ACCENT
 from .uiutil import bind_defocus
+
+log = logging.getLogger("rc")
 
 _FILE_TYPES = [
     (
@@ -35,6 +40,10 @@ class DictionarySettings:
         self.list_frame = None
         self._drag_rows: list[tuple[str, str, tk.Frame]] = []
         self._drag_active: tuple[str, str] | None = None
+        self._index_queue: queue.Queue = queue.Queue()
+        self._index_running = False
+        self._index_total = 0
+        self._index_done = 0
 
         self.win = tk.Toplevel(root)
         self.win.title("本地词典设置")
@@ -113,6 +122,20 @@ class DictionarySettings:
 
         bar = tk.Frame(outer, bg=BG)
         bar.pack(fill="x", side="bottom", pady=(10, 0))
+        self.index_status = tk.Label(
+            outer,
+            text="",
+            bg=BG,
+            fg=MUTED,
+            font=(FONT_FAMILY, 8),
+            anchor="w",
+        )
+        self.index_progress = ttk.Progressbar(
+            outer,
+            mode="determinate",
+            length=240,
+            style="TProgressbar",
+        )
         self._button(bar, "保存", self.save, primary=True).pack(side="right")
         self._button(bar, "取消", self.win.destroy).pack(side="right", padx=(0, 8))
         self._button(bar, "词典映射…", self.open_profiles).pack(side="left")
@@ -390,12 +413,93 @@ class DictionarySettings:
         if not paths:
             return
         added = []
+        path_by_id: dict[str, str] = {}
         for path in paths:
             item = dict_config.add_library_item(self.draft, path)
             added.append(item["id"])
+            path_by_id[item["id"]] = str(item.get("mdx") or path)
         self._render()
         if added:
             self._assign_dialog(added)
+            self._start_indexing([path_by_id[item_id] for item_id in added])
+
+    # ------------------------------------------------------------ index warming
+    def _start_indexing(self, paths: list[str]) -> None:
+        if not paths:
+            return
+        if getattr(self, "_index_running", False):
+            return
+        self._index_running = True
+        self._index_total = len(paths)
+        self._index_done = 0
+        self.index_status.configure(text=tr("正在建立词典索引…"))
+        self.index_progress.configure(maximum=max(1, self._index_total), value=0)
+        self.index_status.pack(fill="x", side="bottom")
+        self.index_progress.pack(fill="x", side="bottom", pady=(2, 0))
+        thread = threading.Thread(
+            target=self._index_worker, args=(paths,), daemon=True
+        )
+        thread.start()
+        self.win.after(80, self._poll_index_queue)
+
+    def _index_worker(self, paths: list[str]) -> None:
+        from . import fuzzy
+        from .dictionary import Dictionary
+
+        for path in paths:
+            self._index_queue.put(("file", Path(path).name))
+            dictionary = None
+            try:
+                dictionary = Dictionary(path)
+                fuzzy.build_index(dictionary)
+                self._index_queue.put(("done", Path(path).name))
+            except Exception as exc:  # noqa: BLE001 - 索引失败不阻止读词
+                self._index_queue.put(("error", f"{Path(path).name}: {exc}"))
+            finally:
+                if dictionary is not None:
+                    try:
+                        dictionary.close()
+                    except Exception as exc:  # noqa: BLE001 - 关闭失败不阻止索引
+                        log.debug("关闭索引词典失败: %s", exc)
+        self._index_queue.put(("finished", None))
+
+    def _poll_index_queue(self) -> None:
+        try:
+            if not self.win.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        try:
+            while True:
+                kind, payload = self._index_queue.get_nowait()
+                if kind == "file":
+                    self.index_status.configure(
+                        text=tr("正在建立索引：{name}").format(name=payload)
+                    )
+                elif kind == "done":
+                    self._index_done += 1
+                    self.index_progress.configure(value=self._index_done)
+                elif kind == "error":
+                    self.index_status.configure(text=tr("索引失败：{error}").format(error=payload))
+                elif kind == "finished":
+                    self._index_running = False
+                    self.index_status.configure(text=tr("索引完成"))
+                    self.win.after(2500, self._clear_index_status)
+                    return
+        except queue.Empty:
+            pass
+        if getattr(self, "_index_running", False):
+            try:
+                self.win.after(100, self._poll_index_queue)
+            except tk.TclError:
+                pass
+
+    def _clear_index_status(self) -> None:
+        try:
+            self.index_status.pack_forget()
+            self.index_progress.pack_forget()
+        except tk.TclError:
+            pass
 
     def _assign_dialog(self, item_ids: list[str]) -> None:
         dialog = tk.Toplevel(self.win)

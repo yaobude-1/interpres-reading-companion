@@ -9,11 +9,16 @@ show them directly.
 from __future__ import annotations
 
 import gzip
+import logging
+import mmap
 import re
 import struct
 from pathlib import Path
 
 from .mdx import html_to_text
+from .stardict_index import KeyView, StarDictIndex
+
+log = logging.getLogger("rc")
 
 
 def _read_ifo(path: Path) -> dict[str, str]:
@@ -51,11 +56,21 @@ class StarDict:
         self.version = "StarDict"
         self.encrypted = "No"
         self.entry_count = int(self.attrs.get("wordcount") or 0)
-        self._keys: list[str] = []
+        self._keys: list[str] | KeyView = []
         self._records: list[tuple[int, int]] = []
         self._index: dict[str, int] = {}
         self._aliases: dict[str, int] = {}
-        self._items: bytes | None = None
+        self._items: bytes | mmap.mmap | None = None
+        self._key_store: StarDictIndex | None = None
+        try:
+            self._key_store = StarDictIndex.open_or_build(base)
+        except Exception as exc:  # noqa: BLE001 - 索引失败时退回内存
+            log.debug("StarDict sidecar 不可用: %s", exc)
+        if self._key_store is not None:
+            self._keys = KeyView(self._key_store)
+            self.entry_count = self._key_store.entry_count
+            self.attrs["Title"] = self.attrs.get("bookname") or base.name
+            return
         self._load_index(base)
         self._load_syn(base)
 
@@ -106,7 +121,11 @@ class StarDict:
             with gzip.open(dz, "rb") as f:
                 self._items = f.read()
         elif plain.exists():
-            self._items = plain.read_bytes()
+            try:
+                with plain.open("rb") as f:
+                    self._items = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            except (OSError, ValueError):
+                self._items = plain.read_bytes()
         else:
             self._items = b""
         return self._items
@@ -114,7 +133,9 @@ class StarDict:
     def _record(self, index: int) -> str | None:
         if index < 0 or index >= len(self._records):
             return None
-        offset, size = self._records[index]
+        return self._record_at(*self._records[index])
+
+    def _record_at(self, offset: int, size: int) -> str | None:
         data = self._data(self.path.with_suffix(""))[offset : offset + size]
         if not data:
             return None
@@ -139,6 +160,9 @@ class StarDict:
         key = (word or "").strip()
         if not key:
             return None
+        if self._key_store is not None:
+            location = self._key_store.find_folded(key.lower())
+            return self._record_at(*location) if location is not None else None
         index = self._index.get(key.lower())
         if index is None:
             index = self._aliases.get(key.lower())
@@ -148,6 +172,8 @@ class StarDict:
 
     def keys_matching(self, prefix: str, limit: int = 10) -> list[str]:
         prefix = (prefix or "").lower()
+        if self._key_store is not None:
+            return self._key_store.prefix(prefix, limit)
         out = []
         for key in self._keys:
             if key.lower().startswith(prefix):
@@ -172,4 +198,12 @@ class StarDict:
         )
 
     def close(self) -> None:
+        if self._key_store is not None:
+            self._key_store.close()
+            self._key_store = None
+        if isinstance(self._items, mmap.mmap):
+            try:
+                self._items.close()
+            except OSError:
+                pass
         self._items = None
