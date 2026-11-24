@@ -29,6 +29,7 @@ import zlib
 from pathlib import Path
 
 from .lzo import decompress as _lzo_decompress
+from .mdx_index import KeyView, MdxIndex
 
 log = logging.getLogger("rc")
 
@@ -74,16 +75,15 @@ class MDX:
         if self._legacy and not version.startswith("1."):
             raise MDXError(f"不认识的 MDX 版本：{version}")
         self.version = version or "2.0"
-        self._keys: list[tuple[str, int]] = []
-        self._key_index: dict[str, int] = {}
-        self._exact_index: dict[str, int] = {}
+        self._keys: list | KeyView = []
+        self._index: MdxIndex | None = None
         self._record_blocks: list[tuple[int, int, int]] = []
         self._record_start = 0
         self._cache: dict[int, bytes] = {}
         self._read_header_offset()
         self._read_key_info()
-        self._read_keys()
         self._read_record_info()
+        self._load_key_index()
 
     # ------------------------------------------------------------------ 头部
     def _read_header(self) -> dict:
@@ -159,7 +159,25 @@ class MDX:
             pos += 16
             self._key_blocks.append((comp, decomp))
 
-    def _read_keys(self) -> None:
+    def _load_key_index(self) -> None:
+        try:
+            index = MdxIndex.open_or_build(
+                self.path,
+                self._iter_keys,
+                lambda key: key.translate(_MACRON_TABLE),
+            )
+        except Exception as exc:  # noqa: BLE001 - 索引失败时退回内存
+            log.debug("MDX sidecar 索引不可用，退回内存: %s", exc)
+            index = None
+        if index is not None:
+            self._index = index
+            self._keys = KeyView(index)
+            self.entry_count = index.entry_count
+            self._offsets = index.offsets
+            return
+        self._read_keys()
+
+    def _iter_keys(self):
         f = self._fh
         f.seek(self._info_at + self._key_block_meta_size())
         unit = self._unit
@@ -186,18 +204,26 @@ class MDX:
                         break
                     key = data[pos:end].decode(self.encoding, "replace")
                     pos = end + 1
-                self._keys.append((key, offset))
-        self.entry_count = len(self._keys)
-        for i, (key, _offset) in enumerate(self._keys):
+                yield key, offset
+
+    def _read_keys(self) -> None:
+        keys: list[tuple[str, int]] = []
+        for key, offset in self._iter_keys():
+            keys.append((key, offset))
+        self._keys = keys
+        self.entry_count = len(keys)
+        self._key_index: dict[str, int] = {}
+        self._exact_index: dict[str, int] = {}
+        for i, (key, _offset) in enumerate(keys):
             self._key_index.setdefault(key.lower(), i)
             self._exact_index.setdefault(key, i)
         # 拉丁语词典的键带长音符号（amō），补一个去掉长音符号的别名
-        for i, (key, _offset) in enumerate(self._keys):
+        for i, (key, _offset) in enumerate(keys):
             plain = key.translate(_MACRON_TABLE)
             if plain != key:
                 self._key_index.setdefault(plain.lower(), i)
                 self._exact_index.setdefault(plain, i)
-        self._offsets = sorted({offset for _key, offset in self._keys})
+        self._offsets = sorted({offset for _key, offset in keys})
 
     def _key_block_meta_size(self) -> int:
         # info 段总长 = info_comp（含 8 字节前缀）
@@ -280,6 +306,16 @@ class MDX:
     # ------------------------------------------------------------------ 查询
     def _lookup_raw(self, key: str) -> str | None:
         # 先按大小写精确匹配（'AI' 和 'ai' 可能是不同的记录）
+        if self._index is not None:
+            offset = self._index.find_exact(key)
+            if offset is None:
+                offset = self._index.find_folded(key.lower())
+            if offset is None:
+                return None
+            try:
+                return self._read_record(offset).decode(self.encoding, "replace")
+            except MDXError:
+                return None
         exact = self._exact_index.get(key)
         if exact is not None:
             _key, offset = self._keys[exact]
@@ -318,7 +354,11 @@ class MDX:
         return None
 
     def keys_matching(self, prefix: str, limit: int = 10) -> list[str]:
-        prefix = prefix.lower()
+        prefix = (prefix or "").lower()
+        if not prefix:
+            return []
+        if self._index is not None:
+            return self._index.prefix(prefix, limit)
         out = []
         for key, _offset in self._keys:
             if key.lower().startswith(prefix):
@@ -336,6 +376,16 @@ class MDX:
             "\\" + key.replace("/", "\\").lstrip("\\"),
             key.lower(),
         ]
+        if self._index is not None:
+            for candidate in candidates:
+                offset = self._index.find_folded(candidate.lower())
+                if offset is None:
+                    continue
+                try:
+                    return self._read_record(offset)
+                except MDXError:
+                    return None
+            return None
         for candidate in candidates:
             idx = self._key_index.get(candidate.lower())
             if idx is not None:
@@ -347,6 +397,9 @@ class MDX:
         return None
 
     def close(self) -> None:
+        if self._index is not None:
+            self._index.close()
+            self._index = None
         try:
             self._fh.close()
         except OSError as exc:  # noqa: BLE001 - 关闭失败不影响已读数据

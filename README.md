@@ -142,6 +142,8 @@ The app does not ship dictionaries. Put dictionary files anywhere and add them i
 
 Encrypted MDX files are not supported. A language can contain several dictionaries; the result bar lists every hit, and **Settings → Language & audio → Dictionary settings… → Groups** controls order, default, per-dictionary panel/popup visibility and whole-group mute. The Anki definition dictionary can be chosen separately per language.
 
+The first load of an MDX/MDD dictionary builds a `.rcidx` headword index next to it (or under `%LOCALAPPDATA%\Interpres\dict-index` when the folder is read-only). The first fuzzy search also builds a `.rcfuzzy` cache. Both are safe to delete; they are rebuilt from the dictionary file and invalidated when its size or modification time changes.
+
 The original-entry viewer uses WebView2 and keeps the dictionary's own HTML/CSS/images/audio, but removes dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links before rendering. Its own toolbar buttons are handled by the app's injected script; a dictionary that depends on custom JavaScript interactivity will look correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
@@ -253,6 +255,7 @@ rc/service_common.py      chunking/cache helpers shared by the mixins
 rc/llm.py                 chat/translation client (streaming, JSON parsing)
 rc/rich.py                dictionary HTML → structured senses/examples
 rc/mdx.py                 pure-stdlib MDX/MDD reader
+rc/mdx_index.py           persistent SQLite headword index for MDX/MDD
 rc/stardict.py            StarDict reader
 rc/dsl.py                 DSL / DSL.dz reader
 rc/dictd.py               Dictd reader

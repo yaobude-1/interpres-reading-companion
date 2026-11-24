@@ -20,6 +20,8 @@ tests/tmp*/
 vendor_build/
 config.json
 *.db
+*.rcidx
+*.rcfuzzy
 cache/
 tests/.uidata/
 tests/.docshots/
