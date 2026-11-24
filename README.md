@@ -144,7 +144,7 @@ Encrypted MDX files are not supported. A language can contain several dictionari
 
 MDX/MDD, StarDict and DSL dictionaries build a `.rcidx` index cache next to the source (or under `%LOCALAPPDATA%\Interpres\dict-index` when the folder is read-only); the first fuzzy search also builds a `.rcfuzzy` cache. Both are safe to delete; they are rebuilt from the dictionary file and invalidated when its size or modification time changes. Importing dictionaries starts this indexing in the background and shows progress in the dictionary settings window; opening that window also indexes dictionaries imported by older versions when their cache is missing.
 
-The original-entry viewer uses WebView2 and keeps the dictionary's own HTML/CSS/images/audio, but removes dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links before rendering. Its own toolbar buttons are handled by the app's injected script; a dictionary that depends on custom JavaScript interactivity will look correct but not run its own scripts.
+The original-entry viewer uses WebView2 and keeps the dictionary's own HTML/CSS/images/audio. Dictionary stylesheets are moved into the page head so CSS-only navigation labels survive, but dictionary-provided `<script>` tags, `on*` handlers, and `javascript:` links are removed before rendering. Its own toolbar buttons are handled by the app's injected script; a dictionary that depends on custom JavaScript interactivity will look correct but not run its own scripts.
 
 Dictionaries are copyrighted works; obtain and use them legally. Dictionary files are never sent anywhere — lookup is entirely local.
 
