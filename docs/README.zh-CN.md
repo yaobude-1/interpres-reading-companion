@@ -116,7 +116,7 @@
 
 - MDX/MDD 2.0
 - 未加密 MDX 1.2（zlib / LZO）
-- StarDict（`.ifo` / `.idx` / `.dict[.dz]`）
+- StarDict（`.ifo` / `.idx` / `.dict[.dz]`；`.dict.dz` 按 chunk 随机读取）
 - DSL（`.dsl` / `.dsl.dz`）
 - Dictd（`.index`）
 - XDXF（`.xdxf` / `.xdxf.dz`）
@@ -226,6 +226,7 @@ rc/mdx.py                 纯标准库 MDX/MDD 读取
 rc/mdx_index.py           MDX/MDD 的 SQLite 持久化词头索引
 rc/stardict.py            StarDict 读取
 rc/stardict_index.py      StarDict 持久化词头索引
+rc/dictzip.py             .dict.dz 随机读取
 rc/dsl.py                 DSL / DSL.dz 读取
 rc/dsl_index.py           DSL 正文/词头持久化索引
 rc/dictd.py               Dictd 读取

@@ -16,6 +16,7 @@ import struct
 from pathlib import Path
 
 from .mdx import html_to_text
+from .dictzip import DictZip, open_dictzip
 from .stardict_index import KeyView, StarDictIndex
 
 log = logging.getLogger("rc")
@@ -61,6 +62,7 @@ class StarDict:
         self._index: dict[str, int] = {}
         self._aliases: dict[str, int] = {}
         self._items: bytes | mmap.mmap | None = None
+        self._dictzip: DictZip | None = None
         self._key_store: StarDictIndex | None = None
         try:
             self._key_store = StarDictIndex.open_or_build(base)
@@ -112,23 +114,29 @@ class StarDict:
             pos = end + 5
 
     # ------------------------------------------------------------------ 数据
-    def _data(self, base: Path) -> bytes:
-        if self._items is not None:
-            return self._items
+    def _read_data(self, offset: int, size: int) -> bytes:
+        base = self.path.with_suffix("")
         dz = Path(str(base) + ".dict.dz")
-        plain = Path(str(base) + ".dict")
         if dz.exists():
-            with gzip.open(dz, "rb") as f:
-                self._items = f.read()
-        elif plain.exists():
-            try:
-                with plain.open("rb") as f:
-                    self._items = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-            except (OSError, ValueError):
-                self._items = plain.read_bytes()
-        else:
-            self._items = b""
-        return self._items
+            if self._dictzip is None:
+                self._dictzip = open_dictzip(dz)
+            if self._dictzip is not None:
+                return self._dictzip.read(offset, size)
+            if self._items is None:
+                with gzip.open(dz, "rb") as f:
+                    self._items = f.read()
+            return self._items[offset : offset + size]
+        if self._items is None:
+            plain = Path(str(base) + ".dict")
+            if plain.exists():
+                try:
+                    with plain.open("rb") as f:
+                        self._items = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                except (OSError, ValueError):
+                    self._items = plain.read_bytes()
+            else:
+                self._items = b""
+        return self._items[offset : offset + size]
 
     def _record(self, index: int) -> str | None:
         if index < 0 or index >= len(self._records):
@@ -136,7 +144,7 @@ class StarDict:
         return self._record_at(*self._records[index])
 
     def _record_at(self, offset: int, size: int) -> str | None:
-        data = self._data(self.path.with_suffix(""))[offset : offset + size]
+        data = self._read_data(offset, size)
         if not data:
             return None
         sequence = self.attrs.get("sametypesequence") or ""
@@ -206,4 +214,7 @@ class StarDict:
                 self._items.close()
             except OSError:
                 pass
+        if self._dictzip is not None:
+            self._dictzip.close()
+            self._dictzip = None
         self._items = None

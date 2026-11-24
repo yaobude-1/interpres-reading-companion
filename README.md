@@ -135,7 +135,7 @@ The app does not ship dictionaries. Put dictionary files anywhere and add them i
 
 - MDX/MDD 2.0
 - unencrypted MDX 1.2 (zlib and LZO blocks)
-- StarDict (`.ifo` / `.idx` / `.dict[.dz]`)
+- StarDict (`.ifo` / `.idx` / `.dict[.dz]`; `.dict.dz` uses random-access chunks)
 - DSL (`.dsl`, `.dsl.dz`)
 - Dictd (`.index`)
 - XDXF (`.xdxf`, `.xdxf.dz`)
@@ -258,6 +258,7 @@ rc/mdx.py                 pure-stdlib MDX/MDD reader
 rc/mdx_index.py           persistent SQLite headword index for MDX/MDD
 rc/stardict.py            StarDict reader
 rc/stardict_index.py      persistent StarDict headword index
+rc/dictzip.py             random-access .dict.dz reader
 rc/dsl.py                 DSL / DSL.dz reader
 rc/dsl_index.py           persistent DSL body/headword index
 rc/dictd.py               Dictd reader
