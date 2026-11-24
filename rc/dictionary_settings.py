@@ -413,18 +413,21 @@ class DictionarySettings:
         if not paths:
             return
         added = []
-        path_by_id: dict[str, str] = {}
+        path_by_id: dict[str, tuple[str, str]] = {}
         for path in paths:
             item = dict_config.add_library_item(self.draft, path)
             added.append(item["id"])
-            path_by_id[item["id"]] = str(item.get("mdx") or path)
+            path_by_id[item["id"]] = (
+                str(item.get("mdx") or path),
+                str(item.get("mdd") or ""),
+            )
         self._render()
         if added:
             self._assign_dialog(added)
             self._start_indexing([path_by_id[item_id] for item_id in added])
 
     # ------------------------------------------------------------ index warming
-    def _start_indexing(self, paths: list[str]) -> None:
+    def _start_indexing(self, paths: list[tuple[str, str]]) -> None:
         if not paths:
             return
         if getattr(self, "_index_running", False):
@@ -442,15 +445,15 @@ class DictionarySettings:
         thread.start()
         self.win.after(80, self._poll_index_queue)
 
-    def _index_worker(self, paths: list[str]) -> None:
+    def _index_worker(self, paths: list[tuple[str, str]]) -> None:
         from . import fuzzy
         from .dictionary import Dictionary
 
-        for path in paths:
+        for path, mdd in paths:
             self._index_queue.put(("file", Path(path).name))
             dictionary = None
             try:
-                dictionary = Dictionary(path)
+                dictionary = Dictionary(path, mdd or None)
                 fuzzy.build_index(dictionary)
                 self._index_queue.put(("done", Path(path).name))
             except Exception as exc:  # noqa: BLE001 - 索引失败不阻止读词
