@@ -19,6 +19,8 @@ import zlib
 from pathlib import Path
 from typing import Iterator
 
+from .index_paths import sidecar
+
 log = logging.getLogger("rc")
 
 SCHEMA_VERSION = 1
@@ -26,7 +28,7 @@ _HEADER_RE = re.compile(r'^#([A-Z_]+)\s+"(.*)"\s*$')
 
 
 def _sidecar_path(path: Path) -> Path:
-    return path.with_name(path.name + ".rcidx")
+    return sidecar(path, ".rcidx")
 
 
 def _decode(raw: bytes) -> str:

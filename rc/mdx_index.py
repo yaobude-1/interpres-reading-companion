@@ -14,15 +14,15 @@ is still read lazily from the original file by offset.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import sqlite3
-import tempfile
 import threading
 from array import array
 from pathlib import Path
 from typing import Callable, Iterable, Iterator
+
+from .index_paths import sidecar
 
 log = logging.getLogger("rc")
 
@@ -44,19 +44,7 @@ def _source_meta(source: Path) -> dict[str, str]:
 
 
 def _sidecar_path(source: Path) -> Path:
-    return source.with_name(source.name + ".rcidx")
-
-
-def _fallback_path(source: Path) -> Path | None:
-    """Use the data dir when the dictionary folder is read-only."""
-    root = os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()
-    digest = hashlib.sha1(str(source).encode("utf-8", "replace")).hexdigest()[:16]
-    path = Path(root) / "Interpres" / "dict-index" / f"{digest}.rcidx"
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        return None
-    return path
+    return sidecar(source, ".rcidx")
 
 
 class MdxIndex:
@@ -75,22 +63,16 @@ class MdxIndex:
         key_iter: Callable[[], Iterable[tuple[str, int]]],
         alias: Callable[[str], str],
     ) -> "MdxIndex | None":
-        sidecar = _sidecar_path(source)
-        for candidate in (sidecar, _fallback_path(source)):
-            if candidate is None:
-                continue
-            index = cls._try_open(candidate, source)
-            if index is not None:
-                return index
-            try:
-                cls._build(candidate, source, key_iter(), alias)
-            except (OSError, sqlite3.Error, MdxIndexError) as exc:
-                log.debug("MDX 索引写入失败 %s: %s", candidate, exc)
-                continue
-            index = cls._try_open(candidate, source)
-            if index is not None:
-                return index
-        return None
+        sidecar_path = _sidecar_path(source)
+        index = cls._try_open(sidecar_path, source)
+        if index is not None:
+            return index
+        try:
+            cls._build(sidecar_path, source, key_iter(), alias)
+        except (OSError, sqlite3.Error, MdxIndexError) as exc:
+            log.debug("MDX 索引写入失败 %s: %s", sidecar_path, exc)
+            return None
+        return cls._try_open(sidecar_path, source)
 
     @classmethod
     def _try_open(cls, path: Path, source: Path) -> "MdxIndex | None":

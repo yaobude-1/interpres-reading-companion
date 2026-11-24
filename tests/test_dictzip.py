@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import binascii
 import gzip
+import os
 import struct
 import sys
 import zlib
@@ -48,6 +49,7 @@ def _dictzip(data: bytes, chunk_length: int = 100) -> bytes:
 
 def main() -> int:
     with local_temp("dictzip-") as tmp:
+        os.environ["INTERPRES_INDEX_DIR"] = str(Path(tmp) / "indexes")
         base = Path(tmp) / "sample"
         data = (
             b"<div>alpha first article</div>"

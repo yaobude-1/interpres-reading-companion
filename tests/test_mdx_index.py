@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 import time
 from pathlib import Path
@@ -11,6 +12,7 @@ sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE))
 
 from rc.fuzzy import build_index  # noqa: E402
+from rc.index_paths import sidecar  # noqa: E402
 from rc.mdx_index import MdxIndex  # noqa: E402
 from tmputil import local_temp  # noqa: E402
 
@@ -25,6 +27,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 def main() -> int:
     with local_temp("mdx-index-") as tmp:
+        os.environ["INTERPRES_INDEX_DIR"] = str(Path(tmp) / "indexes")
         path = Path(tmp) / "dict.mdx"
         path.write_bytes(b"x" * 32)
         calls = 0
@@ -97,7 +100,7 @@ def main() -> int:
         check("fuzzy loaded", second_index is not None and len(second_index) == 3)
         check(
             "fuzzy cache exists",
-            (source.with_name(source.name + ".rcfuzzy")).exists(),
+            sidecar(source, ".rcfuzzy").exists(),
         )
 
     print("\n失败项：", fails if fails else "无")

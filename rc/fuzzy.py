@@ -12,10 +12,11 @@ import gzip
 import logging
 import os
 import struct
-import tempfile
 import threading
 import unicodedata
 from pathlib import Path
+
+from .index_paths import sidecar
 
 log = logging.getLogger("rc")
 
@@ -199,24 +200,7 @@ def _cache_path(mdx) -> Path | None:
     path = getattr(mdx, "path", None)
     if path is None:
         return None
-    path = Path(path)
-    candidate = path.with_name(path.name + ".rcfuzzy")
-    try:
-        candidate.parent.mkdir(parents=True, exist_ok=True)
-        if os.access(candidate.parent, os.W_OK):
-            return candidate
-    except OSError:
-        pass
-    root = os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()
-    fallback = Path(root) / "Interpres" / "dict-index"
-    try:
-        fallback.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        return None
-    import hashlib
-
-    digest = hashlib.sha1(str(path).encode("utf-8", "replace")).hexdigest()[:16]
-    return fallback / f"{digest}.rcfuzzy"
+    return sidecar(path, ".rcfuzzy")
 
 
 def _stat_key(mdx) -> tuple[int, int]:

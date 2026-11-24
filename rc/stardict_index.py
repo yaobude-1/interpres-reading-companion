@@ -16,13 +16,15 @@ import threading
 from pathlib import Path
 from typing import Iterator
 
+from .index_paths import sidecar
+
 log = logging.getLogger("rc")
 
 SCHEMA_VERSION = 1
 
 
 def _sidecar_path(base: Path) -> Path:
-    return base.with_name(base.name + ".rcidx")
+    return sidecar(base, ".rcidx")
 
 
 def _meta(path: Path) -> dict[str, str]:

@@ -142,7 +142,7 @@ The app does not ship dictionaries. Put dictionary files anywhere and add them i
 
 Encrypted MDX files are not supported. A language can contain several dictionaries; the result bar lists every hit, and **Settings → Language & audio → Dictionary settings… → Groups** controls order, default, per-dictionary panel/popup visibility and whole-group mute. The Anki definition dictionary can be chosen separately per language.
 
-MDX/MDD, StarDict and DSL dictionaries build a `.rcidx` index cache next to the source (or under `%LOCALAPPDATA%\Interpres\dict-index` when the folder is read-only); the first fuzzy search also builds a `.rcfuzzy` cache. Both are safe to delete; they are rebuilt from the dictionary file and invalidated when its size or modification time changes. Importing dictionaries starts this indexing in the background and shows progress in the dictionary settings window; opening that window also indexes dictionaries imported by older versions when their cache is missing.
+MDX/MDD, StarDict and DSL dictionaries build their `.rcidx` index cache under `%USERPROFILE%\.reading-companion\dict-index` (falling back to `%LOCALAPPDATA%\Interpres\dict-index`); the first fuzzy search also builds a `.rcfuzzy` cache there. These are implementation caches, not dictionary files: they are safe to delete, and are rebuilt from the dictionary and invalidated when its size or modification time changes. Importing dictionaries starts this indexing in the background and shows progress in the dictionary settings window; opening that window also indexes dictionaries imported by older versions when their cache is missing.
 
 The original-entry viewer uses WebView2 and keeps the dictionary's own HTML/CSS/images/audio. Each library item has an **Allow scripts** switch: newly imported dictionaries default to off, while dictionaries imported by older versions default to on to preserve their previous rendering. With scripts off, the original view still keeps static CSS layout (dictionary stylesheets are moved into the real head so CSS-only navigation labels survive), but removes dictionary `<script>` tags, `on*` handlers and `javascript:` links. With scripts on, the dictionary can run its own code; only enable this for dictionaries you trust.
 
@@ -256,6 +256,7 @@ rc/llm.py                 chat/translation client (streaming, JSON parsing)
 rc/rich.py                dictionary HTML → structured senses/examples
 rc/mdx.py                 pure-stdlib MDX/MDD reader
 rc/mdx_index.py           persistent SQLite headword index for MDX/MDD
+rc/index_paths.py         central dictionary-index cache paths
 rc/stardict.py            StarDict reader
 rc/stardict_index.py      persistent StarDict headword index
 rc/dictzip.py             random-access .dict.dz reader

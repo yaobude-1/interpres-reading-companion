@@ -125,7 +125,7 @@
 
 加密 MDX 暂不支持。一种语言可以挂多本词典；来源栏会列出所有命中，**设置 → 语言、词典与发音 → 词典设置… → 查词组** 里可以调顺序、设默认、控制面板/弹窗单独可见，或整组静音。Anki 释义词典也可以按语言单独选择。
 
-MDX/MDD、StarDict、DSL 词典会在源文件旁边生成 `.rcidx` 索引缓存（目录只读时放到 `%LOCALAPPDATA%\Interpres\dict-index`）；第一次模糊搜索还会生成 `.rcfuzzy` 缓存。它们都可以安全删除；词典文件大小或修改时间变化后会自动重建。导入词典时会在后台建索引，并在词典设置窗口显示进度；打开该窗口时，旧版本导入但缺少索引的词典也会自动补建。
+MDX/MDD、StarDict、DSL 词典的 `.rcidx` 索引缓存在 `%USERPROFILE%\.reading-companion\dict-index`（不可写时回退到 `%LOCALAPPDATA%\Interpres\dict-index`）；第一次模糊搜索还会在同一目录生成 `.rcfuzzy` 缓存。这些是程序缓存，不是词典文件，可以安全删除；词典文件大小或修改时间变化后会自动重建。导入词典时会在后台建索引，并在词典设置窗口显示进度；打开该窗口时，旧版本导入但缺少索引的词典也会自动补建。
 
 词典是有版权的作品，请合法获取和使用。词典文件不会被发送到任何地方，查询完全在本地进行。
 
@@ -226,6 +226,7 @@ rc/llm.py                 翻译/对话客户端（流式、JSON 解析）
 rc/rich.py                词典 HTML → 结构化义项/例句
 rc/mdx.py                 纯标准库 MDX/MDD 读取
 rc/mdx_index.py           MDX/MDD 的 SQLite 持久化词头索引
+rc/index_paths.py         词典索引缓存目录
 rc/stardict.py            StarDict 读取
 rc/stardict_index.py      StarDict 持久化词头索引
 rc/dictzip.py             .dict.dz 随机读取

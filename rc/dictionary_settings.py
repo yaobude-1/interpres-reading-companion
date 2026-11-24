@@ -12,6 +12,7 @@ from tkinter import filedialog, simpledialog, ttk
 
 from . import dict_config
 from .i18n import lang_display_name, tr
+from .index_paths import sidecar
 from .popup import ACCENT, BG, DIM, FONT_FAMILY, GREEN, MUTED, PANEL, PANEL_ALT, RED, TEXT
 from .textutil import display
 from .theme import BORDER_SOFT, ON_ACCENT
@@ -465,14 +466,14 @@ class DictionarySettings:
             index_source = source.with_suffix("")
         else:
             index_source = source
-        index = index_source.with_name(index_source.name + ".rcidx")
-        fuzzy = source.with_name(source.name + ".rcfuzzy")
+        index = sidecar(index_source, ".rcidx")
+        fuzzy = sidecar(source, ".rcfuzzy")
         if not index.exists() or not fuzzy.exists():
             return True
         if mdd:
             mdd_path = Path(mdd)
             if mdd_path.exists():
-                mdd_index = mdd_path.with_name(mdd_path.name + ".rcidx")
+                mdd_index = sidecar(mdd_path, ".rcidx")
                 if not mdd_index.exists():
                     return True
         return False

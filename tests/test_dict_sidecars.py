@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import struct
 import sys
 import time
@@ -26,6 +27,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 def main() -> int:
     with local_temp("dict-sidecar-") as tmp:
+        os.environ["INTERPRES_INDEX_DIR"] = str(Path(tmp) / "indexes")
         base = Path(tmp) / "mini"
         (Path(str(base) + ".ifo")).write_text(
             "StarDict's dict ifo file\nwordcount=2\nbookname=Mini\n",
