@@ -1,5 +1,7 @@
 # Interpres
 
+> **This project is entirely AI-generated.** The code was written by an AI coding agent (DeepSeek models, run through DeepSeek Harness). The human author is not a programmer: they set the requirements, tested each build, and made the product decisions. Treat it as an experimental personal project, not a professionally reviewed product.
+
 A Windows reading companion for foreign-language books: copy text in your reader, get a translation or dictionary card, keep vocabulary per language, and sync it to Anki.
 
 English | [中文说明](docs/README.zh-CN.md)
@@ -318,13 +320,11 @@ rc/i18n.py                zh/en display-layer translation
   translated, but a rarely used label may still be Chinese—please report it.
 - No formal accessibility or localization review has been done.
 
-## How this was built
+## Project background
 
-This project was written by an **AI coding agent** (DeepSeek models, run through
-DeepSeek Harness). The human author is **not a programmer**: this is their first
-project of this kind, put together over a few days by describing what they
-wanted and testing each build on real books. The author set the requirements,
-made the product decisions, reported bugs, and accepted or rejected changes; the
+The project was put together over a few days by describing what was wanted and
+testing each build on real books. The human author set the requirements, made
+the product decisions, reported bugs, and accepted or rejected changes; the
 agent produced the code, tests and documentation.
 
 It is published in the hope that it helps other people with the same reading
