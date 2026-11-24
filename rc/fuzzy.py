@@ -23,6 +23,8 @@ __all__ = ["normalize", "FuzzyIndex", "build_index"]
 
 _FUZZY_VERSION = 2
 _FUZZY_MAGIC = b"RCFZ2\0"
+_MAX_CACHE_ENTRIES = 5_000_000
+_MAX_CACHE_TEXT = 1_000_000
 
 
 def normalize(text: str) -> str:
@@ -237,6 +239,8 @@ def _load_cache(cache_path: Path, mdx) -> FuzzyIndex | None:
             if len(count_raw) != 8:
                 return None
             count = struct.unpack(">Q", count_raw)[0]
+            if count > _MAX_CACHE_ENTRIES:
+                return None
 
             def rows():
                 for _ in range(int(count)):
@@ -257,6 +261,8 @@ def _read_text(fh) -> str | None:
     if len(raw_len) != 4:
         return None
     length = struct.unpack(">I", raw_len)[0]
+    if length > _MAX_CACHE_TEXT:
+        return None
     data = fh.read(length)
     if len(data) != length:
         return None
