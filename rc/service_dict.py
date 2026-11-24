@@ -120,12 +120,29 @@ class DictMixin(ServiceBase):
         return results[:limit]
 
     def lookup_all(
-        self, word: str, lang_hint: str | None = None, context: str = "panel"
+        self,
+        word: str,
+        lang_hint: str | None = None,
+        context: str = "panel",
+        on_hit=None,
     ) -> list[dict]:
-        """在所有可见词典里查这个词，返回 [{lang, source, dict_id, entry}]。"""
+        """在所有可见词典里查这个词，返回 [{lang, source, dict_id, entry}]。
+
+        on_hit 每查完一本词典就回调一次，让界面可以「默认词典先出、其它词典后补」，
+        不必等最慢的词典（例如 OED）解析完才显示第一条结果。
+        """
         text = lemma.strip_word(word)
         if not text:
             return []
+
+        def emit(hit: dict) -> None:
+            if on_hit is None:
+                return
+            try:
+                on_hit(dict(hit))
+            except Exception:  # noqa: BLE001 - 回调方失败不能影响查词
+                log.debug("on_hit 回调失败")
+
         order: list[str] = []
         if lang_hint:
             order.append(lang_hint)
@@ -165,6 +182,7 @@ class DictMixin(ServiceBase):
                             "entry": user_entry,
                         }
                     )
+                    emit(hits[-1])
             for dictionary in dictionaries:
                 entry = None
                 matched_candidate = text
@@ -252,6 +270,7 @@ class DictMixin(ServiceBase):
                         "entry": entry,
                     }
                 )
+                emit(hits[-1])
         # 按匹配质量排序：精确 → 去重音精确 → 词形还原 → 重定向。
         # 同质量时按语言顺序、词典顺序、来源名排序。
         match_rank = {"user": 0, "exact": 1, "accent": 2, "lemma": 3, "redirect": 4}

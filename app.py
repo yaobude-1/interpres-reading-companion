@@ -366,6 +366,15 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                     else:
                         word, entry, anchor = payload
                         self.popup.show_dictionary(entry, anchor, word)
+                elif kind == "dict_partial":
+                    word, entry, anchor = payload
+                    self.popup.show_dictionary(entry, anchor, word)
+                elif kind == "word_card":
+                    row, word, hits, anchor = payload
+                    if hits:
+                        self.popup.show_dictionary(hits[0]["entry"], anchor, word, hits)
+                    else:
+                        self.popup.show_saved_word(row, anchor)
                 elif kind == "dict_missing":
                     word, anchor = payload
                     self.popup.show_dict_missing(

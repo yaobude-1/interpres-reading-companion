@@ -178,20 +178,23 @@ class PanelMixin:
         lang = str(row.get("lang") or "").strip()
         if not word:
             return
-        hits: list[dict] = []
-        for candidate in (word, str(row.get("lemma") or "").strip()):
-            if not candidate:
-                continue
-            try:
-                hits = self.service.lookup_all(candidate, lang_hint=lang or None)
-            except Exception:
-                log.exception("查生词失败：%s", candidate)
-                hits = []
-            if hits:
-                break
-        if hits:
-            self.popup.show_dictionary(hits[0]["entry"], anchor, word, hits)
-        else:
-            self.popup.show_saved_word(row, anchor)
+        # 捕获当前绑定：查词放后台，避免双击时主线程被 OED 解析卡住。
+        lookup = self.service.lookup_all
+
+        def worker() -> None:
+            hits: list[dict] = []
+            for candidate in (word, str(row.get("lemma") or "").strip()):
+                if not candidate:
+                    continue
+                try:
+                    hits = lookup(candidate, lang_hint=lang or None)
+                except Exception:  # noqa: BLE001 - 查生词失败时退回保存信息
+                    log.exception("查生词失败：%s", candidate)
+                    hits = []
+                if hits:
+                    break
+            self.events.put(("word_card", (row, word, hits, anchor)))
+
+        threading.Thread(target=worker, daemon=True, name="word-card").start()
 
     # -------------------------------------------------------------- 划词小按钮

@@ -79,8 +79,21 @@ class FlowMixin:
         """本地词典查词：不调用模型。"""
 
         def worker() -> None:
+            # 默认词典先出结果（Longman 通常几毫秒），其余词典到了再补来源。
+            shown = False
+
+            def emit(hit: dict) -> None:
+                nonlocal shown
+                if shown:
+                    return
+                entry = hit.get("entry")
+                if not entry:
+                    return
+                shown = True
+                self.events.put(("dict_partial", (word, entry, anchor)))
+
             try:
-                hits = self.service.lookup_all(word, context="popup")
+                hits = self.service.lookup_all(word, context="popup", on_hit=emit)
             except Exception:  # noqa: BLE001
                 log.exception("查词失败")
                 hits = []

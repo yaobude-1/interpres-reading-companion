@@ -61,6 +61,7 @@ class PanelDictMixin:
         word = self.dict_input.get().strip()
         self._dict_lookup_gen = getattr(self, "_dict_lookup_gen", 0) + 1
         generation = self._dict_lookup_gen
+        self._dict_partial_gen = None
         if self._dict_web_host is not None:
             self._dict_web_host.hide()
         if self._dict_web_frame is not None:
@@ -101,15 +102,23 @@ class PanelDictMixin:
         if getattr(self, "_dict_lookup_poll_job", None) is None:
             self._dict_lookup_poll_job = self.win.after(20, self._poll_dict_lookup)
 
+        def emit(hit: dict) -> None:
+            # 每本词典一查完就先送到界面：默认词典先出，慢词典后补。
+            lookup_queue.put(("hit", generation, word, hit))
+
         def worker() -> None:
             try:
-                hits = self.service.lookup_all(word, lang_hint=hint or None)
+                hits = self.service.lookup_all(
+                    word, lang_hint=hint or None, on_hit=emit
+                )
                 error = ""
             except Exception as exc:  # noqa: BLE001 - 后台失败交给界面
                 log.exception("查词失败")
                 hits = []
                 error = f"查词失败：{exc}"
-            lookup_queue.put((generation, word, hits, error, record, prefer_dict_id))
+            lookup_queue.put(
+                ("done", generation, word, hits, error, record, prefer_dict_id)
+            )
 
         threading.Thread(target=worker, daemon=True, name="dict-lookup").start()
 
@@ -120,18 +129,43 @@ class PanelDictMixin:
             return
         while True:
             try:
-                generation, word, hits, error, record, prefer_dict_id = lookup_queue.get_nowait()
+                message = lookup_queue.get_nowait()
             except queue.Empty:
                 break
+            if message[0] == "hit":
+                _, generation, word, hit = message
+                self._apply_dict_partial(generation, word, hit)
+                continue
+            _, generation, word, hits, error, record, prefer_dict_id = message
             self._dict_lookup_pending = max(
                 0, getattr(self, "_dict_lookup_pending", 1) - 1
             )
+            self._dict_partial_gen = None
             self._apply_dict_lookup(generation, word, hits, error, record, prefer_dict_id)
         if getattr(self, "_dict_lookup_pending", 0) > 0:
             try:
                 self._dict_lookup_poll_job = self.win.after(30, self._poll_dict_lookup)
             except tk.TclError:
                 self._dict_lookup_poll_job = None
+
+    def _apply_dict_partial(self, generation: int, word: str, hit: dict) -> None:
+        """增量结果：只渲染本轮第一本命中的词典，后续词典到了由最终结果补来源。"""
+        if generation != getattr(self, "_dict_lookup_gen", 0):
+            return
+        if self.dict_input.get().strip() != word:
+            return
+        if getattr(self, "_dict_partial_gen", None) == generation:
+            return
+        entry = hit.get("entry")
+        if not entry:
+            return
+        try:
+            if not self.win.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        self._dict_partial_gen = generation
+        self._apply_dict_lookup(generation, word, [hit], "", False, "")
 
     def _clear_dict_result(self) -> None:
         for child in self.dict_result.winfo_children():
