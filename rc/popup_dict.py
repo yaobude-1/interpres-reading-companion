@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import json
+import queue
+import threading
 import tkinter as tk
 
 from .dict_view_controller import view_url
@@ -871,22 +873,79 @@ class DictViewMixin:
             self._dict_editing = False
 
     def _render_similar(self, parent, word: str, lang: str, anchor) -> None:
-        """没查到词时列相近的词。"""
+        """没查到词时列相近的词；模糊搜索放到后台，避免卡住弹窗。"""
         cb = self.cb.get("fuzzy")
         if cb is None:
             return
+        if getattr(self, "_similar_queue", None) is None:
+            self._similar_queue = queue.Queue()
+        self._similar_gen = getattr(self, "_similar_gen", 0) + 1
+        generation = self._similar_gen
+        box = tk.Frame(parent, bg=BG)
+        box.pack(fill="x", pady=(4, 4))
+        self._similar_box = box
+        self._label(box, "相近的词", fg=MUTED, font=(FONT_FAMILY, 8)).pack(
+            fill="x", pady=(0, 4)
+        )
+        threading.Thread(
+            target=self._similar_worker,
+            args=(generation, word, lang, cb),
+            daemon=True,
+            name="fuzzy-popup",
+        ).start()
+        if getattr(self, "_similar_poll_job", None) is None:
+            self._similar_poll_job = self.win.after(80, self._poll_similar)
+
+    def _similar_worker(self, generation: int, word: str, lang: str, cb) -> None:
         try:
             items = cb(word, lang)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 相近词失败不影响词条
             items = []
-        rows = [it for it in (items or []) if (it.get("word") or "").lower() != word.lower()]
-        if not rows:
+        self._similar_queue.put((generation, word, items))
+
+    def _poll_similar(self) -> None:
+        self._similar_poll_job = None
+        try:
+            if not self.win.winfo_exists():
+                return
+        except tk.TclError:
             return
-        self._label(
-            parent, "相近的词", fg=MUTED, font=(FONT_FAMILY, 8)
-        ).pack(fill="x", pady=(4, 4))
+        latest = None
+        while True:
+            try:
+                item = self._similar_queue.get_nowait()
+            except queue.Empty:
+                break
+            if item[0] == getattr(self, "_similar_gen", 0):
+                latest = item
+        if latest is not None:
+            _generation, word, items = latest
+            box = getattr(self, "_similar_box", None)
+            try:
+                exists = box is not None and box.winfo_exists()
+            except tk.TclError:
+                exists = False
+            if exists:
+                for child in box.winfo_children():
+                    child.destroy()
+                rows = [
+                    it
+                    for it in (items or [])
+                    if (it.get("word") or "").lower() != word.lower()
+                ]
+                if rows:
+                    self._render_similar_rows(box, rows)
+                else:
+                    box.destroy()
+                    self._similar_box = None
+        try:
+            self._similar_poll_job = self.win.after(120, self._poll_similar)
+        except tk.TclError:
+            self._similar_poll_job = None
+
+    def _render_similar_rows(self, box, rows: list[dict]) -> None:
         for item in rows[:8]:
-            line = tk.Frame(parent, bg=BG)
+            line = tk.Frame(box, bg=BG)
             line.pack(fill="x", pady=1)
             name = item.get("word") or ""
             name_label = self._label(

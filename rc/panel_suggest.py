@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import queue
+import threading
 import tkinter as tk
 
 from .theme import (
@@ -164,6 +166,7 @@ class PanelSuggestMixin:
             self._suggest_bind_all(child)
 
     def _hide_suggestions(self) -> None:
+        self._suggest_gen = getattr(self, "_suggest_gen", 0) + 1
         for row in self._suggest_rows:
             try:
                 row.destroy()
@@ -228,20 +231,73 @@ class PanelSuggestMixin:
 
     def _update_suggestions(self) -> None:
         word = self.dict_input.get().strip()
+        self._hide_suggestions()
         if len(word) < 1 or not self.service.has_dictionaries():
-            self._hide_suggestions()
             return
+        self._suggest_gen = getattr(self, "_suggest_gen", 0) + 1
+        generation = self._suggest_gen
+        if getattr(self, "_suggest_queue", None) is None:
+            self._suggest_queue = queue.Queue()
+        self._ensure_suggest_poll()
+        threading.Thread(
+            target=self._suggest_worker,
+            args=(generation, word),
+            daemon=True,
+            name="fuzzy-suggest",
+        ).start()
+
+    def _suggest_worker(self, generation: int, word: str) -> None:
         try:
             items = self.service.fuzzy_lookup(word, None, 10)
-        except Exception:
+        except Exception:  # noqa: BLE001 - 建议失败不影响查词
             items = []
-        if not items:
-            self._hide_suggestions()
+        suggestions = getattr(self, "_suggest_queue", None)
+        if suggestions is None:
+            suggestions = queue.Queue()
+            self._suggest_queue = suggestions
+        suggestions.put((generation, word, items))
+
+    def _ensure_suggest_poll(self) -> None:
+        if getattr(self, "_suggest_poll_job", None) is not None:
             return
+        self._suggest_poll_job = self.win.after(60, self._poll_suggestions)
+
+    def _poll_suggestions(self) -> None:
+        self._suggest_poll_job = None
+        try:
+            if not self.win.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        latest = None
+        suggestions = getattr(self, "_suggest_queue", None)
+        if suggestions is not None:
+            while True:
+                try:
+                    item = suggestions.get_nowait()
+                except queue.Empty:
+                    break
+                if item[0] == getattr(self, "_suggest_gen", 0):
+                    latest = item
+        if latest is not None:
+            _generation, word, items = latest
+            if self.dict_input.get().strip() == word:
+                if items:
+                    self._render_suggestions(items)
+                else:
+                    self._hide_suggestions()
+                    if word:
+                        self._lookup_dict()
+        try:
+            self._suggest_poll_job = self.win.after(120, self._poll_suggestions)
+        except tk.TclError:
+            self._suggest_poll_job = None
+
+    def _render_suggestions(self, items: list[dict]) -> None:
         for row in self._suggest_rows:
             try:
                 row.destroy()
-            except tk.TclError:  # 控件可能已销毁，刻意忽略
+            except tk.TclError:
                 pass
         self._suggest_rows = []
         self._suggest_index = -1
@@ -277,7 +333,7 @@ class PanelSuggestMixin:
         self.suggest_win.deiconify()
         try:
             self.suggest_win.attributes("-topmost", True)
-        except tk.TclError:  # 控件可能已销毁，刻意忽略
+        except tk.TclError:
             pass
         self.suggest_win.lift()
         self.win.update_idletasks()

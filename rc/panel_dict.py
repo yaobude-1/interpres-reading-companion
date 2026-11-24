@@ -311,8 +311,6 @@ class PanelDictMixin:
     def _dict_typed(self) -> None:
         """输入停顿后只刷新下拉建议；卡片等回车/点选再渲染，避免抖。"""
         self._update_suggestions()
-        if not self._suggest_rows and self.dict_input.get().strip():
-            self._lookup_dict()
 
     def _render_dict(self, entry: dict, word: str, alternatives=None) -> None:
         for child in self.dict_result.winfo_children():

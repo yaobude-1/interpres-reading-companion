@@ -731,7 +731,6 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 700,
                 lambda: self.toast("Interpres 已在后台运行 · 划词后点「译」，或按 Ctrl+Alt+T"),
             )
-        self._prebuild_fuzzy()
         self._tts_self_test()
         self.root.mainloop()
 
@@ -745,22 +744,6 @@ class Application(PanelMixin, FlowMixin, MediaMixin):
                 log.exception("tts 自检失败")
 
         threading.Thread(target=worker, daemon=True, name="tts-selftest").start()
-
-    def _prebuild_fuzzy(self) -> None:
-        import threading
-
-        from rc import fuzzy
-
-        def worker() -> None:
-            for code in ("en", "fr", "la", "de", "es"):
-                try:
-                    dictionary = self.service.dicts.dictionary(code)
-                    if dictionary is not None:
-                        fuzzy.build_index(dictionary)
-                except Exception:
-                    continue
-
-        threading.Thread(target=worker, daemon=True, name="fuzzy-index").start()
 
     def shutdown(self) -> None:
         if self.quitting:
