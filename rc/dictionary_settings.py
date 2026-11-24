@@ -140,6 +140,7 @@ class DictionarySettings:
         self._button(bar, "取消", self.win.destroy).pack(side="right", padx=(0, 8))
         self._button(bar, "词典映射…", self.open_profiles).pack(side="left")
         self._render()
+        self.win.after(300, self._index_existing_if_missing)
 
     def _button(self, parent, text, command, primary=False):
         bg = ACCENT if primary else PANEL
@@ -177,6 +178,9 @@ class DictionarySettings:
         head = tk.Frame(self.list_frame, bg=BG)
         head.pack(fill="x", pady=(0, 6))
         self._button(head, "+ 导入词典…", self.import_files).pack(side="left")
+        self._button(head, "为已有词典建索引…", self.index_existing).pack(
+            side="left", padx=(6, 0)
+        )
         tk.Label(
             head, text="导入后先进入词典库；未加入任何语言组时不会参与查词。",
             bg=BG, fg=DIM, font=(FONT_FAMILY, 8),
@@ -427,6 +431,50 @@ class DictionarySettings:
             self._start_indexing([path_by_id[item_id] for item_id in added])
 
     # ------------------------------------------------------------ index warming
+    @staticmethod
+    def _index_paths(item: dict) -> tuple[str, str]:
+        return str(item.get("mdx") or ""), str(item.get("mdd") or "")
+
+    @staticmethod
+    def _needs_index(path: str, mdd: str = "") -> bool:
+        source = Path(path)
+        if not source.exists():
+            return False
+        if source.suffix.lower() == ".ifo":
+            index_source = source.with_suffix("")
+        else:
+            index_source = source
+        index = index_source.with_name(index_source.name + ".rcidx")
+        fuzzy = source.with_name(source.name + ".rcfuzzy")
+        if not index.exists() or not fuzzy.exists():
+            return True
+        if mdd:
+            mdd_path = Path(mdd)
+            if mdd_path.exists():
+                mdd_index = mdd_path.with_name(mdd_path.name + ".rcidx")
+                if not mdd_index.exists():
+                    return True
+        return False
+
+    def index_existing(self) -> None:
+        paths = [
+            self._index_paths(item)
+            for item in dict_config.library(self.draft).values()
+            if self._needs_index(*self._index_paths(item))
+        ]
+        if not paths:
+            self._toast("所有词典的索引都是最新的")
+            return
+        self._start_indexing(paths)
+
+    def _index_existing_if_missing(self) -> None:
+        try:
+            if not self.win.winfo_exists() or getattr(self, "_index_running", False):
+                return
+            self.index_existing()
+        except tk.TclError:
+            pass
+
     def _start_indexing(self, paths: list[tuple[str, str]]) -> None:
         if not paths:
             return
