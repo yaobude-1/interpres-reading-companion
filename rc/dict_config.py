@@ -42,13 +42,16 @@ def _format(path: str) -> str:
     return "mdx"
 
 
-def _new_library_item(path: str, name: str = "", mdd: str = "", item_id: str = "") -> dict:
+def _new_library_item(
+    path: str, name: str = "", mdd: str = "", item_id: str = "", *, allow_scripts: bool = False
+) -> dict:
     return {
         "id": item_id or stable_id(path),
         "name": str(name or "").strip(),
         "mdx": str(path),
         "mdd": str(mdd or "").strip() or find_mdd(path),
         "format": _format(path),
+        "allow_scripts": bool(allow_scripts),
     }
 
 
@@ -96,6 +99,7 @@ def normalize(data: dict) -> dict:
                         str(raw.get("name") or ""),
                         str(raw.get("mdd") or ""),
                         item_id,
+                        allow_scripts=True,
                     )
                 if item_id not in existing_ids:
                     refs.append({"id": item_id, "order": len(refs)})
@@ -129,6 +133,9 @@ def normalize(data: dict) -> dict:
             "mdx": path,
             "mdd": str(raw.get("mdd") or "").strip() or find_mdd(path),
             "format": str(raw.get("format") or "").strip() or _format(path),
+            # Older configs had no script switch; preserve their previous
+            # (script-enabled) original view. Newly imported items default off.
+            "allow_scripts": bool(raw.get("allow_scripts", True)),
         }
         path_to_id[key] = item_id
     data["dictionary_library"] = clean_library
@@ -194,6 +201,19 @@ def library(data: dict) -> dict[str, dict]:
 
 def item_by_id(data: dict, item_id: str) -> dict | None:
     return library(data).get(str(item_id or ""))
+
+
+def scripts_allowed(data: dict, item_id: str) -> bool:
+    item = item_by_id(data, item_id)
+    if item is None:
+        return True
+    return bool(item.get("allow_scripts", True))
+
+
+def set_scripts_allowed(data: dict, item_id: str, allowed: bool) -> None:
+    item = item_by_id(data, item_id)
+    if item is not None:
+        item["allow_scripts"] = bool(allowed)
 
 
 def language_of(data: dict, item_id: str) -> str:

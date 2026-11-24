@@ -99,6 +99,11 @@ class DictionaryManager:
     def language_of(self, dict_id: str) -> str:
         return dict_config.language_of(self.config.data, dict_id)
 
+    def scripts_allowed(self, dict_id: str) -> bool:
+        if not dict_id:
+            return True
+        return dict_config.scripts_allowed(self.config.data, dict_id)
+
     def default_id(self, lang: str) -> str:
         return dict_config.default_id(self.config.data, lang)
 

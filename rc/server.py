@@ -179,6 +179,9 @@ def _make_handler(service: Service, token: str, on_show_settings=None, on_show_p
                 word=word,
                 resource_base=resource_base,
                 lookup_base=lookup_base,
+                allow_scripts=service.dicts.scripts_allowed(
+                    str(entry.get("dict_id") or dict_id)
+                ),
             )
             self._raw(page.encode("utf-8"), "text/html; charset=utf-8")
 

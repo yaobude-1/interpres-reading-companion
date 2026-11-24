@@ -53,6 +53,35 @@ def main() -> int:
     check("没有残留 sound://", "sound://" not in page, page)
     check("没有残留 entry://", "entry://" not in page, page)
 
+    trusted = build_raw_page(
+        '<script>zngq_evil()</script><a onclick="zngq_evil()">x</a>',
+        source="OED",
+        word="test",
+        resource_base="http://127.0.0.1:9/api/dict-res/en/tok/",
+        lookup_base="interpres://lookup?word=",
+        allow_scripts=True,
+    )
+    check("允许脚本时保留 script", "zngq_evil()" in trusted, trusted)
+    check("允许脚本时保留 onclick", "onclick=" in trusted, trusted)
+
+    sandboxed = build_raw_page(
+        '<head><link rel="stylesheet" href="zngq.css">'
+        '<style>.x:before{content:"N"}</style>'
+        "<script>zngq_evil()</script></head>"
+        '<zngq><span tab="Noun1" onclick="zngq_evil()">Noun</span></zngq>',
+        source="OED",
+        word="test",
+        resource_base="http://127.0.0.1:9/api/dict-res/en/tok/",
+        lookup_base="interpres://lookup?word=",
+        allow_scripts=False,
+    )
+    head = sandboxed.split("<body", 1)[0]
+    check("沙箱样式提到 head", 'href="zngq.css"' in head and ".x:before" in head, head)
+    check("沙箱保留 tab 属性", 'tab="Noun1"' in sandboxed, sandboxed)
+    check("沙箱清理脚本", "zngq_evil" not in sandboxed, sandboxed)
+    check("沙箱清理事件", "onclick=" not in sandboxed, sandboxed)
+    check("沙箱无嵌套 head", sandboxed.count("<head") == 1, sandboxed[:300])
+
     print("\n失败项：", fails if fails else "无")
     return 1 if fails else 0
 

@@ -89,6 +89,11 @@ def test_config() -> None:
         unassigned = dict_config.add_library_item(cfg.data, r"D:\unassigned\x.mdx")
         check("未分配不在组里", dict_config.languages_of(cfg.data, unassigned["id"]) == [], "")
         check("未分配不参与查词", unassigned["id"] not in [i["id"] for i in dict_config.visible_items(cfg.data, "en")], "")
+        check("新词典默认不允许脚本", not dict_config.scripts_allowed(cfg.data, unassigned["id"]), "")
+        dict_config.set_scripts_allowed(cfg.data, unassigned["id"], True)
+        dict_config.normalize(cfg.data)
+        check("脚本开关持久化", dict_config.scripts_allowed(cfg.data, unassigned["id"]), "")
+        check("旧迁移词典保留脚本", dict_config.scripts_allowed(cfg.data, items[0]["id"]), "")
 
 
 def test_multi_lookup() -> None:

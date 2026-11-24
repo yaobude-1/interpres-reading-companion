@@ -221,12 +221,33 @@ class DictionarySettings:
         tk.Label(
             row, text=state, bg=PANEL, fg=color, font=(FONT_FAMILY, 8), width=9, anchor="w"
         ).pack(side="left")
+        script_var = tk.BooleanVar(value=bool(item.get("allow_scripts", True)))
+        tk.Checkbutton(
+            row,
+            text="允许脚本",
+            variable=script_var,
+            command=lambda i=item["id"], v=script_var: self._set_scripts(i, v),
+            bg=PANEL,
+            fg=MUTED,
+            selectcolor=BORDER_SOFT,
+            activebackground=PANEL,
+            activeforeground=TEXT,
+            font=(FONT_FAMILY, 8),
+        ).pack(side="left", padx=(4, 4))
         self._button(row, "改名", lambda i=item["id"]: self._rename_library(i)).pack(
             side="left", padx=(0, 4)
         )
         self._button(row, "删除", lambda i=item["id"]: self._remove_library(i)).pack(
             side="left", padx=(0, 8)
         )
+
+    def _set_scripts(self, item_id: str, var: tk.BooleanVar) -> None:
+        allowed = bool(var.get())
+        dict_config.set_scripts_allowed(self.draft, item_id, allowed)
+        if allowed:
+            self._toast("已允许词典脚本执行（有安全风险）")
+        else:
+            self._toast("已关闭词典脚本")
 
     def _render_groups(self) -> None:
         languages = self.draft.get("languages") or {}

@@ -6,6 +6,40 @@ import re
 from html import escape
 from urllib.parse import quote
 
+_LINK_RE = re.compile(r"<link\b[^>]*>", re.IGNORECASE)
+_STYLE_RE = re.compile(r"<style\b[^>]*>.*?</style>", re.IGNORECASE | re.DOTALL)
+_SCRIPT_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL)
+_HEAD_TAG_RE = re.compile(r"</?head\b[^>]*>", re.IGNORECASE)
+_EVENT_ATTR_RE = re.compile(
+    r"""\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)""", re.IGNORECASE
+)
+_JS_HREF_RE = re.compile(
+    r"""(href\s*=\s*["'])\s*javascript:[^"']*(["'])""", re.IGNORECASE
+)
+
+
+def _extract_styles(html: str) -> tuple[str, str]:
+    styles: list[str] = []
+
+    def take_link(match: re.Match) -> str:
+        tag = match.group(0)
+        if re.search(r"""rel\s*=\s*["']?stylesheet""", tag, re.IGNORECASE):
+            styles.append(tag)
+            return ""
+        return tag
+
+    html = _LINK_RE.sub(take_link, html)
+    html = _STYLE_RE.sub(lambda match: styles.append(match.group(0)) or "", html)
+    return html, "".join(styles)
+
+
+def _sanitize_fragment(html: str) -> str:
+    html = _SCRIPT_RE.sub("", html)
+    html = _HEAD_TAG_RE.sub("", html)
+    html = _EVENT_ATTR_RE.sub("", html)
+    html = _JS_HREF_RE.sub(r"\1#\2", html)
+    return html
+
 
 def build_raw_page(
     raw_html: str,
@@ -14,6 +48,7 @@ def build_raw_page(
     word: str,
     resource_base: str,
     lookup_base: str,
+    allow_scripts: bool = True,
 ) -> str:
     """Wrap raw dictionary HTML, rewriting MDX schemes and keeping its layout."""
     html = str(raw_html or "")
@@ -37,6 +72,11 @@ def build_raw_page(
 
     html = re.sub(r'entry://([^"\'\s>]+)', _entry, html, flags=re.IGNORECASE)
 
+    styles = ""
+    if not allow_scripts:
+        html, styles = _extract_styles(html)
+        html = _sanitize_fragment(html)
+
     title = escape(source or word or "Dictionary")
     return f"""<!doctype html>
 <html><head><meta charset="utf-8">
@@ -56,6 +96,7 @@ def build_raw_page(
   .gd-raw .dsl-p {{ display: inline; }}
   .gd-raw .dsl-ref {{ color: #0b57d0; text-decoration: none; }}
 </style>
+{styles}
 <script>
   window.addEventListener('load', function () {{
     try {{
